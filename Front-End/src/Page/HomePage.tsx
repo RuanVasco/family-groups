@@ -1,17 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../Context/AuthContext';
+import { useAuthorization } from '../Context/AuthorizationContext';
 import Farmer from '../Component/Farmer';
 import logo from '../assets/logo.png';
 import FamilyGroup from '../Component/FamilyGroup';
+import User from '../Component/User';
 
 const HomePage = () => {
     const { logout } = useAuth();
+    const { hasPermission } = useAuthorization();
 
     const [viewType, setViewType] = useState<string>("familyGroup");
+    const [canViewUsers, setCanViewUsers] = useState<boolean>(false);
+
+    useEffect(() => {
+        const checkPermission = async () => {
+            const allowed = await hasPermission("User");
+            setCanViewUsers(allowed);
+        };
+
+        checkPermission();
+    }, []);
 
     return (
-        <div className="d-flex">
-            <div className="sidebar d-flex flex-column">
+        <div className="row">
+            <div className="col-3 sidebar d-flex flex-column">
                 <div className="logo_box">
                     <img src={logo} alt="Logo" className="logo" />
                 </div>
@@ -29,6 +42,15 @@ const HomePage = () => {
                     >
                         Produtores
                     </li>
+                    {canViewUsers && (
+                        <li
+                            onClick={() => setViewType("user")}
+                            className={viewType === "user" ? "active" : ""}
+                        >
+                            Usuários
+                        </li>
+                    )}
+
                 </ul>
 
                 <div className="logout_box mt-auto">
@@ -38,9 +60,12 @@ const HomePage = () => {
                 </div>
             </div>
 
-            <div className="content p-4">
+            <div className="content col">
                 {viewType === "familyGroup" && <FamilyGroup />}
                 {viewType === "farmer" && <Farmer />}
+                {canViewUsers && (
+                    viewType === "user" && <User />
+                )}
             </div>
         </div>
 

@@ -2,10 +2,12 @@ package br.com.cotrisoja.familyGroups.Controller;
 
 import br.com.cotrisoja.familyGroups.DTO.Auth.AuthRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.Auth.AuthResponseDTO;
+import br.com.cotrisoja.familyGroups.DTO.User.UserRequestDTO;
 import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.JwtService;
 import br.com.cotrisoja.familyGroups.Service.UserDetailsServiceCustom;
+import br.com.cotrisoja.familyGroups.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,7 +29,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserDetailsServiceCustom userDetailsService;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
     private final UserRepository userRepository;
 
     @PostMapping("/login")
@@ -43,14 +45,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody User user) {
-        Set<String> roles = new HashSet<>();
-        roles.add("ROLE_USER");
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(roles);
+    public ResponseEntity<?> register(@RequestBody UserRequestDTO userRequestDTO) {
+        User user = userService.createUser(userRequestDTO);
         userRepository.save(user);
-        return "Usuário cadastrado com sucesso!";
+        return ResponseEntity.ok("Usuário criado com sucesso.");
     }
 
     @GetMapping("/validate")

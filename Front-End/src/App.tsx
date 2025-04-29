@@ -5,6 +5,7 @@ import HomePage from './Page/HomePage';
 import { JSX } from 'react';
 import { ToastContainer } from 'react-toastify';
 import "./assets/styles/_sidebar.scss";
+import { AuthorizationProvider } from './Context/AuthorizationContext';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
     const { isAuthenticated, isLoading } = useAuth();
@@ -21,17 +22,19 @@ function App() {
         <>
             <Router>
                 <AuthProvider>
-                    <Routes>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route
-                            path="/"
-                            element={
-                                <ProtectedRoute>
-                                    <HomePage />
-                                </ProtectedRoute>
-                            }
-                        />
-                    </Routes>
+                    <AuthorizationProvider>
+                        <Routes>
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route
+                                path="/"
+                                element={
+                                    <ProtectedRoute>
+                                        <HomePage />
+                                    </ProtectedRoute>
+                                }
+                            />
+                        </Routes>
+                    </AuthorizationProvider>
                 </AuthProvider>
             </Router>
             <ToastContainer

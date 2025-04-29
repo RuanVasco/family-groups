@@ -7,6 +7,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FarmerService {
@@ -18,5 +20,10 @@ public class FarmerService {
         Farmer farmer = farmerRequestDTO.toEntity(null);
         farmer = farmerRepository.save(farmer);
         return farmer;
+    }
+
+    @Transactional
+    public List<Farmer> findAll() {
+        return farmerRepository.findAll();
     }
 }

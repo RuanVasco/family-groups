@@ -22,7 +22,7 @@ public class UserDetailsServiceCustom implements UserDetailsService {
 
         String[] rolesArray = user.getRoles()
                 .stream()
-                .map(role -> role.replace("ROLE_", "")) // Corrigido o lambda
+                .map(role -> role.replace("ROLE_", ""))
                 .toArray(String[]::new);
 
         return org.springframework.security.core.userdetails.User

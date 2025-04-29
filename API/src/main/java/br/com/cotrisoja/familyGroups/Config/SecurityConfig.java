@@ -38,6 +38,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/farmer/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/farmer/**").hasRole("TECHNICIAN")
+                        .requestMatchers(HttpMethod.GET, "/user/**").hasRole("ADMIN")
+                        .requestMatchers("/family-group/**").hasRole("TECHNICIAN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

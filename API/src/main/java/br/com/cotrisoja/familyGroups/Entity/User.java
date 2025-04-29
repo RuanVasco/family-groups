@@ -27,4 +27,6 @@ public class User {
 
     @OneToMany(mappedBy = "technician")
     private List<FamilyGroup> familyGroups;
+    
+    private Boolean status;
 }

@@ -6,8 +6,8 @@ import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 
 public record FamilyGroupResponseDTO(
         Long Id,
-        FarmerResponseDTO farmer,
-        UserResponseDTO user,
+        FarmerResponseDTO principal,
+        UserResponseDTO technician,
         String registry
 ) {
     public static FamilyGroupResponseDTO fromEntity(FamilyGroup familyGroup) {

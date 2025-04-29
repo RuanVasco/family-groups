@@ -25,6 +25,7 @@ public class DataInitializer {
                 Set<String> roles = new HashSet<>();
 
                 roles.add("ROLE_ADMIN");
+                roles.add("ROLE_USER");
                 roles.add("ROLE_TECHNICIAN");
 
                 User admin = new User();

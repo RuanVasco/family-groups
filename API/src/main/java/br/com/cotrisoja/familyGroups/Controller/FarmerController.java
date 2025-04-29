@@ -5,10 +5,7 @@ import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/farmer")
@@ -22,5 +19,10 @@ public class FarmerController {
         Farmer farmer = farmerService.createFarmer(farmerRequestDTO);
 
         return ResponseEntity.ok(farmer.getRegistrationNumber());
+    }
+
+    @GetMapping
+    public ResponseEntity<?> findAll() {
+        return ResponseEntity.ok(farmerService.findAll());
     }
 }
