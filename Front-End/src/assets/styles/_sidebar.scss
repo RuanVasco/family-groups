@@ -1,0 +1,69 @@
+@use "./variables" as var;
+@use "sass:color";
+
+.sidebar {
+  background-color: var.$primary-color;
+  min-height: 100vh;
+  width: 20vw;
+  padding: 20px;
+
+  * {
+    color: var.$tertiary-color;
+  }
+}
+
+.sidebar_menu {
+  cursor: pointer;
+  flex-grow: 1;
+
+  li {
+    margin-bottom: 5px;
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+    font-weight: var.$font-weight-medium;
+    font-size: 1.1rem;
+  }
+
+  li:hover {
+    background-color: color.adjust(var.$secondary-color, $lightness: 2%);
+  }
+
+  & .active {
+    background-color: var.$secondary-color;
+  }
+}
+
+.logo {
+  width: 140px;
+}
+
+.logo_box {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var.$tertiary-color;
+}
+
+.btn_logout {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var.$red-color;
+  color: var.$tertiary-color;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: color.adjust(var.$red-color, $lightness: -10%);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}

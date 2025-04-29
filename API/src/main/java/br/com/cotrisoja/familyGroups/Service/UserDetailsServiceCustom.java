@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+
 @Service
 @RequiredArgsConstructor
 public class UserDetailsServiceCustom implements UserDetailsService {
@@ -19,10 +20,15 @@ public class UserDetailsServiceCustom implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
+        String[] rolesArray = user.getRoles()
+                .stream()
+                .map(role -> role.replace("ROLE_", "")) // Corrigido o lambda
+                .toArray(String[]::new);
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getRole().replace("ROLE_", ""))
+                .roles(rolesArray)
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -22,7 +23,7 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role;
+    private Set<String> roles;
 
     @OneToMany(mappedBy = "technician")
     private List<FamilyGroup> familyGroups;
