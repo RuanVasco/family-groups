@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../axiosInstance";
 import { toast } from "react-toastify";
 import { UserType } from "../Type/UserType";
-import { FaPlus } from "react-icons/fa6";
-import { Modal, Button } from "react-bootstrap";
+import { FaPen, FaPlus } from "react-icons/fa6";
+import { Modal, Button, Form } from "react-bootstrap";
 import Select from 'react-select';
+import { BranchType } from "../Type/BranchType";
 
 const User = () => {
     const [users, setUsers] = useState<UserType[]>([]);
+    const [branchs, setBranchs] = useState<BranchType[]>([]);
 
     const [currentUser, setCurrentUser] = useState<Partial<UserType> | null>(null);
     const [modalMode, setModalMode] = useState<string>("");
@@ -21,6 +23,8 @@ const User = () => {
     const handleClose = () => setShow(false);
 
     const handleModalShow = (mode: string) => {
+        fetchBranchs();
+
         setModalMode(mode);
 
         if (mode === "create") {
@@ -40,6 +44,17 @@ const User = () => {
             toast.error('Erro ao buscar usuários');
         }
     };
+
+    const fetchBranchs = async () => {
+        try {
+            const res = await axiosInstance.get("/branch");
+            if (res.status === 200) {
+                setBranchs(res.data);
+            }
+        } catch (error) {
+            toast.error("Erro ao buscar carteiras");
+        }
+    }
 
     useEffect(() => {
         fetchUsers();
@@ -62,14 +77,21 @@ const User = () => {
             return;
         }
 
+        const data = {
+            username: currentUser.username,
+            password: currentUser.password,
+            roles: currentUser.roles,
+            branchId: currentUser.branch?.id || ""
+        }
+
         try {
             let res;
 
             if (modalMode === "create") {
-                res = await axiosInstance.post("/auth/register", currentUser);
+                res = await axiosInstance.post("/auth/register", data);
 
             } else {
-                res = await axiosInstance.put(`/user/${currentUser?.id}`, currentUser);
+                res = await axiosInstance.put(`/user/${currentUser?.id}`, data);
             }
 
             if (res.status === 200 || res.status === 201) {
@@ -91,10 +113,10 @@ const User = () => {
 
     return (
         <div className="container-fluid">
-            <div className="mt-3">
+            <div className="my-3 floating_panel">
                 <button
                     type="button"
-                    className="btn-create full_rounded"
+                    className="button_agree"
                     onClick={() => handleModalShow("create")}
                 >
                     <FaPlus /> Criar Usuário
@@ -107,30 +129,36 @@ const User = () => {
                         <th>Ações</th>
                         <th>Usuário</th>
                         <th>Perfis</th>
+                        <th>Carteira</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {users.map((user) => (
-                        <tr key={user.id}>
-                            <td>
-                                <button
-                                    className="btn btn-small btn-warning"
-                                    onClick={() => {
-                                        const selectedUser = {
-                                            ...user,
-                                            password: "",
-                                        };
-                                        setCurrentUser(selectedUser);
-                                        handleModalShow("edit");
-                                    }}
-                                >
-                                    Editar
-                                </button>
-                            </td>
-                            <td>{user.username}</td>
-                            <td>{user.roles.join(", ")}</td>
-                        </tr>
-                    ))}
+                    {users.length > 0 && (
+                        users.map((user) => (
+                            <tr key={user.id}>
+                                <td>
+                                    <button
+                                        className="button_edit"
+                                        onClick={() => {
+                                            const selectedUser = {
+                                                ...user,
+                                                password: "",
+                                            };
+                                            setCurrentUser(selectedUser);
+                                            handleModalShow("edit");
+                                        }}
+                                    >
+                                        <FaPen />
+                                        Editar
+                                    </button>
+                                </td>
+                                <td>{user.username}</td>
+                                <td>{user.roles.join(", ")}</td>
+                                <td>{user.branch?.name || "Sem carteira vinculada"}</td>
+                            </tr>
+                        ))
+
+                    )}
                 </tbody>
             </table>
 
@@ -175,6 +203,29 @@ const User = () => {
                             placeholder="Selecione perfis"
                         />
                     </div>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Carteira</Form.Label>
+                        <Form.Select
+                            value={currentUser?.branch?.id || ""}
+                            onChange={(e) =>
+                                setCurrentUser(prev => ({
+                                    ...prev,
+                                    branch: {
+                                        id: Number(e.target.value),
+                                        name: prev?.branch?.name || ""
+                                    }
+                                }))
+                            }
+                        >
+                            <option value="">Selecione uma opção</option>
+                            {Object.values(branchs).map((branch) => (
+                                <option key={branch.id} value={branch.id}>
+                                    {branch.name}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleClose}>

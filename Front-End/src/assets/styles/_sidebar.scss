@@ -18,7 +18,7 @@
 
   li {
     margin-bottom: 5px;
-    padding: 0.5rem 1rem;
+    padding: 0.8rem 1rem;
     background-color: transparent;
     border-radius: 8px;
     transition: background-color 0.3s ease;
@@ -50,7 +50,7 @@
 .btn_logout {
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: var.$red-color;
+  background-color: var.$secondary-color;
   color: var.$tertiary-color;
   border: none;
   border-radius: 8px;
@@ -60,7 +60,7 @@
   transition: background-color 0.3s ease, transform 0.2s ease;
 
   &:hover {
-    background-color: color.adjust(var.$red-color, $lightness: -10%);
+    background-color: color.adjust(var.$secondary-color, $lightness: 2%);
   }
 
   &:active {

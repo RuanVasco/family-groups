@@ -1,7 +1,9 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.User.UserRequestDTO;
+import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +16,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
 
     public List<User> findAll() {
@@ -26,6 +29,13 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userRequestDTO.password()));
         user.setRoles(userRequestDTO.roles());
 
+        if (userRequestDTO.branchId() != null) {
+           Branch branch = branchRepository.findById(userRequestDTO.branchId())
+                   .orElseThrow(() -> new RuntimeException("Unidade não encontrada"));
+
+           user.setBranch(branch);
+        }
+
         return userRepository.save(user);
     }
 
@@ -34,6 +44,13 @@ public class UserService {
 
         if (userRequestDTO.password() != null && !userRequestDTO.password().isBlank()) {
             user.setPassword(passwordEncoder.encode(userRequestDTO.password()));
+        }
+
+        if (userRequestDTO.branchId() != null) {
+            Branch branch = branchRepository.findById(userRequestDTO.branchId())
+                    .orElseThrow(() -> new RuntimeException("Unidade não encontrada"));
+
+            user.setBranch(branch);
         }
 
         user.setRoles(userRequestDTO.roles());

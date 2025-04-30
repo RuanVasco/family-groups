@@ -5,6 +5,8 @@ import Farmer from '../Component/Farmer';
 import logo from '../assets/logo.png';
 import FamilyGroup from '../Component/FamilyGroup';
 import User from '../Component/User';
+import "../assets/styles/_sidebar.scss";
+import Branch from '../Component/Branch';
 
 const HomePage = () => {
     const { logout } = useAuth();
@@ -43,12 +45,20 @@ const HomePage = () => {
                         Produtores
                     </li>
                     {canViewUsers && (
-                        <li
-                            onClick={() => setViewType("user")}
-                            className={viewType === "user" ? "active" : ""}
-                        >
-                            Usuários
-                        </li>
+                        <>
+                            <li
+                                onClick={() => setViewType("user")}
+                                className={viewType === "user" ? "active" : ""}
+                            >
+                                Usuários
+                            </li>
+                            <li
+                                onClick={() => setViewType("branch")}
+                                className={viewType === "branch" ? "active" : ""}
+                            >
+                                Carteiras
+                            </li>
+                        </>
                     )}
 
                 </ul>
@@ -64,7 +74,10 @@ const HomePage = () => {
                 {viewType === "familyGroup" && <FamilyGroup />}
                 {viewType === "farmer" && <Farmer />}
                 {canViewUsers && (
-                    viewType === "user" && <User />
+                    <>
+                        {viewType === "user" && <User />}
+                        {viewType === "branch" && <Branch />}
+                    </>
                 )}
             </div>
         </div>

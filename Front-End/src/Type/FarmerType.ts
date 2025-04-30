@@ -1,5 +1,11 @@
+import { StatusEnum } from "../Enum/StatusEnum";
+import { FamilyGroupType } from "./FamilyGroupType";
+import { UserType } from "./UserType";
+
 export interface FarmerType {
   registrationNumber: String;
   name: string;
-  familyGroupId: number;
+  familyGroup?: FamilyGroupType;
+  status: StatusEnum;
+  technician?: UserType;
 }

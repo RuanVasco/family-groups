@@ -1,9 +1,7 @@
 package br.com.cotrisoja.familyGroups.Controller;
 
-import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.User.UserRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.User.UserResponseDTO;
-import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.UserService;

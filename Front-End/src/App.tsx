@@ -4,8 +4,8 @@ import LoginPage from './Page/LoginPage';
 import HomePage from './Page/HomePage';
 import { JSX } from 'react';
 import { ToastContainer } from 'react-toastify';
-import "./assets/styles/_sidebar.scss";
 import { AuthorizationProvider } from './Context/AuthorizationContext';
+import "./assets/styles/Components/_button.scss";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
     const { isAuthenticated, isLoading } = useAuth();

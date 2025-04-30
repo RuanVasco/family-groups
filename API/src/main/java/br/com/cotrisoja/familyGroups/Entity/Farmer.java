@@ -23,4 +23,12 @@ public class Farmer {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_group_id")
     private FamilyGroup familyGroup;
+
+    @ManyToOne
+    @JoinColumn(name = "technician_id")
+    private User technician;
+
+    public boolean isValid() {
+        return this.status == StatusEnum.ACTIVE && this.familyGroup == null;
+    }
 }

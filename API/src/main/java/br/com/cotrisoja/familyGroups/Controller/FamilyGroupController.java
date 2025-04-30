@@ -1,17 +1,15 @@
 package br.com.cotrisoja.familyGroups.Controller;
 
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
+import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
-import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FamilyGroupService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 
 @RestController
@@ -24,25 +22,40 @@ public class FamilyGroupController {
 
     @GetMapping
     public ResponseEntity<?> getAll() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<FamilyGroup> familyGroups = familyGroupService.findAll();
 
-        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado")
-        );
+        List<FamilyGroupResponseDTO> response = familyGroups.stream()
+                .map(FamilyGroupResponseDTO::fromEntity)
+                .toList();
 
-        return ResponseEntity.ok(familyGroupService.findByTechnician(user));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FamilyGroupRequestDTO familyGroupRequestDTO) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        FamilyGroup familyGroup = familyGroupService.create(familyGroupRequestDTO);
 
-        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado")
-        );
+        return ResponseEntity.ok(FamilyGroupResponseDTO.fromEntity(familyGroup));
+    }
 
-        FamilyGroup familyGroup = familyGroupService.create(familyGroupRequestDTO, user);
+    @PutMapping("/add-member/{familyGroupId}/{memberId}")
+    public ResponseEntity<?> addMember(@PathVariable Long familyGroupId, @PathVariable String memberId) {
+        FamilyGroup familyGroup = familyGroupService.addMember(familyGroupId, memberId);
 
         return ResponseEntity.ok(familyGroup);
+    }
+
+    @PutMapping("/remove-member/{familyGroupId}/{memberId}")
+    public ResponseEntity<?> removeMember(@PathVariable Long familyGroupId, @PathVariable String memberId) {
+        familyGroupService.removeMember(familyGroupId, memberId);
+
+        return ResponseEntity.ok("Membro removido do grupo familiar");
+    }
+
+    @PutMapping("/change-principal/{familyGroupId}/{principalId}")
+    public ResponseEntity<?> changePrincipal(@PathVariable Long familyGroupId, @PathVariable String principalId) {
+        familyGroupService.changePrincipal(familyGroupId, principalId);
+
+        return ResponseEntity.ok("Principal atualizado");
     }
 }

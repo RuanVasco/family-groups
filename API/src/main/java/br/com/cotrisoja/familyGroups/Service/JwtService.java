@@ -1,10 +1,6 @@
 package br.com.cotrisoja.familyGroups.Service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
+import java.security.SignatureException;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -49,9 +46,12 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
-        Jws<Claims> jws = jwtParser.parseSignedClaims(token);
-        return jws.getPayload();
+    public Claims extractAllClaims(String token) {
+        try {
+            return jwtParser.parseSignedClaims(token).getPayload();
+        } catch (JwtException e) {
+            throw new RuntimeException("Token inválido ou corrompido");
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
