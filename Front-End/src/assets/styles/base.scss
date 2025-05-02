@@ -49,8 +49,7 @@ img {
 }
 
 input,
-textarea,
-select {
+textarea {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
@@ -58,6 +57,30 @@ select {
   border: 1px solid var.$light-gray-color;
   padding: 0.5rem;
   border-radius: 4px;
+}
+
+select {
+  background-color: transparent;
+  border: 1px solid var.$primary-color;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: var.$secondary-color;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  &:focus {
+    border-color: var.$secondary-color;
+  }
+
+  option {
+    background-color: var.$tertiary-color;
+    color: var.$secondary-color;
+  }
 }
 
 table {
@@ -95,6 +118,10 @@ tr:last-child td {
   position: relative;
 }
 
-h3 {
+h1,
+h2,
+h3,
+h4,
+h5 {
   color: var.$secondary-color;
 }

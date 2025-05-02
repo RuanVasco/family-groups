@@ -1,8 +1,6 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
-import br.com.cotrisoja.familyGroups.DTO.User.UserRequestDTO;
-import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
@@ -11,6 +9,8 @@ import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,8 +44,8 @@ public class FarmerService {
     }
 
     @Transactional
-    public List<Farmer> findAll() {
-        return farmerRepository.findAll();
+    public Page<Farmer> findAll(Pageable pageable) {
+        return farmerRepository.findAll(pageable);
     }
 
     public Set<Farmer> findAvaibleFarmers() {
@@ -66,18 +66,18 @@ public class FarmerService {
         farmer.setName(farmerRequestDTO.name());
         farmer.setStatus(farmerRequestDTO.status());
         farmer.setRegistrationNumber(farmer.getRegistrationNumber());
+        farmer.setOwnedArea(farmerRequestDTO.ownedArea());
+        farmer.setLeasedArea(farmerRequestDTO.leasedArea());
 
         if (farmerRequestDTO.technicianId() != null) {
             user = userRepository.findById(farmerRequestDTO.technicianId())
                     .orElseThrow(() -> new RuntimeException("Técnico não encontrado"));
-
             farmer.setTechnician(user);
         }
 
         if (farmerRequestDTO.familyGroupId() != null) {
             familyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
                     .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
-
             farmer.setFamilyGroup(familyGroup);
         }
 

@@ -11,7 +11,9 @@ public record FarmerResponseCompleteDTO(
         String name,
         StatusEnum status,
         FamilyGroupResponseDTO familyGroup,
-        User technician
+        User technician,
+        float ownedArea,
+        float leasedArea
 ) {
     public static FarmerResponseCompleteDTO fromEntity(Farmer farmer) {
         return new FarmerResponseCompleteDTO(
@@ -21,7 +23,9 @@ public record FarmerResponseCompleteDTO(
                 farmer.getFamilyGroup() != null
                         ? FamilyGroupResponseDTO.fromEntity(farmer.getFamilyGroup())
                         : null,
-                farmer.getTechnician()
+                farmer.getTechnician(),
+                farmer.getOwnedArea(),
+                farmer.getLeasedArea()
         );
     }
 }

@@ -8,4 +8,6 @@ export interface FarmerType {
   familyGroup?: FamilyGroupType;
   status: StatusEnum;
   technician?: UserType;
+  ownedArea?: number;
+  leasedArea?: number;
 }

@@ -8,6 +8,7 @@ import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
 import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { UserType } from "../Type/UserType";
 import Select from "react-select";
+import Pagination from "./Pagination";
 
 const Farmer = () => {
     const [farmers, setFarmers] = useState<FarmerType[]>([]);
@@ -16,17 +17,26 @@ const Farmer = () => {
     const [users, setUsers] = useState<UserType[]>([]);
     const [modalMode, setModalMode] = useState<"create" | "edit">("create");
     const [show, setShow] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
 
-    const fetchFarmers = async () => {
+    const fetchFarmers = async (page = 1, size = 10) => {
         try {
-            const res = await axiosInstance.get("/farmer");
+            const res = await axiosInstance.get(`/farmer?page=${page - 1}&size=${size}`);
             if (res.status === 200) {
-                setFarmers(res.data);
+                setFarmers(res.data.content);
+                setTotalPages(res.data.totalPages);
+                setCurrentPage(res.data.number + 1);
             }
         } catch (error) {
             toast.error("Erro ao buscar os produtores");
         }
     };
+
+    useEffect(() => {
+        fetchFarmers(currentPage, itemsPerPage);
+    }, [currentPage, itemsPerPage]);
 
     const fetchFamilyGroups = async () => {
         try {
@@ -80,8 +90,9 @@ const Farmer = () => {
                 name: currentFarmer.name,
                 status: currentFarmer.status,
                 familyGroupId: currentFarmer.familyGroup?.id,
-                technicianId: currentFarmer.technician?.id
-            }
+                technicianId: currentFarmer.technician?.id,
+                ownedArea: currentFarmer.ownedArea
+            };
 
             let res;
             let msg: string;
@@ -96,7 +107,7 @@ const Farmer = () => {
 
             if (res.status === 200 || res.status === 201) {
                 toast.success(msg);
-                fetchFarmers();
+                fetchFarmers(currentPage, itemsPerPage);
             }
 
 
@@ -106,10 +117,6 @@ const Farmer = () => {
             handleModalClose();
         }
     };
-
-    useEffect(() => {
-        fetchFarmers();
-    }, []);
 
     return (
         <div className="container-fluid">
@@ -123,39 +130,59 @@ const Farmer = () => {
                 </button>
             </div>
 
-            <table className="custom_table striped">
-                <thead>
-                    <tr>
-                        <th>Ações</th>
-                        <th>Matrícula</th>
-                        <th>Nome</th>
-                        <th>Situação</th>
-                        <th>Técnico</th>
-                        <th>Grupo Familiar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {farmers.map(farmer => (
-                        <tr key={Number(farmer.registrationNumber)}>
-                            <td>
-                                <button
-                                    className="button_edit"
-                                    onClick={() => openModal("edit", farmer)}
-                                >
-                                    <FaPen /> Editar
-                                </button>
-                            </td>
-                            <td>{farmer.registrationNumber}</td>
-                            <td>{farmer.name}</td>
-                            <td>{StatusLabels[farmer.status]}</td>
-                            <td>{farmer.technician?.username || "Sem técnico vinculado"}</td>
-                            <td>{farmer.familyGroup ? (farmer.familyGroup?.principal.name) : ("Sem grupo familiar")}</td>
+            <Pagination
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={(val) => {
+                    setItemsPerPage(val);
+                    setCurrentPage(1);
+                }}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+            >
+                <table className="striped">
+                    <thead>
+                        <tr>
+                            <th>Ações</th>
+                            <th>Matrícula</th>
+                            <th>Nome</th>
+                            <th>Situação</th>
+                            <th>Técnico</th>
+                            <th>Grupo familiar</th>
+                            <th>Terra própria</th>
+                            <th>Terra arrendada</th>
+                            <th>Terra total</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            <Modal show={show} onHide={handleModalClose}>
+                    </thead>
+                    <tbody>
+                        {farmers.map(farmer => (
+                            <tr key={Number(farmer.registrationNumber)}>
+                                <td>
+                                    <button
+                                        className="button_edit"
+                                        onClick={() => openModal("edit", farmer)}
+                                    >
+                                        <FaPen /> Editar
+                                    </button>
+                                </td>
+                                <td>{farmer.registrationNumber}</td>
+                                <td>{farmer.name}</td>
+                                <td>{StatusLabels[farmer.status]}</td>
+                                <td>{farmer.technician?.username || "Sem técnico vinculado"}</td>
+                                <td>{farmer.familyGroup ? (farmer.familyGroup?.principal.name) : ("Sem grupo familiar")}</td>
+                                <td>{farmer.ownedArea || 0} ha</td>
+                                <td>{farmer.leasedArea || 0} ha</td>
+                                <td>
+                                    {(farmer.ownedArea || farmer.leasedArea)
+                                        ? (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0)
+                                        : 0} ha
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </Pagination>
+            <Modal show={show} onHide={handleModalClose} size="xl">
                 <Modal.Header closeButton>
                     <Modal.Title>
                         {modalMode === "create" ? "Criar Produtor" : "Editar Produtor"}
@@ -196,6 +223,24 @@ const Farmer = () => {
                                     </option>
                                 ))}
                             </Form.Select>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Área própria (ha)</Form.Label>
+                            <Form.Control
+                                required
+                                type="number"
+                                value={currentFarmer?.ownedArea || 0}
+                                onChange={(e) => handleChange("ownedArea", parseFloat(e.target.value))}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Área arrendada (ha)</Form.Label>
+                            <Form.Control
+                                required
+                                type="number"
+                                value={currentFarmer?.leasedArea || 0}
+                                onChange={(e) => handleChange("leasedArea", parseFloat(e.target.value))}
+                            />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Grupo Familiar</Form.Label>

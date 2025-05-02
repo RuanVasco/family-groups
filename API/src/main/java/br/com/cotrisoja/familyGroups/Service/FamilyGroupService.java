@@ -1,8 +1,10 @@
 package br.com.cotrisoja.familyGroups.Service;
 
+import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.CultivationResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
+import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import lombok.RequiredArgsConstructor;
@@ -123,4 +125,29 @@ public class FamilyGroupService {
         return familyGroupRepository.findAll();
     }
 
+    public CultivationResponseDTO getCultivation(Long familyGroupId) {
+        FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupId)
+                .orElseThrow(() -> new IllegalArgumentException("Grupo familiar com ID " + familyGroupId + " não encontrado"));
+
+        return CultivationResponseDTO.fromEntity(familyGroup);
+    }
+
+    public void updateCultivations(FamilyGroup familyGroup, CultivationResponseDTO cultivationDTO) {
+        familyGroup.setCanolaArea(cultivationDTO.canolaArea());
+        familyGroup.setWheatArea(cultivationDTO.wheatArea());
+        familyGroup.setCornSilageArea(cultivationDTO.cornSilageArea());
+        familyGroup.setGrainCornArea(cultivationDTO.grainCornArea());
+        familyGroup.setBeanArea(cultivationDTO.beanArea());
+        familyGroup.setSoybeanArea(cultivationDTO.soybeanArea());
+
+        familyGroupRepository.save(familyGroup);
+    }
+
+    public Optional<FamilyGroup> findById(Long familyGroupId) {
+        return familyGroupRepository.findById(familyGroupId);
+    }
+
+    public List<FamilyGroup> findByTechnician(User technician) {
+        return familyGroupRepository.findByTechnician(technician);
+    }
 }

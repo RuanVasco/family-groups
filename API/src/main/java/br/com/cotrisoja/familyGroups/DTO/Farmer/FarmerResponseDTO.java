@@ -9,14 +9,18 @@ public record FarmerResponseDTO(
         String registrationNumber,
         String name,
         StatusEnum status,
-        UserResponseDTO technician
+        UserResponseDTO technician,
+        float ownedArea,
+        float leasedArea
 ) {
     public static FarmerResponseDTO fromEntity(Farmer farmer) {
         return new FarmerResponseDTO(
                 farmer.getRegistrationNumber(),
                 farmer.getName(),
                 farmer.getStatus(),
-                farmer.getTechnician() != null ? UserResponseDTO.fromEntity(farmer.getTechnician()) : null
+                farmer.getTechnician() != null ? UserResponseDTO.fromEntity(farmer.getTechnician()) : null,
+                farmer.getOwnedArea(),
+                farmer.getLeasedArea()
         );
     }
 }

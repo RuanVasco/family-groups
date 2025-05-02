@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { useAuthorization } from '../Context/AuthorizationContext';
 import Farmer from '../Component/Farmer';
+import Report from '../Component/Report';
 import logo from '../assets/logo.png';
 import FamilyGroup from '../Component/FamilyGroup';
 import User from '../Component/User';
@@ -26,7 +27,7 @@ const HomePage = () => {
 
     return (
         <div className="row">
-            <div className="col-3 sidebar d-flex flex-column">
+            <div className="col-2 sidebar d-flex flex-column">
                 <div className="logo_box">
                     <img src={logo} alt="Logo" className="logo" />
                 </div>
@@ -58,6 +59,12 @@ const HomePage = () => {
                             >
                                 Carteiras
                             </li>
+                            <li
+                                onClick={() => setViewType("report")}
+                                className={viewType === "report" ? "active" : ""}
+                            >
+                                Relatório
+                            </li>
                         </>
                     )}
 
@@ -77,6 +84,7 @@ const HomePage = () => {
                     <>
                         {viewType === "user" && <User />}
                         {viewType === "branch" && <Branch />}
+                        {viewType === "report" && <Report />}
                     </>
                 )}
             </div>

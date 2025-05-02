@@ -10,7 +10,9 @@ public record FarmerRequestDTO (
         String name,
         StatusEnum status,
         Long familyGroupId,
-        Long technicianId
+        Long technicianId,
+        float ownedArea,
+        float leasedArea
 ) {
     public Farmer toEntity(FamilyGroup familyGroup, User user) {
         Farmer farmer = new Farmer();
@@ -18,9 +20,9 @@ public record FarmerRequestDTO (
         farmer.setName(this.name);
         farmer.setStatus(this.status);
         farmer.setFamilyGroup(familyGroup);
-
+        farmer.setOwnedArea(this.ownedArea);
+        farmer.setLeasedArea(this.leasedArea);
         farmer.setTechnician(user);
-
         return farmer;
     }
 }
