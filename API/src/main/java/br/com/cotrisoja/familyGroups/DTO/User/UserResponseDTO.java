@@ -8,6 +8,7 @@ import java.util.Set;
 public record UserResponseDTO(
         Long id,
         String username,
+        String name,
         Set<String> roles,
         Branch branch
 ) {
@@ -15,6 +16,7 @@ public record UserResponseDTO(
         return new UserResponseDTO(
                 user.getId(),
                 user.getUsername(),
+                user.getName(),
                 user.getRoles(),
                 user.getBranch()
         );

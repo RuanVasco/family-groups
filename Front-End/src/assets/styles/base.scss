@@ -48,7 +48,6 @@ img {
   display: block;
 }
 
-input,
 textarea {
   font-family: inherit;
   font-size: inherit;
@@ -57,6 +56,19 @@ textarea {
   border: 1px solid var.$light-gray-color;
   padding: 0.5rem;
   border-radius: 4px;
+}
+
+input {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  color: var.$secondary-color;
+  background-color: transparent;
+  border: 1px solid var.$primary-color;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 select {
@@ -124,4 +136,9 @@ h3,
 h4,
 h5 {
   color: var.$secondary-color;
+}
+
+.required-asterisk {
+  margin-left: 4px;
+  font-weight: bold;
 }

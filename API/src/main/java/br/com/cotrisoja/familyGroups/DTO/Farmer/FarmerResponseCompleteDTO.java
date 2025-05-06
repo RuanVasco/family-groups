@@ -12,8 +12,8 @@ public record FarmerResponseCompleteDTO(
         StatusEnum status,
         FamilyGroupResponseDTO familyGroup,
         User technician,
-        float ownedArea,
-        float leasedArea
+        double ownedArea,
+        double leasedArea
 ) {
     public static FarmerResponseCompleteDTO fromEntity(Farmer farmer) {
         return new FarmerResponseCompleteDTO(

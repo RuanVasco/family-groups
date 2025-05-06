@@ -8,6 +8,10 @@ import FamilyGroup from '../Component/FamilyGroup';
 import User from '../Component/User';
 import "../assets/styles/_sidebar.scss";
 import Branch from '../Component/Branch';
+import { Button, Form, Modal } from 'react-bootstrap';
+import { FaUpload } from 'react-icons/fa6';
+import { toast } from 'react-toastify';
+import axiosInstance from '../axiosInstance';
 
 const HomePage = () => {
     const { logout } = useAuth();
@@ -15,6 +19,8 @@ const HomePage = () => {
 
     const [viewType, setViewType] = useState<string>("familyGroup");
     const [canViewUsers, setCanViewUsers] = useState<boolean>(false);
+    const [csvFile, setCsvFile] = useState<File | null>(null);
+    const [show, setShow] = useState(false);
 
     useEffect(() => {
         const checkPermission = async () => {
@@ -24,6 +30,42 @@ const HomePage = () => {
 
         checkPermission();
     }, []);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && file.type === 'text/csv') {
+            setCsvFile(file);
+        } else {
+            setCsvFile(null);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!csvFile) return;
+
+        const formData = new FormData();
+        formData.append('file', csvFile);
+
+        try {
+            const res = await axiosInstance.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (res.status === 200 || res.status === 201) {
+                toast.success("Arquivo enviado com sucesso.");
+            }
+
+            if (res.status === 202) {
+                toast.success("Arquivo está sendo carregado.");
+            }
+        } catch (error) {
+            toast.error("Erro ao enviar arquivo.")
+        } finally {
+            setShow(false);
+        }
+    };
 
     return (
         <div className="row">
@@ -65,6 +107,12 @@ const HomePage = () => {
                             >
                                 Relatório
                             </li>
+                            <li
+                                onClick={() => setShow(true)}
+                                className="d-flex align-items-center gap-2"
+                            >
+                                Enviar Dados <FaUpload />
+                            </li>
                         </>
                     )}
 
@@ -88,8 +136,36 @@ const HomePage = () => {
                     </>
                 )}
             </div>
+            <Modal show={show} onHide={() => setShow(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        Enviar arquivos
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group>
+                            <Form.Label>
+                                Selecionar um arquivo
+                            </Form.Label>
+                            <Form.Control
+                                type="file"
+                                accept=".csv"
+                                onChange={handleFileChange}
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShow(false)}>
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={handleUpload}>
+                        Enviar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
-
     );
 };
 

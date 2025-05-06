@@ -4,16 +4,16 @@ import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.CultivationResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupMembersResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupResponseDTO;
+import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
+import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FamilyGroupService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,13 +29,19 @@ public class FamilyGroupController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
-        List<FamilyGroup> familyGroups = familyGroupService.findAll();
+    public ResponseEntity<?> getAll(
+            @RequestParam(required = false) String search,
+            Pageable pageable
+    ) {
+        Page<FamilyGroup> familyGroups;
 
-        List<FamilyGroupResponseDTO> response = familyGroups.stream()
-                .map(FamilyGroupResponseDTO::fromEntity)
-                .toList();
+        if (search != null && !search.isBlank()) {
+            familyGroups = familyGroupService.findByValue(search, pageable);
+        } else {
+            familyGroups = familyGroupService.findAll(pageable);
+        }
 
+        Page<FamilyGroupResponseDTO> response = familyGroups.map(FamilyGroupResponseDTO::fromEntity);
         return ResponseEntity.ok(response);
     }
 

@@ -72,13 +72,14 @@ const User = () => {
             return;
         }
 
-        if (!currentUser.username || !currentUser.roles?.length) {
+        if (!currentUser.username || !currentUser.roles?.length || !currentUser.name) {
             toast.warning("Preencha o nome de usuário e selecione ao menos um perfil.");
             return;
         }
 
         const data = {
             username: currentUser.username,
+            name: currentUser.name,
             password: currentUser.password,
             roles: currentUser.roles,
             branchId: currentUser.branch?.id || ""
@@ -128,6 +129,7 @@ const User = () => {
                     <tr>
                         <th>Ações</th>
                         <th>Usuário</th>
+                        <th>Nome</th>
                         <th>Perfis</th>
                         <th>Carteira</th>
                     </tr>
@@ -153,6 +155,7 @@ const User = () => {
                                     </button>
                                 </td>
                                 <td>{user.username}</td>
+                                <td>{user.name}</td>
                                 <td>{user.roles.join(", ")}</td>
                                 <td>{user.branch?.name || "Sem carteira vinculada"}</td>
                             </tr>
@@ -170,7 +173,9 @@ const User = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="mb-3">
-                        <label className="form-label">Nome de Usuário</label>
+                        <label className="form-label" htmlFor="user">
+                            Usuário <span className="required-asterisk">*</span>
+                        </label>
                         <input
                             type="text"
                             className="form-control"
@@ -180,7 +185,17 @@ const User = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Senha</label>
+                        <label className="form-label">Nome <span className="required-asterisk">*</span></label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={currentUser?.name || ""}
+                            onChange={(e) => handleChange("name", e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mb-3">
+                        <label className="form-label">Senha <span className="required-asterisk">*</span></label>
                         <input
                             type="password"
                             className="form-control"
@@ -190,7 +205,7 @@ const User = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Perfis</label>
+                        <label className="form-label">Perfis <span className="required-asterisk">*</span></label>
                         <Select
                             isMulti
                             options={roleOptions}

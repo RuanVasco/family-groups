@@ -11,8 +11,8 @@ public record FarmerRequestDTO (
         StatusEnum status,
         Long familyGroupId,
         Long technicianId,
-        float ownedArea,
-        float leasedArea
+        double ownedArea,
+        double leasedArea
 ) {
     public Farmer toEntity(FamilyGroup familyGroup, User user) {
         Farmer farmer = new Farmer();

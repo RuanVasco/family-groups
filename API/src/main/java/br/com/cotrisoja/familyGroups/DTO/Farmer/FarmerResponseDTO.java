@@ -10,8 +10,8 @@ public record FarmerResponseDTO(
         String name,
         StatusEnum status,
         UserResponseDTO technician,
-        float ownedArea,
-        float leasedArea
+        double ownedArea,
+        double leasedArea
 ) {
     public static FarmerResponseDTO fromEntity(Farmer farmer) {
         return new FarmerResponseDTO(

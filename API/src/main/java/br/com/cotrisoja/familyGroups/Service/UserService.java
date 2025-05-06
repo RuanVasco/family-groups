@@ -26,6 +26,7 @@ public class UserService {
     public User createUser(UserRequestDTO userRequestDTO) {
         User user = new User();
         user.setUsername(userRequestDTO.username());
+        user.setName(userRequestDTO.name());
         user.setPassword(passwordEncoder.encode(userRequestDTO.password()));
         user.setRoles(userRequestDTO.roles());
 
@@ -41,6 +42,7 @@ public class UserService {
 
     public User updateUser(User user, UserRequestDTO userRequestDTO) {
         user.setUsername(userRequestDTO.username());
+        user.setName(userRequestDTO.name());
 
         if (userRequestDTO.password() != null && !userRequestDTO.password().isBlank()) {
             user.setPassword(passwordEncoder.encode(userRequestDTO.password()));

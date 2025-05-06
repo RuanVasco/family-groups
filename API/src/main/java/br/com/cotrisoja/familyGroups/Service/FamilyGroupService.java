@@ -8,6 +8,8 @@ import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -121,8 +123,8 @@ public class FamilyGroupService {
     }
 
 
-    public List<FamilyGroup> findAll() {
-        return familyGroupRepository.findAll();
+    public Page<FamilyGroup> findAll(Pageable pageable) {
+        return familyGroupRepository.findAll(pageable);
     }
 
     public CultivationResponseDTO getCultivation(Long familyGroupId) {
@@ -149,5 +151,9 @@ public class FamilyGroupService {
 
     public List<FamilyGroup> findByTechnician(User technician) {
         return familyGroupRepository.findByTechnician(technician);
+    }
+
+    public Page<FamilyGroup> findByValue(String value, Pageable pageable) {
+        return familyGroupRepository.findByValue(value, pageable);
     }
 }

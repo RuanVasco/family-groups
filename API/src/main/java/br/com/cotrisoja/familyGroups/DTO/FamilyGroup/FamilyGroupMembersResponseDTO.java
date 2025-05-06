@@ -9,12 +9,12 @@ public record FamilyGroupMembersResponseDTO(
         Long familyGroupId,
         FarmerResponseDTO principal,
         List<FarmerResponseDTO> members,
-        float canolaArea,
-        float wheatArea,
-        float cornSilageArea,
-        float grainCornArea,
-        float beanArea,
-        float soybeanArea
+        double canolaArea,
+        double wheatArea,
+        double cornSilageArea,
+        double grainCornArea,
+        double beanArea,
+        double soybeanArea
 ) {
     public static FamilyGroupMembersResponseDTO fromEntity(FamilyGroup familyGroup) {
         return new FamilyGroupMembersResponseDTO(

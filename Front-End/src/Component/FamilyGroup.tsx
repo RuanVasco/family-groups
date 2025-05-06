@@ -9,6 +9,7 @@ import { FarmerType } from "../Type/FarmerType";
 import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
 import { StatusLabels } from "../Enum/StatusEnum";
+import Pagination from "./Pagination";
 
 interface CultivationType {
     canolaArea?: number;
@@ -28,6 +29,10 @@ const FamilyGroup = () => {
     const [selectedPrincipalId, setSelectedPrincipalId] = useState<string>("");
     const [selectedMembers, setSelectedMembers] = useState<FarmerType[]>([]);
     const [cultivations, setCultivations] = useState<CultivationType | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [searchValue, setSearchValue] = useState<string>("");
 
     const [show, setShow] = useState(false);
 
@@ -37,6 +42,10 @@ const FamilyGroup = () => {
             fetchCultivations();
         }
     }, [selectedFamilyGroup]);
+
+    useEffect(() => {
+        fetchFamilyGroups(currentPage, itemsPerPage);
+    }, [currentPage, itemsPerPage]);
 
     const fetchFarmers = async () => {
         try {
@@ -61,11 +70,13 @@ const FamilyGroup = () => {
         }
     }
 
-    const fetchFamilyGroups = async () => {
+    const fetchFamilyGroups = async (page = 1, size = 10) => {
         try {
-            const res = await axiosInstance.get("/family-group");
+            const res = await axiosInstance.get(`/family-group?page=${page - 1}&size=${size}`);
             if (res.status === 200 || res.status === 201) {
-                setFamilyGroups(res.data);
+                setFamilyGroups(res.data.content);
+                setTotalPages(res.data.totalPages);
+                setCurrentPage(res.data.number + 1);
             }
         } catch (error) {
             toast.error("Erro ao buscar os grupos familiares");
@@ -92,7 +103,7 @@ const FamilyGroup = () => {
     const handleModalShow = async (mode: "create" | "select" | "add-user" | "add-cultivation") => {
         setModalMode(mode);
         if (mode === "select") {
-            await fetchFamilyGroups();
+            await fetchFamilyGroups(currentPage, itemsPerPage);
         } else if (mode === "add-cultivation") {
             await fetchCultivations();
         } else {
@@ -220,6 +231,30 @@ const FamilyGroup = () => {
             [field]: value,
         }));
     };
+
+    useEffect(() => {
+        const fetch = async () => {
+            try {
+                const res = await axiosInstance.get("/family-group", {
+                    params: {
+                        search: searchValue.length >= 3 ? searchValue : undefined,
+                        page: currentPage - 1,
+                        size: itemsPerPage,
+                    },
+                });
+
+                if (res.status === 200) {
+                    setFamilyGroups(res.data.content);
+                    setTotalPages(res.data.totalPages);
+                    setCurrentPage(res.data.number + 1);
+                }
+            } catch (error) {
+                toast.error("Erro ao buscar produtores");
+            }
+        };
+
+        fetch();
+    }, [searchValue, currentPage, itemsPerPage]);
 
     return (
         <div className="container-fluid pt-4 pe-4">
@@ -362,7 +397,7 @@ const FamilyGroup = () => {
                 </>
             )}
 
-            <Modal show={show} onHide={handleClose} size="lg">
+            <Modal show={show} onHide={handleClose} size="xl">
                 <Modal.Header closeButton>
                     <Modal.Title className="fw-bold">
                         {modalMode === "create"
@@ -376,33 +411,51 @@ const FamilyGroup = () => {
                 </Modal.Header>
                 <Modal.Body>
                     {modalMode === "select" ? (
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Ações</th>
-                                    <th>ID</th>
-                                    <th>Principal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {familyGroups.length > 0 && (
-                                    familyGroups.map((group) => (
-                                        <tr key={group.id}>
-                                            <td>
-                                                <button
-                                                    className="btn_select"
-                                                    onClick={() => handleSelectGroup(group)}
-                                                >
-                                                    Selecionar
-                                                </button>
-                                            </td>
-                                            <td>{group.id}</td>
-                                            <td>{group.principal.name}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                        <Pagination
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={(val) => {
+                                setItemsPerPage(val);
+                                setCurrentPage(1);
+                            }}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(page) => setCurrentPage(page)}
+                        >
+                            <input
+                                type="text"
+                                placeholder="Procurar"
+                                className="mb-3 w-50"
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                            />
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ações</th>
+                                        <th>ID</th>
+                                        <th>Principal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {familyGroups.length > 0 && (
+                                        familyGroups.map((group) => (
+                                            <tr key={group.id}>
+                                                <td>
+                                                    <button
+                                                        className="btn_select"
+                                                        onClick={() => handleSelectGroup(group)}
+                                                    >
+                                                        Selecionar
+                                                    </button>
+                                                </td>
+                                                <td>{group.id}</td>
+                                                <td>{group.principal.name}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </ Pagination>
                     ) : modalMode === "add-user" ? (
                         <table>
                             <thead>

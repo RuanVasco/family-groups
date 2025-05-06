@@ -1,15 +1,14 @@
 package br.com.cotrisoja.familyGroups.DTO.FamilyGroup;
 
-import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 
 public record CultivationResponseDTO(
-        float canolaArea,
-        float wheatArea,
-        float cornSilageArea,
-        float grainCornArea,
-        float beanArea,
-        float soybeanArea
+        double canolaArea,
+        double wheatArea,
+        double cornSilageArea,
+        double grainCornArea,
+        double beanArea,
+        double soybeanArea
 ) {
     public static CultivationResponseDTO fromEntity(FamilyGroup familyGroup) {
         return new CultivationResponseDTO(

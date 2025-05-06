@@ -20,6 +20,8 @@ const Farmer = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState<number>(0);
+    const [searchValue, setSearchValue] = useState<string>("");
 
     const fetchFarmers = async (page = 1, size = 10) => {
         try {
@@ -28,6 +30,7 @@ const Farmer = () => {
                 setFarmers(res.data.content);
                 setTotalPages(res.data.totalPages);
                 setCurrentPage(res.data.number + 1);
+                setTotalItems(res.data.totalElements);
             }
         } catch (error) {
             toast.error("Erro ao buscar os produtores");
@@ -37,6 +40,32 @@ const Farmer = () => {
     useEffect(() => {
         fetchFarmers(currentPage, itemsPerPage);
     }, [currentPage, itemsPerPage]);
+
+    useEffect(() => {
+        const fetch = async () => {
+            try {
+                const res = await axiosInstance.get("/farmer", {
+                    params: {
+                        search: searchValue.length >= 3 ? searchValue : undefined,
+                        page: currentPage - 1,
+                        size: itemsPerPage,
+                    },
+                });
+
+                if (res.status === 200) {
+                    setFarmers(res.data.content);
+                    setTotalPages(res.data.totalPages);
+                    setCurrentPage(res.data.number + 1);
+                    setTotalItems(res.data.totalElements);
+                }
+            } catch (error) {
+                toast.error("Erro ao buscar produtores");
+            }
+        };
+
+        fetch();
+    }, [searchValue, currentPage, itemsPerPage]);
+
 
     const fetchFamilyGroups = async () => {
         try {
@@ -120,7 +149,7 @@ const Farmer = () => {
 
     return (
         <div className="container-fluid">
-            <div className="my-3 floating_panel">
+            <div className="my-3 floating_panel d-flex align-items-center justify-content-between">
                 <button
                     type="button"
                     className="button_agree"
@@ -128,6 +157,14 @@ const Farmer = () => {
                 >
                     <FaPlus /> Criar Produtor
                 </button>
+                <input
+                    className="w-50"
+                    placeholder="Pesquisar"
+                    type="text"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                />
+                <h4 className="fw-bold p-0 m-0">Total de items: {totalItems}</h4>
             </div>
 
             <Pagination
@@ -168,7 +205,7 @@ const Farmer = () => {
                                 <td>{farmer.registrationNumber}</td>
                                 <td>{farmer.name}</td>
                                 <td>{StatusLabels[farmer.status]}</td>
-                                <td>{farmer.technician?.username || "Sem técnico vinculado"}</td>
+                                <td>{farmer.technician?.name || "Sem técnico vinculado"}</td>
                                 <td>{farmer.familyGroup ? (farmer.familyGroup?.principal.name) : ("Sem grupo familiar")}</td>
                                 <td>{farmer.ownedArea || 0} ha</td>
                                 <td>{farmer.leasedArea || 0} ha</td>

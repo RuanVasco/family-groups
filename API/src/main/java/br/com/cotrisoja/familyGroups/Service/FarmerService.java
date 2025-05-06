@@ -48,6 +48,10 @@ public class FarmerService {
         return farmerRepository.findAll(pageable);
     }
 
+    public Page<Farmer> findByValue(String value, Pageable pageable) {
+        return farmerRepository.findByValue(value, pageable);
+    }
+
     public Set<Farmer> findAvaibleFarmers() {
         return farmerRepository.findAvaibleFarmers();
     }

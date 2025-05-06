@@ -29,11 +29,19 @@ public class FarmerController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<FarmerResponseCompleteDTO>> findAll(Pageable pageable) {
-        Page<Farmer> farmers = farmerService.findAll(pageable);
+    public ResponseEntity<Page<FarmerResponseCompleteDTO>> findAll(
+            @RequestParam(required = false) String search,
+            Pageable pageable
+    ) {
+        Page<Farmer> farmers;
+
+        if (search != null && !search.isBlank()) {
+            farmers = farmerService.findByValue(search, pageable);
+        } else {
+            farmers = farmerService.findAll(pageable);
+        }
 
         Page<FarmerResponseCompleteDTO> response = farmers.map(FarmerResponseCompleteDTO::fromEntity);
-
         return ResponseEntity.ok(response);
     }
 
