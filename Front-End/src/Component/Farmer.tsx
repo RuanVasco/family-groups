@@ -69,7 +69,7 @@ const Farmer = () => {
 
     const fetchFamilyGroups = async () => {
         try {
-            const res = await axiosInstance.get("/family-group");
+            const res = await axiosInstance.get("/family-group/all");
             if (res.status === 200) {
                 setFamilyGroups(res.data);
             }
@@ -289,11 +289,13 @@ const Farmer = () => {
                                 }}
                             >
                                 <option value="">Selecione uma opção</option>
-                                {familyGroups.map((familyGroup) => (
-                                    <option key={familyGroup.id} value={familyGroup.id}>
-                                        {familyGroup.principal.name}
-                                    </option>
-                                ))}
+                                {familyGroups.length > 0 && (
+                                    familyGroups.map((familyGroup) => (
+                                        <option key={familyGroup.id} value={familyGroup.id}>
+                                            {familyGroup.principal.name}
+                                        </option>
+                                    ))
+                                )}
                             </Form.Select>
                         </Form.Group>
                         <Form.Group>

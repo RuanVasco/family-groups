@@ -128,6 +128,7 @@ const User = () => {
                 <thead>
                     <tr>
                         <th>Ações</th>
+                        <th>ID</th>
                         <th>Usuário</th>
                         <th>Nome</th>
                         <th>Perfis</th>
@@ -154,6 +155,7 @@ const User = () => {
                                         Editar
                                     </button>
                                 </td>
+                                <td>{user.id}</td>
                                 <td>{user.username}</td>
                                 <td>{user.name}</td>
                                 <td>{user.roles.join(", ")}</td>

@@ -127,6 +127,10 @@ public class FamilyGroupService {
         return familyGroupRepository.findAll(pageable);
     }
 
+    public List<FamilyGroup> findAll() {
+        return familyGroupRepository.findAll();
+    }
+
     public CultivationResponseDTO getCultivation(Long familyGroupId) {
         FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupId)
                 .orElseThrow(() -> new IllegalArgumentException("Grupo familiar com ID " + familyGroupId + " não encontrado"));

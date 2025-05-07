@@ -45,6 +45,12 @@ public class FamilyGroupController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllWithoutPagination() {
+        List<FamilyGroup> familyGroups = familyGroupService.findAll();
+        return ResponseEntity.ok(familyGroups.stream().map(FamilyGroupResponseDTO::fromEntity).toList());
+    }
+
     @GetMapping("/cultivation/{familyGroupId}")
     public ResponseEntity<?> getCultivation(
             @PathVariable Long familyGroupId

@@ -134,7 +134,6 @@ const FamilyGroup = () => {
             }
 
         } catch (error) {
-            console.log(error)
             toast.error("Erro ao atualizar culturas");
         } finally {
             setCultivations(null);
@@ -256,6 +255,10 @@ const FamilyGroup = () => {
         fetch();
     }, [searchValue, currentPage, itemsPerPage]);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchValue]);
+
     return (
         <div className="container-fluid pt-4 pe-4">
             <div className="family-group-header">
@@ -312,7 +315,7 @@ const FamilyGroup = () => {
                                     <td>{p.registrationNumber}</td>
                                     <td>{p.name}</td>
                                     <td>{StatusLabels[p.status]}</td>
-                                    <td>{p.technician?.username || "Sem técnico vinculado"}</td>
+                                    <td>{p.technician?.name || "Sem técnico vinculado"}</td>
                                     <td>
                                         {(p.ownedArea || p.leasedArea)
                                             ? (p.ownedArea ?? 0) + (p.leasedArea ?? 0)

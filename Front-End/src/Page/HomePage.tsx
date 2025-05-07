@@ -9,7 +9,7 @@ import User from '../Component/User';
 import "../assets/styles/_sidebar.scss";
 import Branch from '../Component/Branch';
 import { Button, Form, Modal } from 'react-bootstrap';
-import { FaUpload } from 'react-icons/fa6';
+import { FaChartColumn, FaUpload, FaUser, FaUserGroup, FaWallet, FaWheatAwn } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import axiosInstance from '../axiosInstance';
 
@@ -77,41 +77,56 @@ const HomePage = () => {
                 <ul className="sidebar_menu flex-grow-1">
                     <li
                         onClick={() => setViewType("familyGroup")}
-                        className={viewType === "familyGroup" ? "active" : ""}
+                        className={
+                            "d-flex align-items-center gap-2" +
+                            (viewType === "familyGroup" ? " active" : "")
+                        }
                     >
-                        Grupo Familiar
+                        <FaUserGroup />Grupo Familiar
                     </li>
                     <li
                         onClick={() => setViewType("farmer")}
-                        className={viewType === "farmer" ? "active" : ""}
+                        className={
+                            "d-flex align-items-center gap-2" +
+                            (viewType === "farmer" ? " active" : "")
+                        }
                     >
-                        Produtores
+                        <FaWheatAwn />Produtores
                     </li>
                     {canViewUsers && (
                         <>
                             <li
                                 onClick={() => setViewType("user")}
-                                className={viewType === "user" ? "active" : ""}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (viewType === "user" ? " active" : "")
+                                }
                             >
-                                Usuários
+                                <FaUser />Usuários
                             </li>
                             <li
                                 onClick={() => setViewType("branch")}
-                                className={viewType === "branch" ? "active" : ""}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (viewType === "branch" ? " active" : "")
+                                }
                             >
-                                Carteiras
+                                <FaWallet />Carteiras
                             </li>
                             <li
                                 onClick={() => setViewType("report")}
-                                className={viewType === "report" ? "active" : ""}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (viewType === "report" ? " active" : "")
+                                }
                             >
-                                Relatório
+                                <FaChartColumn />Relatório
                             </li>
                             <li
                                 onClick={() => setShow(true)}
                                 className="d-flex align-items-center gap-2"
                             >
-                                Enviar Dados <FaUpload />
+                                <FaUpload />Enviar Dados
                             </li>
                         </>
                     )}

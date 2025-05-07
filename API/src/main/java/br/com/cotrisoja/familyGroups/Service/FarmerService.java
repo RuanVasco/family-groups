@@ -1,6 +1,7 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
+import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
@@ -61,6 +62,14 @@ public class FarmerService {
                 .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
 
         return familyGroup.getMembers();
+    }
+
+    public List<Farmer> findByTechnician(User technician) {
+         return farmerRepository.findByTechnician(technician);
+    }
+
+    public List<Farmer> findByBranch(Branch branch) {
+        return farmerRepository.findByBranch(branch);
     }
 
     public Farmer updateFarmer(Farmer farmer, FarmerRequestDTO farmerRequestDTO) {

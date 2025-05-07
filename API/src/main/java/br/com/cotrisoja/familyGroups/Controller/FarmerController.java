@@ -1,9 +1,15 @@
 package br.com.cotrisoja.familyGroups.Controller;
 
+import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupMembersResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
+import br.com.cotrisoja.familyGroups.Entity.Branch;
+import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
+import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
+import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -20,6 +27,8 @@ import java.util.Set;
 public class FarmerController {
 
     private final FarmerService farmerService;
+    private final UserRepository userRepository;
+    private final BranchRepository branchRepository;
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FarmerRequestDTO farmerRequestDTO) {
@@ -65,6 +74,41 @@ public class FarmerController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/by-technician/{userId}")
+    public ResponseEntity<?> getByTechnician(@PathVariable Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("Usuário não encontrado");
+        }
+
+        User technician = userOptional.get();
+        List<Farmer> farmers = farmerService.findByTechnician(technician);
+
+        return ResponseEntity.ok(
+                farmers.stream()
+                        .map(FarmerResponseDTO::fromEntity)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/by-branch/{branchId}")
+    public ResponseEntity<?> getByBranch(@PathVariable Long branchId) {
+        Optional<Branch> branchOptional = branchRepository.findById(branchId);
+
+        if (branchOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("Carteira não encontrado");
+        }
+
+        Branch branch = branchOptional.get();
+        List<Farmer> farmers = farmerService.findByBranch(branch);
+
+        return ResponseEntity.ok(
+                farmers.stream()
+                        .map(FarmerResponseDTO::fromEntity)
+                        .toList()
+        );
+    }
 
     @PutMapping("/{farmerRegistration}")
     public ResponseEntity<?> updateFarmer(
