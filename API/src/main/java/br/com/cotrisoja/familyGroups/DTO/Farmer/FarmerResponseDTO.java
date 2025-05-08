@@ -2,7 +2,6 @@ package br.com.cotrisoja.familyGroups.DTO.Farmer;
 
 import br.com.cotrisoja.familyGroups.DTO.Branch.BranchResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.User.UserResponseDTO;
-import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 

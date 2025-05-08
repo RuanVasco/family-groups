@@ -303,10 +303,10 @@ const Farmer = () => {
                             <Select
                                 options={users.map((user) => ({
                                     value: user,
-                                    label: user.username
+                                    label: user.name
                                 }))}
                                 value={users
-                                    .map((user) => ({ value: user, label: user.username }))
+                                    .map((user) => ({ value: user, label: user.name }))
                                     .find(opt => opt.value.id === currentFarmer?.technician?.id)}
                                 onChange={(selectedOption) => handleChange("technician", selectedOption?.value)}
                                 placeholder="Selecione um técnico"

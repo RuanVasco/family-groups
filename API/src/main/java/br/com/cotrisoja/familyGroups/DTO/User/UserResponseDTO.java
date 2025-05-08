@@ -1,5 +1,6 @@
 package br.com.cotrisoja.familyGroups.DTO.User;
 
+import br.com.cotrisoja.familyGroups.DTO.Branch.BranchResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.User;
 
@@ -10,7 +11,7 @@ public record UserResponseDTO(
         String username,
         String name,
         Set<String> roles,
-        Branch branch
+        BranchResponseDTO branch
 ) {
     public static UserResponseDTO fromEntity(User user) {
         return new UserResponseDTO(
@@ -18,7 +19,7 @@ public record UserResponseDTO(
                 user.getUsername(),
                 user.getName(),
                 user.getRoles(),
-                user.getBranch()
+                user.getBranch() != null ? BranchResponseDTO.from(user.getBranch()) : null
         );
     }
 }

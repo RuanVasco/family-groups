@@ -34,6 +34,7 @@ const Report = () => {
     const [totalItems, setTotalItems] = useState<number>(0);
     const [reportType, setReportType] = useState<OptionType | null>(null);
     const [reportMode, setReportMode] = useState<OptionType | null>(null);
+    // const [searchValue, setSearchValue] = useState<string>("");
 
     const fetchBranchs = async () => {
         try {
@@ -120,20 +121,25 @@ const Report = () => {
     useEffect(() => {
         if (!reportType || reportType.value !== "familyGroup") return;
         if (!selectedUser) return;
-
         setFarmers([]);
+        setFamilyGroups([]);
+
         fetchFamilyGroups();
     }, [selectedUser, reportType]);
 
     useEffect(() => {
         if (!reportType || reportType.value !== "farmer") return;
-
+        setFarmers([]);
         setFamilyGroups([]);
+
         fetchFarmers();
     }, [selectedUser, reportType]);
 
     useEffect(() => {
         if (!selectedUser && reportMode?.value === "byTechnician") {
+            setFarmers([]);
+            setFamilyGroups([]);
+
             fetchFarmers();
         }
     }, [reportMode]);
@@ -210,7 +216,6 @@ const Report = () => {
                             isClearable
                         />
                     )}
-
                 </div>
                 <h4 className="fw-bold m-0 p-0 me-2">Total de itens: {totalItems}</h4>
             </div>
@@ -275,70 +280,72 @@ const Report = () => {
                         <h4 className="fw-bold mb-2">
                             Grupo Familiar #{f.familyGroupId} – Principal: {f.principal.name}
                         </h4>
-                        <table className="striped">
-                            <thead>
-                                <tr>
-                                    <th>Matrícula</th>
-                                    <th>Nome</th>
-                                    <th>Situação</th>
-                                    <th>Técnico</th>
-                                    <th>Área própria</th>
-                                    <th>Área arrendada</th>
-                                    <th>Área total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {farmers.length > 0 ? (
-                                    farmers.map((p) => (
-                                        <tr key={Number(p.registrationNumber)}>
-                                            <td>{p.registrationNumber}</td>
-                                            <td>{p.name}</td>
-                                            <td>{StatusLabels[p.status]}</td>
-                                            <td>{p.technician?.name || "Sem técnico vinculado"} - {p.technician?.branch?.name || ""} </td>
-                                            <td>{p.ownedArea} ha</td>
-                                            <td>{p.leasedArea} ha</td>
-                                            <td>{(p.ownedArea ?? 0) + (p.leasedArea ?? 0)} ha</td>
+                        <div className="floating_panel">
+                            <table className="striped">
+                                <thead>
+                                    <tr>
+                                        <th>Matrícula</th>
+                                        <th>Nome</th>
+                                        <th>Situação</th>
+                                        <th>Técnico</th>
+                                        <th>Área própria</th>
+                                        <th>Área arrendada</th>
+                                        <th>Área total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {farmers.length > 0 ? (
+                                        farmers.map((p) => (
+                                            <tr key={Number(p.registrationNumber)}>
+                                                <td>{p.registrationNumber}</td>
+                                                <td>{p.name}</td>
+                                                <td>{StatusLabels[p.status]}</td>
+                                                <td>{p.technician?.name || "Sem técnico vinculado"} - {p.technician?.branch?.name || ""} </td>
+                                                <td>{p.ownedArea} ha</td>
+                                                <td>{p.leasedArea} ha</td>
+                                                <td>{(p.ownedArea ?? 0) + (p.leasedArea ?? 0)} ha</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={6}>Nenhum produtor vinculado.</td>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={6}>Nenhum produtor vinculado.</td>
-                                    </tr>
+                                    )}
+                                </tbody>
+                                {farmers.length > 0 && (
+                                    <tfoot>
+                                        <tr>
+                                            <td colSpan={6} className="text-end fw-bold">
+                                                Total da área do grupo:
+                                            </td>
+                                            <td className="fw-bold">{totalArea.toFixed(2)} ha</td>
+                                        </tr>
+                                    </tfoot>
                                 )}
-                            </tbody>
-                            {farmers.length > 0 && (
-                                <tfoot>
+                            </table>
+                            <table className="mt-3">
+                                <thead>
                                     <tr>
-                                        <td colSpan={6} className="text-end fw-bold">
-                                            Total da área do grupo:
-                                        </td>
-                                        <td className="fw-bold">{totalArea.toFixed(2)} ha</td>
+                                        <th>Canola</th>
+                                        <th>Trigo</th>
+                                        <th>Milho Silagem</th>
+                                        <th>Milho Grão</th>
+                                        <th>Feijão</th>
+                                        <th>Soja</th>
                                     </tr>
-                                </tfoot>
-                            )}
-                        </table>
-                        <table className="mt-3">
-                            <thead>
-                                <tr>
-                                    <th>Canola</th>
-                                    <th>Trigo</th>
-                                    <th>Milho Silagem</th>
-                                    <th>Milho Grão</th>
-                                    <th>Feijão</th>
-                                    <th>Soja</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr className="fw-bold">
-                                    <td>{f.canolaArea} ha</td>
-                                    <td>{f.wheatArea} ha</td>
-                                    <td>{f.cornSilageArea} ha</td>
-                                    <td>{f.grainCornArea} ha</td>
-                                    <td>{f.beanArea} ha</td>
-                                    <td>{f.soybeanArea} ha</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <tr className="fw-bold">
+                                        <td>{f.canolaArea} ha</td>
+                                        <td>{f.wheatArea} ha</td>
+                                        <td>{f.cornSilageArea} ha</td>
+                                        <td>{f.grainCornArea} ha</td>
+                                        <td>{f.beanArea} ha</td>
+                                        <td>{f.soybeanArea} ha</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 );
             })}

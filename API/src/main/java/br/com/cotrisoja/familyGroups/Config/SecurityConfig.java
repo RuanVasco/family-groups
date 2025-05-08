@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,11 +33,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
-                        .disable())
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin()))
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
@@ -45,10 +42,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/farmer/**").hasRole("TECHNICIAN")
                         .requestMatchers(HttpMethod.POST, "/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/user/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/branch/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/branch/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/branch/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/family-group/**").hasRole("TECHNICIAN")
                         .requestMatchers(HttpMethod.PUT, "/family-group/**").hasRole("TECHNICIAN")
+                        .requestMatchers(HttpMethod.GET, "/family-group/**").hasRole("TECHNICIAN")
                         .requestMatchers("/family-group/**").hasRole("TECHNICIAN")
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -61,7 +61,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
+                "http://localhost:5174",
                 "http://localhost:5173",
+                "http://192.0.3.127:5173",
                 "http://localhost:80",
                 "http://192.0.3.127",
                 "http://192.0.3.127:80"));

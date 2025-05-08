@@ -1,8 +1,9 @@
 package br.com.cotrisoja.familyGroups.DTO.Farmer;
 
+import br.com.cotrisoja.familyGroups.DTO.Branch.BranchResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupResponseDTO;
+import br.com.cotrisoja.familyGroups.DTO.User.UserResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 
 
@@ -11,7 +12,8 @@ public record FarmerResponseCompleteDTO(
         String name,
         StatusEnum status,
         FamilyGroupResponseDTO familyGroup,
-        User technician,
+        UserResponseDTO technician,
+        BranchResponseDTO branch,
         double ownedArea,
         double leasedArea
 ) {
@@ -23,9 +25,15 @@ public record FarmerResponseCompleteDTO(
                 farmer.getFamilyGroup() != null
                         ? FamilyGroupResponseDTO.fromEntity(farmer.getFamilyGroup())
                         : null,
-                farmer.getTechnician(),
+                farmer.getTechnician() != null
+                        ? UserResponseDTO.fromEntity(farmer.getTechnician())
+                        : null,
+                farmer.getBranch() != null
+                        ? BranchResponseDTO.from(farmer.getBranch())
+                        : null,
                 farmer.getOwnedArea(),
                 farmer.getLeasedArea()
         );
     }
 }
+

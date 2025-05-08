@@ -7,6 +7,8 @@ public record BranchResponseDTO (
         String name
 ) {
     public static BranchResponseDTO from(Branch branch) {
+        if (branch == null) return null;
+
         return new BranchResponseDTO(
                 branch.getId(),
                 branch.getName()
