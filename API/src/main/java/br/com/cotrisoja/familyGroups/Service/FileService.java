@@ -81,13 +81,25 @@ public class FileService {
         String branchName = getCol(columns, 14);
 
         Branch branch = findOrCreateBranch(branchName);
-        User technician = findOrCreateUser(technicianName, branch);
+
+        User technician;
+        if (!technicianName.equals("SEM TECNICO")) {
+            technician = findOrCreateUser(technicianName, branch);
+        } else {
+            technician = null;
+        }
 
         Farmer farmer = farmerRepository.findById(farmerRegistration).orElseGet(() -> {
             Farmer f = new Farmer();
             f.setRegistrationNumber(farmerRegistration);
             f.setName(farmerName);
-            f.setTechnician(technician);
+
+            if (technician != null) {
+                f.setTechnician(technician);
+            } else {
+                f.setBranch(branch);
+            }
+
             f.setOwnedArea(ownedArea);
             f.setLeasedArea(leasedArea);
             f.setStatus("Normal".equalsIgnoreCase(farmerStatus) ? StatusEnum.ACTIVE : StatusEnum.DECEASED);

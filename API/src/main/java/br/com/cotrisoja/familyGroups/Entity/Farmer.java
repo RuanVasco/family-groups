@@ -24,6 +24,10 @@ public class Farmer {
     @JoinColumn(name = "family_group_id")
     private FamilyGroup familyGroup;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
+
     private double ownedArea;
     private double leasedArea;
 

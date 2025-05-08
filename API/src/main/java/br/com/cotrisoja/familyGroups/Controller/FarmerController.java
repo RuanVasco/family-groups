@@ -74,16 +74,21 @@ public class FarmerController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/by-technician/{userId}")
-    public ResponseEntity<?> getByTechnician(@PathVariable Long userId) {
-        Optional<User> userOptional = userRepository.findById(userId);
+    @GetMapping("/by-technician")
+    public ResponseEntity<?> getByTechnician(@RequestParam(required = false) Long userId) {
+        List<Farmer> farmers;
+        if (userId == null) {
+            farmers = farmerService.findWithoutTechnician();
+        } else {
+            Optional<User> userOptional = userRepository.findById(userId);
 
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body("Usuário não encontrado");
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.badRequest().body("Usuário não encontrado");
+            }
+
+            User technician = userOptional.get();
+            farmers = farmerService.findByTechnician(technician);
         }
-
-        User technician = userOptional.get();
-        List<Farmer> farmers = farmerService.findByTechnician(technician);
 
         return ResponseEntity.ok(
                 farmers.stream()
@@ -101,7 +106,7 @@ public class FarmerController {
         }
 
         Branch branch = branchOptional.get();
-        List<Farmer> farmers = farmerService.findByBranch(branch);
+        List<Farmer> farmers = farmerService.findByEffectiveBranch(branch);
 
         return ResponseEntity.ok(
                 farmers.stream()

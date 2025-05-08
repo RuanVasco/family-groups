@@ -33,7 +33,7 @@ const Report = () => {
     const [branchs, setBranchs] = useState<BranchType[]>([]);
     const [totalItems, setTotalItems] = useState<number>(0);
     const [reportType, setReportType] = useState<OptionType | null>(null);
-    const [reportMode, setReportMode] = useState<OptionType | null>({ label: "Por técnico", value: "byTechnician" });
+    const [reportMode, setReportMode] = useState<OptionType | null>(null);
 
     const fetchBranchs = async () => {
         try {
@@ -74,16 +74,16 @@ const Report = () => {
     };
 
     const fetchFarmers = async () => {
-        if (reportMode?.value === "byBranch" && !selectedBranch) return;
-        if (reportMode?.value === "byTechnician" && !selectedUser) return;
-
         try {
             let res;
 
             if (reportMode?.value === "byBranch") {
+                if (!selectedBranch) return;
                 res = await axiosInstance.get(`/farmer/by-branch/${selectedBranch.id}`);
             } else {
-                res = await axiosInstance.get(`/farmer/by-technician/${selectedUser.id}`);
+                res = await axiosInstance.get(`/farmer/by-technician`, {
+                    params: selectedUser ? { userId: selectedUser.id } : {},
+                });
             }
 
             if (res.status === 200 || res.status === 201) {
@@ -96,42 +96,47 @@ const Report = () => {
     };
 
     useEffect(() => {
+        if (!selectedBranch) return
+
+        fetchFarmers();
+    }, [selectedBranch?.id]);
+
+    useEffect(() => {
         if (!reportMode) return
 
         setFarmers([]);
         setFamilyGroups([]);
         setSelectedUser(null);
+        setSelectedBranch(null);
+        setReportType(null);
 
         if (reportMode.value === "byBranch") {
             fetchBranchs();
         } else {
             fetchUsers();
         }
+    }, [reportMode?.value]);
+
+    useEffect(() => {
+        if (!reportType || reportType.value !== "familyGroup") return;
+        if (!selectedUser) return;
+
+        setFarmers([]);
+        fetchFamilyGroups();
+    }, [selectedUser, reportType]);
+
+    useEffect(() => {
+        if (!reportType || reportType.value !== "farmer") return;
+
+        setFamilyGroups([]);
+        fetchFarmers();
+    }, [selectedUser, reportType]);
+
+    useEffect(() => {
+        if (!selectedUser && reportMode?.value === "byTechnician") {
+            fetchFarmers();
+        }
     }, [reportMode]);
-
-    useEffect(() => {
-        if (!selectedUser || !reportType) return;
-
-        if (reportType.value === "familyGroup") {
-            setFarmers([]);
-            fetchFamilyGroups();
-        } else if (reportType.value === "farmer") {
-            setFamilyGroups([]);
-            fetchFarmers();
-        }
-    }, [reportType, selectedUser]);
-
-    useEffect(() => {
-        if (!selectedUser || !reportType) return;
-
-        if (reportType.value === "familyGroup") {
-            setFarmers([]);
-            fetchFamilyGroups();
-        } else if (reportType.value === "farmer") {
-            setFamilyGroups([]);
-            fetchFarmers();
-        }
-    }, [selectedUser?.id, reportType?.value]);
 
     return (
         <main className="container-fluid">
@@ -151,31 +156,40 @@ const Report = () => {
                         <>
                             <Select
                                 placeholder="Selecione um técnico"
-                                options={users.map(user => ({
-                                    value: user.id,
-                                    label: user.name
-                                }))}
+                                options={[
+                                    { value: "", label: "Sem técnico" },
+                                    ...users.map(user => ({
+                                        value: user.id,
+                                        label: user.name
+                                    }))
+                                ]}
                                 value={
                                     selectedUser
                                         ? { value: selectedUser.id, label: selectedUser.name }
-                                        : null
+                                        : { value: "", label: "Sem técnico" }
                                 }
                                 onChange={(option) => {
-                                    const user = users.find(u => u.id === option?.value);
-                                    setSelectedUser(user || null);
+                                    if (!option || option.value === "") {
+                                        setSelectedUser(null);
+                                    } else {
+                                        const user = users.find(u => u.id === option.value);
+                                        setSelectedUser(user || null);
+                                    }
                                 }}
                                 isClearable
                             />
-                            <Select<OptionType>
-                                placeholder="Selecione um método"
-                                options={[
-                                    { value: "farmer", label: "Por produtor" },
-                                    { value: "familyGroup", label: "Por grupo familiar" }
-                                ]}
-                                value={reportType}
-                                onChange={(option) => setReportType(option)}
-                                isClearable
-                            />
+                            {selectedUser && (
+                                <Select<OptionType>
+                                    placeholder="Selecione um método"
+                                    options={[
+                                        { value: "farmer", label: "Por produtor" },
+                                        { value: "familyGroup", label: "Por grupo familiar" }
+                                    ]}
+                                    value={reportType}
+                                    onChange={(option) => setReportType(option)}
+                                    isClearable
+                                />
+                            )}
                         </>
                     ) : (
                         <Select
@@ -215,6 +229,9 @@ const Report = () => {
                                 <th>Nome</th>
                                 <th>Situação</th>
                                 <th>Técnico</th>
+                                {!selectedUser && reportMode?.value === "byTechnician" && (
+                                    <th>Carteira</th>
+                                )}
                                 <th>Área própria</th>
                                 <th>Área arrendada</th>
                                 <th>Área total</th>
@@ -227,6 +244,9 @@ const Report = () => {
                                     <td>{farmer.name}</td>
                                     <td>{StatusLabels[farmer.status]}</td>
                                     <td>{farmer.technician?.name || "Sem técnico vinculado"}</td>
+                                    {!selectedUser && reportMode?.value === "byTechnician" && (
+                                        <td>{farmer.branch?.name}</td>
+                                    )}
                                     <td>{farmer.ownedArea} ha</td>
                                     <td>{farmer.leasedArea} ha</td>
                                     <td>{(farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0)} ha</td>

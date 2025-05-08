@@ -68,8 +68,12 @@ public class FarmerService {
          return farmerRepository.findByTechnician(technician);
     }
 
-    public List<Farmer> findByBranch(Branch branch) {
-        return farmerRepository.findByBranch(branch);
+    public List<Farmer> findWithoutTechnician() {
+        return farmerRepository.findWithoutTechnician();
+    }
+
+    public List<Farmer> findByEffectiveBranch(Branch branch) {
+        return farmerRepository.findByEffectiveBranch(branch);
     }
 
     public Farmer updateFarmer(Farmer farmer, FarmerRequestDTO farmerRequestDTO) {

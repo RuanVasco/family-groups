@@ -31,6 +31,17 @@ public interface FarmerRepository extends JpaRepository<Farmer, String> {
     @Query("SELECT f FROM Farmer f WHERE f.technician = :technician")
     List<Farmer> findByTechnician(@Param("technician") User technician);
 
-    @Query("SELECT f FROM Farmer f WHERE f.technician.branch = :branch")
-    List<Farmer> findByBranch(@Param("branch") Branch branch);
+    @Query("""
+        SELECT f FROM Farmer f
+        LEFT JOIN f.technician t
+        LEFT JOIN t.branch tb
+        WHERE
+            (t IS NOT NULL AND tb = :branch)
+            OR
+            (t IS NULL AND f.branch = :branch)
+    """)
+    List<Farmer> findByEffectiveBranch(@Param("branch") Branch branch);
+
+    @Query("SELECT f FROM Farmer f WHERE f.technician IS null")
+    List<Farmer> findWithoutTechnician();
 }
