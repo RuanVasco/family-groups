@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: familygroups
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ticketease-net
+
+  api:
+    build:
+      context: ./API
+    container_name: api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/familygroups
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      - postgres
+    networks:
+      - ticketease-net
+
+  frontend:
+    build:
+      context: ./Front-End
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - ticketease-net
+
+volumes:
+  postgres_data:
+
+networks:
+  ticketease-net:
+    driver: bridge

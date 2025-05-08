@@ -34,11 +34,9 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
-                        .disable()
-                )
+                        .disable())
                 .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin())
-                )
+                        .frameOptions(frame -> frame.sameOrigin()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
@@ -52,8 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/family-group/**").hasRole("TECHNICIAN")
                         .requestMatchers(HttpMethod.PUT, "/family-group/**").hasRole("TECHNICIAN")
                         .requestMatchers("/family-group/**").hasRole("TECHNICIAN")
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .userDetailsService(userDetailsService)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -63,7 +60,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:80",
+                "http://192.0.3.127",
+                "http://192.0.3.127:80"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
