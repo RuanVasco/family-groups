@@ -1,5 +1,6 @@
 package br.com.cotrisoja.familyGroups.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +21,7 @@ public class FamilyGroup {
     private Farmer principal;
 
     @OneToMany(mappedBy = "familyGroup")
+    @JsonIgnore
     private List<Farmer> members;
 
     private String registry;

@@ -75,31 +75,33 @@ const Branch = () => {
                 </button>
             </div>
 
-            <table className="custom_table striped">
-                <thead>
-                    <tr>
-                        <th>Ações</th>
-                        <th>ID</th>
-                        <th>Nome</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {branchs.map(branch => (
-                        <tr key={branch.id}>
-                            <td>
-                                <button
-                                    className="button_edit"
-                                    onClick={() => openModal("edit", branch)}
-                                >
-                                    <FaPen /> Editar
-                                </button>
-                            </td>
-                            <td>{branch.id}</td>
-                            <td>{branch.name}</td>
+            <div className="floating_panel">
+                <table className="custom_table striped">
+                    <thead>
+                        <tr>
+                            <th>Ações</th>
+                            <th>ID</th>
+                            <th>Nome</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {branchs.map(branch => (
+                            <tr key={branch.id}>
+                                <td>
+                                    <button
+                                        className="button_edit"
+                                        onClick={() => openModal("edit", branch)}
+                                    >
+                                        <FaPen /> Editar
+                                    </button>
+                                </td>
+                                <td>{branch.id}</td>
+                                <td>{branch.name}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             <Modal show={show} onHide={handleModalClose}>
                 <Modal.Header closeButton>

@@ -297,66 +297,67 @@ const FamilyGroup = () => {
                             Adicionar Participante
                         </button>
                     </div>
+                    <div className="my-3 floating_panel">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Matrícula</th>
+                                    <th>Nome</th>
+                                    <th>Situação</th>
+                                    <th>Técnico</th>
+                                    <th>Área total</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {farmers.map((p) => (
+                                    <tr key={Number(p.registrationNumber)}>
+                                        <td>{p.registrationNumber}</td>
+                                        <td>{p.name}</td>
+                                        <td>{StatusLabels[p.status]}</td>
+                                        <td>{p.technician?.name || "Sem técnico vinculado"}</td>
+                                        <td>
+                                            {(p.ownedArea || p.leasedArea)
+                                                ? (p.ownedArea ?? 0) + (p.leasedArea ?? 0)
+                                                : 0} ha
+                                        </td>
+                                        <td className="d-flex gap-2">
+                                            {p.registrationNumber != selectedFamilyGroup?.principal.registrationNumber ? (
+                                                <>
+                                                    <button
+                                                        className="button_neutral btn_sm"
+                                                        onClick={() => handlePrincipalChange(p.registrationNumber)}
+                                                    >
+                                                        <FaChessKing />
+                                                        Tornar principal
+                                                    </button>
+                                                    <button
+                                                        className="button_remove btn_sm"
+                                                        onClick={() => handleRemoveMember(p.registrationNumber)}
+                                                    >
+                                                        <FaMinus />
+                                                        Remover
+                                                    </button></>
+                                            ) : (
+                                                <>-</>
+                                            )}
 
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Matrícula</th>
-                                <th>Nome</th>
-                                <th>Situação</th>
-                                <th>Técnico</th>
-                                <th>Área total</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {farmers.map((p) => (
-                                <tr key={Number(p.registrationNumber)}>
-                                    <td>{p.registrationNumber}</td>
-                                    <td>{p.name}</td>
-                                    <td>{StatusLabels[p.status]}</td>
-                                    <td>{p.technician?.name || "Sem técnico vinculado"}</td>
-                                    <td>
-                                        {(p.ownedArea || p.leasedArea)
-                                            ? (p.ownedArea ?? 0) + (p.leasedArea ?? 0)
-                                            : 0} ha
-                                    </td>
-                                    <td className="d-flex gap-2">
-                                        {p.registrationNumber != selectedFamilyGroup?.principal.registrationNumber ? (
-                                            <>
-                                                <button
-                                                    className="button_neutral btn_sm"
-                                                    onClick={() => handlePrincipalChange(p.registrationNumber)}
-                                                >
-                                                    <FaChessKing />
-                                                    Tornar principal
-                                                </button>
-                                                <button
-                                                    className="button_remove btn_sm"
-                                                    onClick={() => handleRemoveMember(p.registrationNumber)}
-                                                >
-                                                    <FaMinus />
-                                                    Remover
-                                                </button></>
-                                        ) : (
-                                            <>-</>
-                                        )}
-
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan={7}>
+                                        <h4 className="fw-bold text-end">
+                                            Área Total:{" "}
+                                            {farmers.reduce((total, f) => total + (f.ownedArea ?? 0) + (f.leasedArea ?? 0), 0)} ha
+                                        </h4>
                                     </td>
                                 </tr>
-                            ))}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colSpan={7}>
-                                    <h4 className="fw-bold text-end">
-                                        Área Total:{" "}
-                                        {farmers.reduce((total, f) => total + (f.ownedArea ?? 0) + (f.leasedArea ?? 0), 0)} ha
-                                    </h4>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </tfoot>
+                        </table>
+                    </div>
 
                     <div className="d-flex align-items-center justify-content-between mt-5 mb-3 floating_panel">
                         <h3 className="fw-bold" style={{ margin: "0", padding: "0" }}>Cultivos</h3>
@@ -369,34 +370,36 @@ const FamilyGroup = () => {
                             Editar cultivo
                         </button>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Safra</th>
-                                <th>Canola</th>
-                                <th>Trigo</th>
-                                <th>Milho silagem</th>
-                                <th>Milho grão</th>
-                                <th>Feijão</th>
-                                <th>Soja</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                {cultivations && (
-                                    <>
-                                        <td>2025/2026</td>
-                                        <td>{cultivations.canolaArea} ha</td>
-                                        <td>{cultivations.wheatArea} ha</td>
-                                        <td>{cultivations.cornSilageArea} ha</td>
-                                        <td>{cultivations.grainCornArea} ha</td>
-                                        <td>{cultivations.beanArea} ha</td>
-                                        <td>{cultivations.soybeanArea} ha</td>
-                                    </>
-                                )}
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div className="floating_panel">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Safra</th>
+                                    <th>Canola</th>
+                                    <th>Trigo</th>
+                                    <th>Milho silagem</th>
+                                    <th>Milho grão</th>
+                                    <th>Feijão</th>
+                                    <th>Soja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {cultivations && (
+                                        <>
+                                            <td>2025/2026</td>
+                                            <td>{cultivations.canolaArea} ha</td>
+                                            <td>{cultivations.wheatArea} ha</td>
+                                            <td>{cultivations.cornSilageArea} ha</td>
+                                            <td>{cultivations.grainCornArea} ha</td>
+                                            <td>{cultivations.beanArea} ha</td>
+                                            <td>{cultivations.soybeanArea} ha</td>
+                                        </>
+                                    )}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </>
             )}
 

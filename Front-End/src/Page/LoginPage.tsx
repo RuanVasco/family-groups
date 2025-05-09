@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import api from '../axiosInstance';
 
 const LoginPage = () => {
     const { login } = useAuth();
@@ -10,7 +10,7 @@ const LoginPage = () => {
 
     const handleLogin = async () => {
         try {
-            let response = await axios.post('http://192.0.3.127:8080/auth/login', {
+            let response = await api.post('/auth/login', {
                 username,
                 password,
             });

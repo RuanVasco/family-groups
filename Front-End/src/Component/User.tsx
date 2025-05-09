@@ -124,48 +124,50 @@ const User = () => {
                 </button>
             </div>
 
-            <table className="custom_table striped">
-                <thead>
-                    <tr>
-                        <th>Ações</th>
-                        <th>ID</th>
-                        <th>Usuário</th>
-                        <th>Nome</th>
-                        <th>Perfis</th>
-                        <th>Carteira</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.length > 0 && (
-                        users.map((user) => (
-                            <tr key={user.id}>
-                                <td>
-                                    <button
-                                        className="button_edit"
-                                        onClick={() => {
-                                            const selectedUser = {
-                                                ...user,
-                                                password: "",
-                                            };
-                                            setCurrentUser(selectedUser);
-                                            handleModalShow("edit");
-                                        }}
-                                    >
-                                        <FaPen />
-                                        Editar
-                                    </button>
-                                </td>
-                                <td>{user.id}</td>
-                                <td>{user.username}</td>
-                                <td>{user.name}</td>
-                                <td>{user.roles.join(", ")}</td>
-                                <td>{user.branch?.name || "Sem carteira vinculada"}</td>
-                            </tr>
-                        ))
+            <div className="my-3 floating_panel">
+                <table className="custom_table striped">
+                    <thead>
+                        <tr>
+                            <th>Ações</th>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Nome</th>
+                            <th>Perfis</th>
+                            <th>Carteira</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users.length > 0 && (
+                            users.map((user) => (
+                                <tr key={user.id}>
+                                    <td>
+                                        <button
+                                            className="button_edit"
+                                            onClick={() => {
+                                                const selectedUser = {
+                                                    ...user,
+                                                    password: "",
+                                                };
+                                                setCurrentUser(selectedUser);
+                                                handleModalShow("edit");
+                                            }}
+                                        >
+                                            <FaPen />
+                                            Editar
+                                        </button>
+                                    </td>
+                                    <td>{user.id}</td>
+                                    <td>{user.username}</td>
+                                    <td>{user.name}</td>
+                                    <td>{user.roles.join(", ")}</td>
+                                    <td>{user.branch?.name || "Sem carteira vinculada"}</td>
+                                </tr>
+                            ))
 
-                    )}
-                </tbody>
-            </table>
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
             <Modal show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
@@ -176,7 +178,7 @@ const User = () => {
                 <Modal.Body>
                     <div className="mb-3">
                         <label className="form-label" htmlFor="user">
-                            Usuário <span className="required-asterisk">*</span>
+                            Usuário<span className="required-asterisk">*</span>
                         </label>
                         <input
                             type="text"
@@ -187,7 +189,7 @@ const User = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Nome <span className="required-asterisk">*</span></label>
+                        <label className="form-label">Nome<span className="required-asterisk">*</span></label>
                         <input
                             type="text"
                             className="form-control"
@@ -197,7 +199,7 @@ const User = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Senha <span className="required-asterisk">*</span></label>
+                        <label className="form-label">Senha<span className="required-asterisk">*</span></label>
                         <input
                             type="password"
                             className="form-control"
@@ -207,7 +209,7 @@ const User = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Perfis <span className="required-asterisk">*</span></label>
+                        <label className="form-label">Perfis<span className="required-asterisk">*</span></label>
                         <Select
                             isMulti
                             options={roleOptions}

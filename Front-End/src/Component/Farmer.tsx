@@ -177,47 +177,49 @@ const Farmer = () => {
                 totalPages={totalPages}
                 onPageChange={(page) => setCurrentPage(page)}
             >
-                <table className="striped">
-                    <thead>
-                        <tr>
-                            <th>Ações</th>
-                            <th>Matrícula</th>
-                            <th>Nome</th>
-                            <th>Situação</th>
-                            <th>Técnico</th>
-                            <th>Grupo familiar</th>
-                            <th>Terra própria</th>
-                            <th>Terra arrendada</th>
-                            <th>Terra total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {farmers.map(farmer => (
-                            <tr key={Number(farmer.registrationNumber)}>
-                                <td>
-                                    <button
-                                        className="button_edit"
-                                        onClick={() => openModal("edit", farmer)}
-                                    >
-                                        <FaPen /> Editar
-                                    </button>
-                                </td>
-                                <td>{farmer.registrationNumber}</td>
-                                <td>{farmer.name}</td>
-                                <td>{StatusLabels[farmer.status]}</td>
-                                <td>{farmer.technician?.name || "Sem técnico vinculado"}</td>
-                                <td>{farmer.familyGroup ? (farmer.familyGroup?.principal.name) : ("Sem grupo familiar")}</td>
-                                <td>{farmer.ownedArea || 0} ha</td>
-                                <td>{farmer.leasedArea || 0} ha</td>
-                                <td>
-                                    {(farmer.ownedArea || farmer.leasedArea)
-                                        ? (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0)
-                                        : 0} ha
-                                </td>
+                <div className="my-3 floating_panel">
+                    <table className="striped">
+                        <thead>
+                            <tr>
+                                <th>Ações</th>
+                                <th>Matrícula</th>
+                                <th>Nome</th>
+                                <th>Situação</th>
+                                <th>Técnico</th>
+                                <th>Grupo familiar</th>
+                                <th>Terra própria</th>
+                                <th>Terra arrendada</th>
+                                <th>Terra total</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {farmers.map(farmer => (
+                                <tr key={Number(farmer.registrationNumber)}>
+                                    <td>
+                                        <button
+                                            className="button_edit"
+                                            onClick={() => openModal("edit", farmer)}
+                                        >
+                                            <FaPen /> Editar
+                                        </button>
+                                    </td>
+                                    <td>{farmer.registrationNumber}</td>
+                                    <td>{farmer.name}</td>
+                                    <td>{StatusLabels[farmer.status]}</td>
+                                    <td>{farmer.technician?.name || "Sem técnico vinculado"}</td>
+                                    <td>{farmer.familyGroup ? (farmer.familyGroup?.principal.name) : ("Sem grupo familiar")}</td>
+                                    <td>{farmer.ownedArea || 0} ha</td>
+                                    <td>{farmer.leasedArea || 0} ha</td>
+                                    <td>
+                                        {(farmer.ownedArea || farmer.leasedArea)
+                                            ? (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0)
+                                            : 0} ha
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </Pagination>
             <Modal show={show} onHide={handleModalClose} size="xl">
                 <Modal.Header closeButton>
