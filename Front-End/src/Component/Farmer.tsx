@@ -3,12 +3,11 @@ import { FaPen, FaPlus } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { FarmerType } from "../Type/FarmerType";
 import axiosInstance from "../axiosInstance";
-import { Modal, Button, Form } from "react-bootstrap";
-import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
+import { StatusLabels } from "../Enum/StatusEnum";
 import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { UserType } from "../Type/UserType";
-import Select from "react-select";
 import Pagination from "./Pagination";
+import FarmerModal from "./FarmerModal";
 
 const Farmer = () => {
     const [farmers, setFarmers] = useState<FarmerType[]>([]);
@@ -148,7 +147,7 @@ const Farmer = () => {
     };
 
     return (
-        <div className="container-fluid">
+        <div>
             <div className="my-3 floating_panel d-flex align-items-center justify-content-between">
                 <button
                     type="button"
@@ -178,7 +177,7 @@ const Farmer = () => {
                 onPageChange={(page) => setCurrentPage(page)}
             >
                 <div className="my-3 floating_panel">
-                    <table className="striped">
+                    <table className="custom_table">
                         <thead>
                             <tr>
                                 <th>Ações</th>
@@ -221,111 +220,16 @@ const Farmer = () => {
                     </table>
                 </div>
             </Pagination>
-            <Modal show={show} onHide={handleModalClose} size="xl">
-                <Modal.Header closeButton>
-                    <Modal.Title>
-                        {modalMode === "create" ? "Criar Produtor" : "Editar Produtor"}
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Matrícula</Form.Label>
-                            <Form.Control
-                                required
-                                type="text"
-                                value={Number(currentFarmer?.registrationNumber) || ""}
-                                onChange={(e) => handleChange("registrationNumber", e.target.value)}
-                                disabled={modalMode === "edit"}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Nome</Form.Label>
-                            <Form.Control
-                                required
-                                type="text"
-                                value={currentFarmer?.name || ""}
-                                onChange={(e) => handleChange("name", e.target.value)}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Situação</Form.Label>
-                            <Form.Select
-                                required
-                                value={currentFarmer?.status || ""}
-                                onChange={(e) => handleChange("status", e.target.value as StatusEnum)}
-                            >
-                                <option value="">Selecione uma opção</option>
-                                {Object.values(StatusEnum).map((status) => (
-                                    <option key={status} value={status}>
-                                        {StatusLabels[status]}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Área própria (ha)</Form.Label>
-                            <Form.Control
-                                required
-                                type="number"
-                                value={currentFarmer?.ownedArea || 0}
-                                onChange={(e) => handleChange("ownedArea", parseFloat(e.target.value))}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Área arrendada (ha)</Form.Label>
-                            <Form.Control
-                                required
-                                type="number"
-                                value={currentFarmer?.leasedArea || 0}
-                                onChange={(e) => handleChange("leasedArea", parseFloat(e.target.value))}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Grupo Familiar</Form.Label>
-                            <Form.Select
-                                value={currentFarmer?.familyGroup?.id || ""}
-                                onChange={(e) => {
-                                    const selectedGroup = familyGroups.find(fg => fg.id === Number(e.target.value));
-                                    handleChange("familyGroup", selectedGroup || null);
-                                }}
-                            >
-                                <option value="">Selecione uma opção</option>
-                                {familyGroups.length > 0 && (
-                                    familyGroups.map((familyGroup) => (
-                                        <option key={familyGroup.id} value={familyGroup.id}>
-                                            {familyGroup.principal.name}
-                                        </option>
-                                    ))
-                                )}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label>Técnico</Form.Label>
-                            <Select
-                                options={users.map((user) => ({
-                                    value: user,
-                                    label: user.name
-                                }))}
-                                value={users
-                                    .map((user) => ({ value: user, label: user.name }))
-                                    .find(opt => opt.value.id === currentFarmer?.technician?.id)}
-                                onChange={(selectedOption) => handleChange("technician", selectedOption?.value)}
-                                placeholder="Selecione um técnico"
-                                isClearable
-                            />
-                        </Form.Group>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleModalClose}>
-                        Cancelar
-                    </Button>
-                    <Button variant="primary" onClick={handleSubmit}>
-                        {modalMode === "create" ? "Criar" : "Salvar"}
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+            <FarmerModal
+                show={show}
+                onClose={handleModalClose}
+                onSubmit={handleSubmit}
+                currentFarmer={currentFarmer}
+                familyGroups={familyGroups}
+                users={users}
+                modalMode={modalMode}
+                onChange={handleChange}
+            />
         </div>
     );
 };

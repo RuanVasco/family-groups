@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 @RestController
 @RequestMapping("/branch")
 @RequiredArgsConstructor
@@ -40,8 +43,15 @@ public class BranchController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
-        return ResponseEntity.ok(branchRepository.findAll());
+    public ResponseEntity<?> getAll(@RequestParam(required = false) Integer page,
+                                    @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            Pageable pageable = PageRequest.of(page, size);
+            return ResponseEntity.ok(branchRepository.findAll(pageable));
+        } else {
+            return ResponseEntity.ok(branchRepository.findAll());
+        }
     }
+
 
 }

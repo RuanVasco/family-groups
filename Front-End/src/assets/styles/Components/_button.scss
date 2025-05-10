@@ -100,3 +100,27 @@
 .btn_sm {
   padding: 0.4rem 1rem;
 }
+
+.btn_select {
+  color: var.$tertiary-color;
+  background-color: var.$secondary-color;
+  font-family: var.$font-family-base;
+  font-size: var.$font-size-base;
+  font-weight: var.$font-weight-bold;
+  padding: 0.5rem 1.25rem;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 8px;
+
+  &:hover {
+    background-color: color.adjust(var.$secondary-color, $lightness: 5%);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var.$primary-color, 0.25);
+  }
+}

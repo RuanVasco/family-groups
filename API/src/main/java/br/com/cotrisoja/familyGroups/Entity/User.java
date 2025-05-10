@@ -30,7 +30,7 @@ public class User {
     @Column(name = "role")
     private Set<String> roles;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Branch branch;
     
     private Boolean status;

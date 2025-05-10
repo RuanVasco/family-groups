@@ -5,6 +5,7 @@
   background-color: var.$primary-color;
   min-height: 100vh;
   padding: 20px;
+  overflow-y: hidden;
 
   * {
     color: var.$tertiary-color;
@@ -12,8 +13,8 @@
 }
 
 .sidebar_menu {
-  cursor: pointer;
-  flex-grow: 1;
+  max-height: 60vh;
+  overflow-y: auto;
 
   li {
     margin-bottom: 5px;
@@ -26,6 +27,7 @@
   }
 
   li:hover {
+    cursor: pointer;
     background-color: color.adjust(var.$secondary-color, $lightness: 2%);
   }
 
@@ -65,4 +67,83 @@
   &:active {
     transform: translateY(0);
   }
+}
+
+.back_header {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var.$tertiary-color;
+  padding-bottom: 1rem;
+
+  .back_button {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background-color: var.$secondary-color;
+    color: var.$tertiary-color;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: rgba(var.$secondary-color, 0.85);
+    }
+  }
+}
+
+.pageable {
+  color: var.$tertiary-color;
+  display: flex;
+  align-items: center;
+
+  & button {
+    border: 1px solid var.$secondary-color;
+    padding: 0.4rem 0.6rem;
+    background: var.$secondary-color;
+    color: var.$tertiary-color;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+
+    &:hover {
+      background-color: rgba(var.$secondary-color, 0.85);
+      transform: scale(1.05);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: var.$secondary-color;
+      transform: none;
+    }
+  }
+
+  .current_page {
+    padding: 0.4rem 0.6rem;
+    border-top: 1px solid var.$secondary-color;
+    border-bottom: 1px solid var.$secondary-color;
+    font-weight: var.$font-weight-bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  & button:first-of-type {
+    border-radius: 8px 0 0 8px;
+  }
+
+  & button:last-of-type {
+    border-radius: 0 8px 8px 0;
+  }
+}
+
+.report-title {
+  font-size: var.$font-size-lg;
+  padding: 0;
+  margin: 0;
+}
+
+.report-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var.$light-gray-color;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

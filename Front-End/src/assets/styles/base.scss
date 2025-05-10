@@ -13,7 +13,7 @@ html,
 body {
   width: 100%;
   height: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   font-family: var.$font-family-base, sans-serif;
   background-color: var.$tertiary-color;
   -webkit-font-smoothing: antialiased;
@@ -95,30 +95,6 @@ select {
   }
 }
 
-table {
-  color: var.$secondary-color;
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  overflow: hidden;
-  padding: 1rem;
-}
-
-th {
-  font-size: 1.1rem;
-}
-
-th,
-td {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid color.adjust(var.$light-gray-color, $lightness: -10%);
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
 .floating_panel {
   background-color: var.$light-gray-color;
   padding: 1rem;
@@ -141,6 +117,7 @@ h5 {
 }
 
 .content {
-  max-height: 93vh;
+  height: 100vh;
   overflow-y: auto;
+  padding: 0;
 }

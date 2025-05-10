@@ -1,0 +1,26 @@
+@use "../../assets/styles/variables" as var;
+@use "sass:color";
+
+.custom_table {
+  color: var.$secondary-color;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  table-layout: fixed;
+}
+
+.custom_table th {
+  font-size: 1.1rem;
+}
+
+.custom_table th,
+.custom_table td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid color.adjust(var.$light-gray-color, $lightness: -10%);
+}
+
+.custom_table tr:last-child td {
+  border-bottom: none;
+}

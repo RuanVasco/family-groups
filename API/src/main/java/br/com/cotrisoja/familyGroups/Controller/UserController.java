@@ -6,12 +6,13 @@ import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/user")
@@ -22,14 +23,23 @@ public class UserController {
     private final UserRepository userRepository;
 
     @GetMapping
+    public ResponseEntity<?> getAllPageable(Pageable pageable) {
+        Page<User> usersPage = userRepository.findAll(pageable);
+
+        Page<UserResponseDTO> usersDTOPage = usersPage.map(UserResponseDTO::fromEntity);
+
+        return ResponseEntity.ok(usersDTOPage);
+    }
+
+    @GetMapping("/all")
     public ResponseEntity<?> getAll() {
-        List<User> users = userService.findAll();
+        List<User> users = userRepository.findAll();
 
-        Set<UserResponseDTO> usersDTO = users.stream()
+        List<UserResponseDTO> usersDTOPage = users.stream()
                 .map(UserResponseDTO::fromEntity)
-                .collect(Collectors.toSet());
+                .toList();
 
-        return ResponseEntity.ok(usersDTO);
+        return ResponseEntity.ok(usersDTOPage);
     }
 
     @PutMapping("/{userId}")

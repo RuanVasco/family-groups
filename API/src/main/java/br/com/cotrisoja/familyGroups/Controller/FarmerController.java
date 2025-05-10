@@ -4,6 +4,7 @@ import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupMembersResponseD
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
+import br.com.cotrisoja.familyGroups.DTO.User.UserResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/farmer")
@@ -58,7 +60,11 @@ public class FarmerController {
     public ResponseEntity<?> findAvaibleFarmers() {
         Set<Farmer> farmers = farmerService.findAvaibleFarmers();
 
-        return ResponseEntity.ok(farmers);
+        Set<FarmerResponseDTO> response = farmers.stream()
+                .map(FarmerResponseDTO::fromEntity)
+                .collect(Collectors.toSet());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("by-family-group/{familyGroupID}")

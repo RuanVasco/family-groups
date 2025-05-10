@@ -125,7 +125,7 @@ const User = () => {
             </div>
 
             <div className="my-3 floating_panel">
-                <table className="custom_table striped">
+                <table className="custom_table">
                     <thead>
                         <tr>
                             <th>Ações</th>

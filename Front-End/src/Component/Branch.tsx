@@ -76,7 +76,7 @@ const Branch = () => {
             </div>
 
             <div className="floating_panel">
-                <table className="custom_table striped">
+                <table className="custom_table">
                     <thead>
                         <tr>
                             <th>Ações</th>
