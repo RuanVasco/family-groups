@@ -2,258 +2,266 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../axiosInstance";
 import { toast } from "react-toastify";
 import { UserType } from "../Type/UserType";
+import { BranchType } from "../Type/BranchType";
 import { FaPen, FaPlus } from "react-icons/fa6";
 import { Modal, Button, Form } from "react-bootstrap";
-import Select from 'react-select';
-import { BranchType } from "../Type/BranchType";
+import Select from "react-select";
+import Pagination from "./Common/Pagination";
+import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
+
+const roleOptions = [
+    { value: "ROLE_ADMIN", label: "Administrador" },
+    { value: "ROLE_TECHNICIAN", label: "Técnico" },
+];
 
 const User = () => {
-    const [users, setUsers] = useState<UserType[]>([]);
-    const [branchs, setBranchs] = useState<BranchType[]>([]);
+    /** ────────── filtros locais ────────── */
+    const [search, setSearch] = useState("");
+    const [pageSize, setPageSize] = useState(10);
 
-    const [currentUser, setCurrentUser] = useState<Partial<UserType> | null>(null);
-    const [modalMode, setModalMode] = useState<string>("");
+    /** ────────── modal ────────── */
+    const [branchs, setBranchs] = useState<BranchType[]>([]);
+    const [currentUser, setCurrentUser] =
+        useState<Partial<UserType> | null>(null);
+    const [modalMode, setModalMode] = useState<"create" | "edit">("create");
     const [show, setShow] = useState(false);
 
-    const roleOptions = [
-        { value: 'ROLE_ADMIN', label: 'Administrador' },
-        { value: 'ROLE_TECHNICIAN', label: 'Técnico' }
-    ];
+    /** ────────── hook paginado ────────── */
+    const {
+        data: users,
+        currentPage,
+        totalPages,
+        totalItems,
+        isLoading,
+        fetchPage,
+        setPageSize: hookSetPageSize,
+    } = usePaginatedFetchData<UserType>("/user", pageSize);
 
-    const handleClose = () => setShow(false);
-
-    const handleModalShow = (mode: string) => {
-        fetchBranchs();
-
-        setModalMode(mode);
-
-        if (mode === "create") {
-            setCurrentUser(null);
-        }
-
-        setShow(true);
-    };
-
-    const fetchUsers = async () => {
-        try {
-            const res = await axiosInstance.get("/user");
-            if (res.status === 200 || res.status === 201) {
-                setUsers(res.data);
-            }
-        } catch (error) {
-            toast.error('Erro ao buscar usuários');
-        }
-    };
-
-    const fetchBranchs = async () => {
-        try {
-            const res = await axiosInstance.get("/branch");
-            if (res.status === 200) {
-                setBranchs(res.data);
-            }
-        } catch (error) {
-            toast.error("Erro ao buscar carteiras");
-        }
-    }
-
+    /** 1ª carga + filtros */
     useEffect(() => {
-        fetchUsers();
+        fetchPage(1);
     }, []);
 
-    const handleChange = (field: string, value: any) => {
-        setCurrentUser(prev => ({
-            ...prev,
-            [field]: value,
-        }));
-    }
+    /** pesquisa (debounce 300 ms) */
+    useEffect(() => {
+        const id = setTimeout(() => {
+            const filters = search.length >= 3 ? { value: search.trim() } : {};
+            fetchPage(1, filters);
+        }, 300);
+        return () => clearTimeout(id);
+    }, [search]);
 
+    /** ─────── carteiras para select ─────── */
+    const fetchBranchs = async () => {
+        try {
+            const { data } = await axiosInstance.get("/branch");
+            setBranchs(data);
+        } catch {
+            toast.error("Erro ao buscar carteiras");
+        }
+    };
+
+    /** ────────── modal helpers ────────── */
+    const openModal = (mode: "create" | "edit", user?: UserType) => {
+        fetchBranchs();
+        setModalMode(mode);
+        setCurrentUser(mode === "edit" ? { ...user, password: "" } : null);
+        setShow(true);
+    };
+    const closeModal = () => setShow(false);
+    const handleChange = (field: keyof UserType, val: any) =>
+        setCurrentUser((p) => ({ ...p, [field]: val }));
+
+    /** ────────── salvar usuário ────────── */
     const handleSubmit = async () => {
-        if (!currentUser) {
+        if (!currentUser?.username || !currentUser.roles?.length || !currentUser.name) {
+            toast.warn("Preencha usuário, nome e perfis.");
             return;
         }
 
-        if (!currentUser.username || !currentUser.roles?.length || !currentUser.name) {
-            toast.warning("Preencha o nome de usuário e selecione ao menos um perfil.");
-            return;
-        }
-
-        const data = {
+        const body = {
             username: currentUser.username,
             name: currentUser.name,
             password: currentUser.password,
             roles: currentUser.roles,
-            branchId: currentUser.branch?.id || ""
-        }
+            branchId: currentUser.branch?.id ?? "",
+        };
 
         try {
-            let res;
-
-            if (modalMode === "create") {
-                res = await axiosInstance.post("/auth/register", data);
-
-            } else {
-                res = await axiosInstance.put(`/user/${currentUser?.id}`, data);
-            }
+            const res =
+                modalMode === "create"
+                    ? await axiosInstance.post("/auth/register", body)
+                    : await axiosInstance.put(`/user/${currentUser.id}`, body);
 
             if (res.status === 200 || res.status === 201) {
-                setCurrentUser(null);
-                fetchUsers();
-
                 toast.success(
-                    modalMode === "create"
-                        ? "Usuário criado com sucesso!"
-                        : "Usuário atualizado com sucesso!"
+                    modalMode === "create" ? "Usuário criado com sucesso!" : "Usuário atualizado com sucesso!"
                 );
+                fetchPage(currentPage); // mantém filtros
             }
-        } catch (error) {
-            toast.error('Erro ao criar usuário');
+        } catch {
+            toast.error("Erro ao salvar usuário");
         } finally {
-            handleClose();
+            closeModal();
         }
-    }
+    };
 
+    /* ─────────────────────── UI ─────────────────────── */
     return (
-        <div className="container-fluid">
-            <div className="my-3 floating_panel">
-                <button
-                    type="button"
-                    className="button_agree"
-                    onClick={() => handleModalShow("create")}
-                >
+        <div className="pt-3 px-4 pb-5">
+            {/* barra superior */}
+            <div className="my-3 floating_panel d-flex align-items-center justify-content-between">
+                <button className="button_agree" onClick={() => openModal("create")}>
                     <FaPlus /> Criar Usuário
                 </button>
+
+                <input
+                    className="w-50"
+                    placeholder="Pesquisar (mín. 3 letras)"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+
+                <h4 className="fw-bold m-0">Total: {totalItems}</h4>
             </div>
 
-            <div className="my-3 floating_panel">
-                <table className="custom_table">
-                    <thead>
-                        <tr>
-                            <th>Ações</th>
-                            <th>ID</th>
-                            <th>Usuário</th>
-                            <th>Nome</th>
-                            <th>Perfis</th>
-                            <th>Carteira</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users.length > 0 && (
-                            users.map((user) => (
-                                <tr key={user.id}>
-                                    <td>
-                                        <button
-                                            className="button_edit"
-                                            onClick={() => {
-                                                const selectedUser = {
-                                                    ...user,
-                                                    password: "",
-                                                };
-                                                setCurrentUser(selectedUser);
-                                                handleModalShow("edit");
-                                            }}
-                                        >
-                                            <FaPen />
-                                            Editar
-                                        </button>
-                                    </td>
-                                    <td>{user.id}</td>
-                                    <td>{user.username}</td>
-                                    <td>{user.name}</td>
-                                    <td>{user.roles.join(", ")}</td>
-                                    <td>{user.branch?.name || "Sem carteira vinculada"}</td>
+            {/* tabela + paginação */}
+            <Pagination
+                itemsPerPage={pageSize}
+                onItemsPerPageChange={(val) => {
+                    setPageSize(val);
+                    hookSetPageSize(val);            // já chama fetchPage(1)
+                }}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(p) =>
+                    fetchPage(p, search.length >= 3 ? { value: search } : {})
+                }
+            >
+                <div className="my-3 floating_panel">
+                    {isLoading ? (
+                        <div className="text-center py-5">Carregando…</div>
+                    ) : users.length === 0 ? (
+                        <p className="p-3">Nenhum usuário encontrado.</p>
+                    ) : (
+                        <table className="custom_table">
+                            <thead>
+                                <tr>
+                                    <th>Ações</th>
+                                    <th>ID</th>
+                                    <th>Usuário</th>
+                                    <th>Nome</th>
+                                    <th>Perfis</th>
+                                    <th>Carteira</th>
                                 </tr>
-                            ))
+                            </thead>
+                            <tbody>
+                                {users.map((u) => (
+                                    <tr key={u.id}>
+                                        <td>
+                                            <button
+                                                className="button_edit"
+                                                onClick={() => openModal("edit", u)}
+                                            >
+                                                <FaPen /> Editar
+                                            </button>
+                                        </td>
+                                        <td>{u.id}</td>
+                                        <td>{u.username}</td>
+                                        <td>{u.name}</td>
+                                        <td>{u.roles.join(", ")}</td>
+                                        <td>{u.branch?.name ?? "Sem carteira"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </Pagination>
 
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            <Modal show={show} onHide={handleClose}>
+            {/* modal criar/editar */}
+            <Modal show={show} onHide={closeModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>
                         {modalMode === "create" ? "Criar Usuário" : "Editar Usuário"}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <div className="mb-3">
-                        <label className="form-label" htmlFor="user">
-                            Usuário<span className="required-asterisk">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={currentUser?.username || ""}
+                    <Form.Group className="mb-3">
+                        <Form.Label>
+                            Usuário <span className="required-asterisk">*</span>
+                        </Form.Label>
+                        <Form.Control
+                            value={currentUser?.username ?? ""}
                             onChange={(e) => handleChange("username", e.target.value)}
                         />
-                    </div>
+                    </Form.Group>
 
-                    <div className="mb-3">
-                        <label className="form-label">Nome<span className="required-asterisk">*</span></label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={currentUser?.name || ""}
+                    <Form.Group className="mb-3">
+                        <Form.Label>
+                            Nome <span className="required-asterisk">*</span>
+                        </Form.Label>
+                        <Form.Control
+                            value={currentUser?.name ?? ""}
                             onChange={(e) => handleChange("name", e.target.value)}
                         />
-                    </div>
+                    </Form.Group>
 
-                    <div className="mb-3">
-                        <label className="form-label">Senha<span className="required-asterisk">*</span></label>
-                        <input
+                    <Form.Group className="mb-3">
+                        <Form.Label>Senha</Form.Label>
+                        <Form.Control
                             type="password"
-                            className="form-control"
-                            value={currentUser?.password || ""}
+                            value={currentUser?.password ?? ""}
                             onChange={(e) => handleChange("password", e.target.value)}
                         />
-                    </div>
+                    </Form.Group>
 
-                    <div className="mb-3">
-                        <label className="form-label">Perfis<span className="required-asterisk">*</span></label>
+                    <Form.Group className="mb-3">
+                        <Form.Label>
+                            Perfis <span className="required-asterisk">*</span>
+                        </Form.Label>
                         <Select
                             isMulti
                             options={roleOptions}
-                            value={roleOptions.filter(opt => currentUser?.roles?.includes(opt.value))}
-                            onChange={(selectedOptions) =>
-                                handleChange('roles', selectedOptions.map(opt => opt.value))
+                            value={roleOptions.filter((o) =>
+                                currentUser?.roles?.includes(o.value)
+                            )}
+                            onChange={(opts) =>
+                                handleChange(
+                                    "roles",
+                                    opts.map((o) => o.value)
+                                )
                             }
-                            className="basic-multi-select"
-                            classNamePrefix="select"
                             placeholder="Selecione perfis"
                         />
-                    </div>
+                    </Form.Group>
 
                     <Form.Group className="mb-3">
                         <Form.Label>Carteira</Form.Label>
                         <Form.Select
-                            value={currentUser?.branch?.id || ""}
+                            value={currentUser?.branch?.id ?? ""}
                             onChange={(e) =>
-                                setCurrentUser(prev => ({
-                                    ...prev,
-                                    branch: {
-                                        id: Number(e.target.value),
-                                        name: prev?.branch?.name || ""
-                                    }
-                                }))
+                                handleChange("branch", {
+                                    id: Number(e.target.value) || undefined,
+                                    name: branchs.find((b) => b.id === Number(e.target.value))
+                                        ?.name,
+                                })
                             }
                         >
-                            <option value="">Selecione uma opção</option>
-                            {Object.values(branchs).map((branch) => (
-                                <option key={branch.id} value={branch.id}>
-                                    {branch.name}
+                            <option value="">Nenhuma</option>
+                            {branchs.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                    {b.name}
                                 </option>
                             ))}
                         </Form.Select>
                     </Form.Group>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={handleClose}>
+                    <Button variant="secondary" onClick={closeModal}>
                         Cancelar
                     </Button>
-                    <Button
-                        variant="primary"
-                        onClick={handleSubmit}
-                    >
+                    <Button variant="primary" onClick={handleSubmit}>
                         {modalMode === "create" ? "Criar" : "Atualizar"}
                     </Button>
                 </Modal.Footer>

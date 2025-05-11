@@ -3,14 +3,23 @@ import axiosInstance from "../axiosInstance";
 import { toast } from "react-toastify";
 
 interface PaginationResult<T> {
+  /* dados / paginação */
   data: T[];
   currentPage: number;
   totalPages: number;
   totalItems: number;
   isLoading: boolean;
   pageSize: number;
+
+  /* API */
   fetchPage: (page: number, filters?: Record<string, any>) => void;
   setPageSize: (size: number) => void;
+
+  /* NOVO  ➜ ordenação */
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+  setSortField: (field?: string) => void;
+  setSortDir: (dir: "asc" | "desc") => void;
 }
 
 export function usePaginatedFetchData<T>(
@@ -24,30 +33,31 @@ export function usePaginatedFetchData<T>(
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [sortField, setSortField] = useState<string>();
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const fetchPage = async (
     page: number,
-    filters: Record<string, any> = initialFilters
+    extraFilters: Record<string, any> = {}
   ) => {
     setIsLoading(true);
-
     try {
       const params = {
         page: page - 1,
-        size: pageSize,
-        ...filters,
+        size: extraFilters.size ?? pageSize,
+        // sort: sortField ? `${sortField},${sortDir}` : undefined,
+        ...initialFilters,
+        ...extraFilters,
       };
 
-      const res = await axiosInstance.get(endpoint, { params });
+      const { data } = await axiosInstance.get(endpoint, { params });
+      const { content, totalPages, totalElements } = data;
 
-      if (res.status === 200) {
-        const { content, totalPages, totalElements } = res.data;
-        setData(content);
-        setCurrentPage(page);
-        setTotalPages(totalPages);
-        setTotalItems(totalElements);
-      }
-    } catch (error) {
+      setData(content);
+      setCurrentPage(page);
+      setTotalPages(totalPages);
+      setTotalItems(totalElements);
+    } catch (err) {
       toast.error("Erro ao buscar dados paginados.");
     } finally {
       setIsLoading(false);
@@ -56,7 +66,7 @@ export function usePaginatedFetchData<T>(
 
   const setPageSize = (size: number) => {
     setPageSizeState(size);
-    fetchPage(1);
+    fetchPage(1, { size });
   };
 
   return {
@@ -68,5 +78,9 @@ export function usePaginatedFetchData<T>(
     pageSize,
     fetchPage,
     setPageSize,
+    setSortField,
+    setSortDir,
+    sortField,
+    sortDir,
   };
 }

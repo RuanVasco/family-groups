@@ -1,232 +1,199 @@
+// Farmer.tsx
 import { useEffect, useState } from "react";
 import { FaPen, FaPlus } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { FarmerType } from "../Type/FarmerType";
 import axiosInstance from "../axiosInstance";
 import { StatusLabels } from "../Enum/StatusEnum";
-import { FamilyGroupType } from "../Type/FamilyGroupType";
-import { UserType } from "../Type/UserType";
-import Pagination from "./Pagination";
+import Pagination from "./Common/Pagination";
 import FarmerModal from "./FarmerModal";
+import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
 
 const Farmer = () => {
-    const [farmers, setFarmers] = useState<FarmerType[]>([]);
-    const [currentFarmer, setCurrentFarmer] = useState<Partial<FarmerType> | null>(null);
-    const [familyGroups, setFamilyGroups] = useState<FamilyGroupType[]>([]);
-    const [users, setUsers] = useState<UserType[]>([]);
+    /** ───────────────────────   estados de filtro  ─────────────────────── */
+    const [searchValue, setSearchValue] = useState("");
+    const [pageSize, setPageSize] = useState(10);        // tamanho do select
     const [modalMode, setModalMode] = useState<"create" | "edit">("create");
     const [show, setShow] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState<number>(0);
-    const [searchValue, setSearchValue] = useState<string>("");
+    const [currentFarmer, setCurrentFarmer] =
+        useState<Partial<FarmerType> | null>(null);
 
-    const fetchFarmers = async (page = 1, size = 10) => {
-        try {
-            const res = await axiosInstance.get(`/farmer?page=${page - 1}&size=${size}`);
-            if (res.status === 200) {
-                setFarmers(res.data.content);
-                setTotalPages(res.data.totalPages);
-                setCurrentPage(res.data.number + 1);
-                setTotalItems(res.data.totalElements);
-            }
-        } catch (error) {
-            toast.error("Erro ao buscar os produtores");
-        }
-    };
+    /** ──────────────────── hook de paginação reutilizável ────────────────── */
+    const {
+        data: farmers,
+        currentPage,
+        totalPages,
+        totalItems,
+        isLoading,
+        fetchPage,
+        setPageSize: hookSetPageSize,
+    } = usePaginatedFetchData<FarmerType>("/farmer", pageSize);
 
+    /** ────────── 1ª carga (page 1, sem filtro) ────────── */
     useEffect(() => {
-        fetchFarmers(currentPage, itemsPerPage);
-    }, [currentPage, itemsPerPage]);
+        fetchPage(1);
+    }, []);
 
+    /** ────────── quando o usuário digita a pesquisa ────────── */
     useEffect(() => {
-        const fetch = async () => {
-            try {
-                const res = await axiosInstance.get("/farmer", {
-                    params: {
-                        search: searchValue.length >= 3 ? searchValue : undefined,
-                        page: currentPage - 1,
-                        size: itemsPerPage,
-                    },
-                });
+        // Debounce simples (300 ms) para não bater na API a cada tecla
+        const id = setTimeout(() => {
+            const filters =
+                searchValue.length >= 3 ? { value: searchValue.trim() } : {};
+            fetchPage(1, filters);
+        }, 300);
 
-                if (res.status === 200) {
-                    setFarmers(res.data.content);
-                    setTotalPages(res.data.totalPages);
-                    setCurrentPage(res.data.number + 1);
-                    setTotalItems(res.data.totalElements);
-                }
-            } catch (error) {
-                toast.error("Erro ao buscar produtores");
-            }
-        };
+        return () => clearTimeout(id);
+    }, [searchValue]);
 
-        fetch();
-    }, [searchValue, currentPage, itemsPerPage]);
-
-
-    const fetchFamilyGroups = async () => {
-        try {
-            const res = await axiosInstance.get("/family-group/all");
-            if (res.status === 200) {
-                setFamilyGroups(res.data);
-            }
-        } catch (error) {
-            toast.error("Erro ao buscar os grupos familiares");
-        }
-    }
-
-    const fetchUsers = async () => {
-        try {
-            const res = await axiosInstance.get("/user");
-            if (res.status === 200 || res.status === 201) {
-                setUsers(res.data);
-            }
-        } catch (error) {
-            toast.error('Erro ao buscar usuários');
-        }
-    }
-
-    const handleModalClose = () => setShow(false);
-
+    /** ────────── callbacks auxiliares ────────── */
     const openModal = (mode: "create" | "edit", farmer?: FarmerType) => {
         setModalMode(mode);
         setCurrentFarmer(mode === "edit" ? { ...farmer } : null);
         setShow(true);
-        fetchFamilyGroups();
-        fetchUsers();
     };
 
-    const handleChange = (field: keyof FarmerType, value: any) => {
-        setCurrentFarmer(prev => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
+    const handleModalClose = () => setShow(false);
 
+    const handleChange = (field: keyof FarmerType, value: any) =>
+        setCurrentFarmer((prev) => ({ ...prev, [field]: value }));
+
+    /** ────────── cria / edita produtor ────────── */
     const handleSubmit = async () => {
         try {
-
             if (!currentFarmer?.name || !currentFarmer?.registrationNumber) {
                 toast.warn("Preencha todos os campos obrigatórios.");
                 return;
             }
 
-            const data = {
+            const body = {
                 registrationNumber: currentFarmer.registrationNumber,
                 name: currentFarmer.name,
                 status: currentFarmer.status,
                 familyGroupId: currentFarmer.familyGroup?.id,
                 technicianId: currentFarmer.technician?.id,
-                ownedArea: currentFarmer.ownedArea
+                ownedArea: currentFarmer.ownedArea,
+                leasedArea: currentFarmer.leasedArea,
             };
 
-            let res;
-            let msg: string;
-
-            if (modalMode === "create") {
-                res = await axiosInstance.post("/farmer", data);
-                msg = "Produtor criado com sucesso!";
-            } else {
-                res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, data);
-                msg = "Produtor atualizado com sucesso!";
-            }
+            const res =
+                modalMode === "create"
+                    ? await axiosInstance.post("/farmer", body)
+                    : await axiosInstance.put(
+                        `/farmer/${currentFarmer.registrationNumber}`,
+                        body
+                    );
 
             if (res.status === 200 || res.status === 201) {
-                toast.success(msg);
-                fetchFarmers(currentPage, itemsPerPage);
+                toast.success(
+                    modalMode === "create"
+                        ? "Produtor criado com sucesso!"
+                        : "Produtor atualizado com sucesso!"
+                );
+                fetchPage(currentPage); // recarrega lista mantendo filtros atuais
             }
-
-
-        } catch (error) {
+        } catch {
             toast.error("Erro ao salvar produtor.");
         } finally {
             handleModalClose();
         }
     };
 
+    /** ───────────────────────  UI ─────────────────────── */
     return (
-        <div>
+        <div className="pt-3 px-4 pb-5">
+            {/* Barra de ações */}
             <div className="my-3 floating_panel d-flex align-items-center justify-content-between">
-                <button
-                    type="button"
-                    className="button_agree"
-                    onClick={() => openModal("create")}
-                >
+                <button className="button_agree" onClick={() => openModal("create")}>
                     <FaPlus /> Criar Produtor
                 </button>
+
                 <input
                     className="w-50"
-                    placeholder="Pesquisar"
-                    type="text"
+                    placeholder="Pesquisar (mín. 3 letras)"
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                 />
-                <h4 className="fw-bold p-0 m-0">Total de items: {totalItems}</h4>
+
+                <h4 className="fw-bold m-0">Total: {totalItems}</h4>
             </div>
 
+            {/* Tabela com paginação */}
             <Pagination
-                itemsPerPage={itemsPerPage}
+                itemsPerPage={pageSize}
                 onItemsPerPageChange={(val) => {
-                    setItemsPerPage(val);
-                    setCurrentPage(1);
+                    setPageSize(val);       // atualiza select
+                    hookSetPageSize(val);   // dispara fetchPage(1) já preservando filtros
                 }}
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
+                onPageChange={(page) =>
+                    fetchPage(page, searchValue.length >= 3 ? { value: searchValue } : {})
+                }
             >
                 <div className="my-3 floating_panel">
-                    <table className="custom_table">
-                        <thead>
-                            <tr>
-                                <th>Ações</th>
-                                <th>Matrícula</th>
-                                <th>Nome</th>
-                                <th>Situação</th>
-                                <th>Técnico</th>
-                                <th>Grupo familiar</th>
-                                <th>Terra própria</th>
-                                <th>Terra arrendada</th>
-                                <th>Terra total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {farmers.map(farmer => (
-                                <tr key={Number(farmer.registrationNumber)}>
-                                    <td>
-                                        <button
-                                            className="button_edit"
-                                            onClick={() => openModal("edit", farmer)}
-                                        >
-                                            <FaPen /> Editar
-                                        </button>
-                                    </td>
-                                    <td>{farmer.registrationNumber}</td>
-                                    <td>{farmer.name}</td>
-                                    <td>{StatusLabels[farmer.status]}</td>
-                                    <td>{farmer.technician?.name || "Sem técnico vinculado"}</td>
-                                    <td>{farmer.familyGroup ? (farmer.familyGroup?.principal.name) : ("Sem grupo familiar")}</td>
-                                    <td>{farmer.ownedArea || 0} ha</td>
-                                    <td>{farmer.leasedArea || 0} ha</td>
-                                    <td>
-                                        {(farmer.ownedArea || farmer.leasedArea)
-                                            ? (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0)
-                                            : 0} ha
-                                    </td>
+                    {isLoading ? (
+                        <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    ) : farmers.length === 0 ? (
+                        <p className="p-3">Nenhum produtor encontrado.</p>
+                    ) : (
+                        <table className="custom_table">
+                            <thead>
+                                <tr>
+                                    <th>Ações</th>
+                                    <th>Matrícula</th>
+                                    <th>Nome</th>
+                                    <th>Situação</th>
+                                    <th>Tipo</th>
+                                    <th>Técnico</th>
+                                    <th>Grupo familiar</th>
+                                    <th>Terra própria</th>
+                                    <th>Terra arrendada</th>
+                                    <th>Terra total</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {farmers.map((f) => (
+                                    <tr key={Number(f.registrationNumber)}>
+                                        <td>
+                                            <button
+                                                className="button_edit"
+                                                onClick={() => openModal("edit", f)}
+                                            >
+                                                <FaPen /> Editar
+                                            </button>
+                                        </td>
+                                        <td>{f.registrationNumber}</td>
+                                        <td>{f.name}</td>
+                                        <td>{StatusLabels[f.status]}</td>
+                                        <td>{f.type?.description ?? "-"}</td>
+                                        <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
+                                        <td>
+                                            {f.familyGroup
+                                                ? f.familyGroup.principal.name
+                                                : "Sem grupo familiar"}
+                                        </td>
+                                        <td>{f.ownedArea ?? 0} ha</td>
+                                        <td>{f.leasedArea ?? 0} ha</td>
+                                        <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </Pagination>
+
+            {/* Modal de criar/editar */}
             <FarmerModal
                 show={show}
                 onClose={handleModalClose}
                 onSubmit={handleSubmit}
                 currentFarmer={currentFarmer}
-                familyGroups={familyGroups}
-                users={users}
                 modalMode={modalMode}
                 onChange={handleChange}
             />

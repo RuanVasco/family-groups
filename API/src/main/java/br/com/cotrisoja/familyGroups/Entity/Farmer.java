@@ -35,6 +35,10 @@ public class Farmer {
     @JoinColumn(name = "technician_id")
     private User technician;
 
+    @ManyToOne
+    @JoinColumn(name = "type_id")
+    private Type type;
+
     public boolean isValid() {
         return this.status == StatusEnum.ACTIVE && this.familyGroup == null;
     }

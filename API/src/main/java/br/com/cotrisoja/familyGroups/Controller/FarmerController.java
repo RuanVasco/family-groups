@@ -13,6 +13,9 @@ import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,13 +44,13 @@ public class FarmerController {
 
     @GetMapping
     public ResponseEntity<Page<FarmerResponseCompleteDTO>> findAll(
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String value,
             Pageable pageable
     ) {
         Page<Farmer> farmers;
 
-        if (search != null && !search.isBlank()) {
-            farmers = farmerService.findByValue(search, pageable);
+        if (value != null && !value.isBlank()) {
+            farmers = farmerService.findByValue(value, pageable);
         } else {
             farmers = farmerService.findAll(pageable);
         }
@@ -81,44 +84,43 @@ public class FarmerController {
     }
 
     @GetMapping("/by-technician")
-    public ResponseEntity<?> getByTechnician(@RequestParam(required = false) Long userId) {
-        List<Farmer> farmers;
+    public ResponseEntity<?> getByTechnician(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "registrationNumber,asc") String sort
+    ) {
+        Pageable pageable = PageRequest.of(page, size, buildSort(sort));
+        Page<Farmer> farmersPage;
+
         if (userId == null) {
-            farmers = farmerService.findWithoutTechnician();
+            farmersPage = farmerService.findWithoutTechnician(pageable);
         } else {
-            Optional<User> userOptional = userRepository.findById(userId);
-
-            if (userOptional.isEmpty()) {
-                return ResponseEntity.badRequest().body("Usuário não encontrado");
-            }
-
-            User technician = userOptional.get();
-            farmers = farmerService.findByTechnician(technician);
+            return userRepository.findById(userId)
+                    .<ResponseEntity<?>>map(tech -> ResponseEntity.ok(
+                            farmerService.findByTechnician(tech, pageable)
+                                    .map(FarmerResponseDTO::fromEntity)))
+                    .orElseGet(() -> ResponseEntity.badRequest().body("Usuário não encontrado"));
         }
 
-        return ResponseEntity.ok(
-                farmers.stream()
-                        .map(FarmerResponseDTO::fromEntity)
-                        .toList()
-        );
+        return ResponseEntity.ok(farmersPage.map(FarmerResponseDTO::fromEntity));
     }
 
+
     @GetMapping("/by-branch/{branchId}")
-    public ResponseEntity<?> getByBranch(@PathVariable Long branchId) {
-        Optional<Branch> branchOptional = branchRepository.findById(branchId);
-
-        if (branchOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body("Carteira não encontrado");
-        }
-
-        Branch branch = branchOptional.get();
-        List<Farmer> farmers = farmerService.findByEffectiveBranch(branch);
-
-        return ResponseEntity.ok(
-                farmers.stream()
-                        .map(FarmerResponseDTO::fromEntity)
-                        .toList()
-        );
+    public ResponseEntity<?> getByBranch(
+            @PathVariable Long branchId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "registrationNumber,asc") String sort)
+    {
+        return branchRepository.findById(branchId)
+                .<ResponseEntity<?>>map(branch -> {
+                    Pageable pageable = PageRequest.of(page, size, buildSort(sort));
+                    Page<Farmer> p = farmerService.findByEffectiveBranch(branch, pageable);
+                    return ResponseEntity.ok(p.map(FarmerResponseDTO::fromEntity));
+                })
+                .orElseGet(() -> ResponseEntity.badRequest().body("Carteira não encontrada"));
     }
 
     @PutMapping("/{farmerRegistration}")
@@ -130,5 +132,17 @@ public class FarmerController {
                 .orElseThrow(() -> new RuntimeException("Produtor não encontrado"));
 
         return ResponseEntity.ok(farmerService.updateFarmer(farmer, farmerRequestDTO));
+    }
+
+    private Sort buildSort(String sortParam) {
+        String[] s = sortParam.split(",");
+        String field = s[0];
+        Sort.Direction dir = s.length > 1 ? Sort.Direction.fromString(s[1]) : Sort.Direction.ASC;
+
+        if ("totalArea".equals(field)) {
+            return JpaSort.unsafe(dir,
+                    "COALESCE(ownedArea,0) + COALESCE(leasedArea,0)");
+        }
+        return Sort.by(dir, field);
     }
 }

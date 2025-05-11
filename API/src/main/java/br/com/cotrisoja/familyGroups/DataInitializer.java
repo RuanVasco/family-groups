@@ -1,7 +1,9 @@
 package br.com.cotrisoja.familyGroups;
 
 
+import br.com.cotrisoja.familyGroups.Entity.Type;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -15,7 +17,9 @@ import java.util.Set;
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
+
     private final UserRepository userRepository;
+    private final TypeRepository typeRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -36,6 +40,26 @@ public class DataInitializer {
                 userRepository.save(admin);
                 System.out.println("Usuário ADMIN inicial criado: admin/admin");
             }
+
+            Type pfa = new Type();
+            pfa.setId(1);
+            pfa.setDescription("Pessoa Física Associado");
+            typeRepository.save(pfa);
+
+            Type pft = new Type();
+            pft.setId(2);
+            pft.setDescription("Pessoa Física Terceiro");
+            typeRepository.save(pft);
+
+            Type pja = new Type();
+            pja.setId(3);
+            pja.setDescription("Pessoa Juridica Associado");
+            typeRepository.save(pja);
+
+            Type pjt = new Type();
+            pjt.setId(4);
+            pjt.setDescription("Pessoa Juridica Terceiro");
+            typeRepository.save(pjt);
         };
     }
 }

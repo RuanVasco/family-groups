@@ -29,19 +29,17 @@ public interface FarmerRepository extends JpaRepository<Farmer, String> {
     Page<Farmer> findByValue(@Param("value") String value, Pageable pageable);
 
     @Query("SELECT f FROM Farmer f WHERE f.technician = :technician")
-    List<Farmer> findByTechnician(@Param("technician") User technician);
+    Page<Farmer> findByTechnician(@Param("technician") User technician, Pageable pageable);
 
     @Query("""
-        SELECT f FROM Farmer f
-        LEFT JOIN f.technician t
-        LEFT JOIN t.branch tb
-        WHERE
-            (t IS NOT NULL AND tb = :branch)
-            OR
-            (t IS NULL AND f.branch = :branch)
-    """)
-    List<Farmer> findByEffectiveBranch(@Param("branch") Branch branch);
+    SELECT f FROM Farmer f
+    LEFT JOIN f.technician t
+    LEFT JOIN t.branch tb
+    WHERE (t IS NOT NULL AND tb = :branch)
+       OR (t IS NULL  AND f.branch = :branch)
+""")
+    Page<Farmer> findByEffectiveBranch(@Param("branch") Branch branch, Pageable pageable);
 
-    @Query("SELECT f FROM Farmer f WHERE f.technician IS null")
-    List<Farmer> findWithoutTechnician();
+    @Query("SELECT f FROM Farmer f WHERE f.technician IS NULL")
+    Page<Farmer> findWithoutTechnician(Pageable pageable);
 }

@@ -1,4 +1,4 @@
-import { FaChessKing, FaMinus, FaPen, FaPencil, FaPlus } from "react-icons/fa6";
+import { FaChessKing, FaMinus, FaPen, FaPlus } from "react-icons/fa6";
 import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { FarmerType } from "../Type/FarmerType";
 import { StatusLabels } from "../Enum/StatusEnum";
@@ -43,6 +43,7 @@ const FamilyGroupTable = ({
                         "Matrícula",
                         "Nome",
                         "Situação",
+                        "Tipo",
                         "Técnico",
                         "Área própria",
                         "Área arrendada",
@@ -52,6 +53,7 @@ const FamilyGroupTable = ({
                     columnWidths={[
                         "90px",
                         "230px",
+                        "90px",
                         "90px",
                         "230px",
                         "140px",
@@ -65,6 +67,7 @@ const FamilyGroupTable = ({
                             <td>{f.registrationNumber}</td>
                             <td>{f.name}</td>
                             <td>{StatusLabels[f.status]}</td>
+                            <td>{f.type?.description || "-"}</td>
                             <td>{f.technician?.name || "Sem técnico"}</td>
                             <td>{f.ownedArea} ha</td>
                             <td>{f.leasedArea} ha</td>

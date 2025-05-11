@@ -7,7 +7,7 @@ import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
 import FamilyGroupTable from "../FamilyGroupTable";
 import { Button, Form, Modal } from "react-bootstrap";
 import Select from "react-select";
-import Pagination from "../Pagination";
+import Pagination from "../Common/Pagination";
 import CustomTable from "../Common/CustomTable";
 import { useFetchItem } from "../../Hook/useFetchItem";
 import { useFetchData } from "../../Hook/useFetchData";
@@ -343,6 +343,11 @@ const FamilyGroup = () => {
                             {familyGroupsToDisplay.length > 0 && (
                                 <CustomTable
                                     headers={["Ações", "ID", "Principal"]}
+                                    columnWidths={[
+                                        "170px",
+                                        "70px",
+                                        undefined,
+                                    ]}
                                 >
                                     {familyGroupsToDisplay.map((group) => (
                                         <tr key={group.id}>

@@ -1,6 +1,7 @@
 import { StatusEnum } from "../Enum/StatusEnum";
 import { BranchType } from "./BranchType";
 import { FamilyGroupType } from "./FamilyGroupType";
+import { TypeType } from "./TypeType";
 import { UserType } from "./UserType";
 
 export interface FarmerType {
@@ -12,4 +13,5 @@ export interface FarmerType {
   technician?: UserType;
   ownedArea?: number;
   leasedArea?: number;
+  type?: TypeType;
 }

@@ -11,7 +11,13 @@ function ProtectedRoute({ children }: { children: JSX.Element }) {
     const { isAuthenticated, isLoading } = useAuth();
 
     if (isLoading) {
-        return <div>Carregando...</div>;
+        return (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
     }
 
     return isAuthenticated ? children : <Navigate to="/login" />;

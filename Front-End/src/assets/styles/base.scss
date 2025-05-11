@@ -71,29 +71,29 @@ input {
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-select {
-  background-color: transparent;
-  border: 1px solid var.$primary-color;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  color: var.$secondary-color;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+// select {
+//   background-color: transparent;
+//   border: 1px solid var.$primary-color;
+//   padding: 0.5rem 1rem;
+//   border-radius: 8px;
+//   color: var.$secondary-color;
+//   font-size: 1rem;
+//   outline: none;
+//   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 
-  &:hover {
-    cursor: pointer;
-  }
+//   &:hover {
+//     cursor: pointer;
+//   }
 
-  &:focus {
-    border-color: var.$secondary-color;
-  }
+//   &:focus {
+//     border-color: var.$secondary-color;
+//   }
 
-  option {
-    background-color: var.$tertiary-color;
-    color: var.$secondary-color;
-  }
-}
+//   option {
+//     background-color: var.$tertiary-color;
+//     color: var.$secondary-color;
+//   }
+// }
 
 .floating_panel {
   background-color: var.$light-gray-color;

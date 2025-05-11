@@ -137,7 +137,11 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
     return (
         <div className="p-4">
             {loading ? (
-                <>...Carregando</>
+                <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
             ) : (
                 familyGroups && familyGroups.map((f) => (
                     <div className="floating_panel my-3">
@@ -180,7 +184,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                     </div>
                 ))
             )}
-
 
             <FarmerModal
                 show={show}

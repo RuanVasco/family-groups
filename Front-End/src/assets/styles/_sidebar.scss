@@ -10,6 +10,15 @@
   * {
     color: var.$tertiary-color;
   }
+
+  &.collapsed {
+    width: 80px;
+  }
+
+  & svg {
+    font-size: 1.1rem;
+    min-width: 24px;
+  }
 }
 
 .sidebar_menu {
@@ -24,6 +33,9 @@
     transition: background-color 0.3s ease;
     font-weight: var.$font-weight-medium;
     font-size: 1.1rem;
+    display: flex;
+    justify-content: start;
+    transition: justify-content 0.3s;
   }
 
   li:hover {
@@ -36,13 +48,18 @@
   }
 }
 
+.sidebar.collapsed .sidebar_menu li {
+  justify-content: center;
+}
+
 .logo {
-  width: 140px;
+  height: 50px;
+  width: auto;
 }
 
 .logo_box {
   display: flex;
-  justify-content: center;
+  align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var.$tertiary-color;
@@ -73,21 +90,33 @@
   margin-bottom: 1rem;
   border-bottom: 1px solid var.$tertiary-color;
   padding-bottom: 1rem;
+}
 
-  .back_button {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    background-color: var.$secondary-color;
-    color: var.$tertiary-color;
-    cursor: pointer;
-    transition: background-color 0.3s;
+.back_button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background-color: var.$secondary-color;
+  color: var.$tertiary-color;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s;
 
-    &:hover {
-      background-color: rgba(var.$secondary-color, 0.85);
-    }
+  svg {
+    font-size: 1.3rem;
+    min-width: 20px;
+  }
+
+  &:hover {
+    background-color: rgba(var.$secondary-color, 0.85);
   }
 }
 
+.sidebar.collapsed .back_button {
+  padding: 0.3rem;
+  justify-content: center;
+}
 .pageable {
   color: var.$tertiary-color;
   display: flex;

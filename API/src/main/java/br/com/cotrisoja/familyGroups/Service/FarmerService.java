@@ -1,12 +1,10 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
-import br.com.cotrisoja.familyGroups.Entity.Branch;
-import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
-import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Entity.*;
 import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
+import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +23,12 @@ public class FarmerService {
     private final FarmerRepository farmerRepository;
     private final FamilyGroupRepository familyGroupRepository;
     private final UserRepository userRepository;
+    private final TypeRepository typeRepository;
 
     public Farmer createFarmer(FarmerRequestDTO farmerRequestDTO) {
         FamilyGroup familyGroup = null;
         User user = null;
+        Type type = null;
 
         if (farmerRequestDTO.technicianId() != null) {
             user = userRepository.findById(farmerRequestDTO.technicianId())
@@ -40,7 +40,12 @@ public class FarmerService {
                     .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
         }
 
-        Farmer farmer = farmerRequestDTO.toEntity(familyGroup, user);
+        if (farmerRequestDTO.typeId() != null) {
+            type = typeRepository.findById(farmerRequestDTO.typeId())
+                    .orElseThrow(() -> new RuntimeException("Tipo não encontrado"));
+        }
+
+        Farmer farmer = farmerRequestDTO.toEntity(familyGroup, user, type);
         return farmerRepository.save(farmer);
     }
 
@@ -64,21 +69,22 @@ public class FarmerService {
         return familyGroup.getMembers();
     }
 
-    public List<Farmer> findByTechnician(User technician) {
-         return farmerRepository.findByTechnician(technician);
+    public Page<Farmer> findByTechnician(User technician, Pageable pageable) {
+        return farmerRepository.findByTechnician(technician, pageable);
     }
 
-    public List<Farmer> findWithoutTechnician() {
-        return farmerRepository.findWithoutTechnician();
+    public Page<Farmer> findWithoutTechnician(Pageable pageable) {
+        return farmerRepository.findWithoutTechnician(pageable);
     }
 
-    public List<Farmer> findByEffectiveBranch(Branch branch) {
-        return farmerRepository.findByEffectiveBranch(branch);
+    public Page<Farmer> findByEffectiveBranch(Branch branch, Pageable pageable) {
+        return farmerRepository.findByEffectiveBranch(branch, pageable);
     }
 
     public Farmer updateFarmer(Farmer farmer, FarmerRequestDTO farmerRequestDTO) {
         FamilyGroup familyGroup = null;
         User user = null;
+        Type type = null;
 
         farmer.setName(farmerRequestDTO.name());
         farmer.setStatus(farmerRequestDTO.status());
@@ -96,6 +102,12 @@ public class FarmerService {
             familyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
                     .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
             farmer.setFamilyGroup(familyGroup);
+        }
+
+        if (farmerRequestDTO.typeId() != null) {
+            type = typeRepository.findById(farmerRequestDTO.typeId())
+                    .orElseThrow(() -> new RuntimeException("Tipo não encontrado"));
+            farmer.setType(type);
         }
 
         return farmerRepository.save(farmer);

@@ -8,7 +8,7 @@ import User from '../Component/User';
 import "../assets/styles/_sidebar.scss";
 import Branch from '../Component/Branch';
 import { Button, Form, Modal } from 'react-bootstrap';
-import { FaChartColumn, FaChevronLeft, FaChevronRight, FaUpload, FaUser, FaUserGroup, FaWallet, FaWheatAwn } from 'react-icons/fa6';
+import { FaArrowRightFromBracket, FaChartColumn, FaChevronLeft, FaChevronRight, FaUpload, FaUser, FaUserGroup, FaWallet, FaWheatAwn } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import axiosInstance from '../axiosInstance';
 import { BranchType } from '../Type/BranchType';
@@ -16,6 +16,7 @@ import { usePaginatedFetchData } from '../Hook/usePaginatedFetchData';
 import { UserType } from '../Type/UserType';
 import ReportByFarmer from '../Component/Report/ReportByFarmer';
 import ReportByFamilyGroup from '../Component/Report/ReportByFamilyGroup';
+import ButtonCollapse from '../Component/Common/Buttons/ButtonColapse';
 
 interface SideBarPagenableProps {
     className?: string;
@@ -39,25 +40,20 @@ const HomePage = () => {
     const [selectedBranch, setSelectedBranch] = useState<BranchType | null>(null);
     const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
     const [totalItems, setTotalItems] = useState<number | null>(null);
+    const [collapsed, setCollapsed] = useState(false);
 
     const {
         data: branchs,
         currentPage: branchPage,
         totalPages: branchTotalPages,
-        totalItems: branchTotalItems,
-        isLoading: branchLoading,
         fetchPage: fetchBranchs,
-        setPageSize: setBranchPageSize,
     } = usePaginatedFetchData<BranchType>("/branch", pageSize);
 
     const {
         data: users,
         currentPage: userPage,
         totalPages: userTotalPages,
-        totalItems: userTotalItems,
-        isLoading: userLoading,
         fetchPage: fetchUsers,
-        setPageSize: setUserPageSize,
     } = usePaginatedFetchData<UserType>("/user", pageSize);
 
     useEffect(() => {
@@ -127,10 +123,13 @@ const HomePage = () => {
 
     return (
         <div className="row g-0">
-            <div className="col-2">
-                <div className="sidebar d-flex flex-column">
+            <div className={collapsed ? "col-auto" : "col-2"}>
+                <div className={collapsed ? "sidebar collapsed d-flex flex-column" : "sidebar d-flex flex-column"}>
                     <div className="logo_box">
-                        <img src={logo} alt="Logo" className="logo" />
+                        <ButtonCollapse collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+                        {!collapsed && (
+                            <img src={logo} alt="Logo" className="logo" />
+                        )}
                     </div>
                     {menuContext !== "default" && (
                         <div className="back_header d-flex flex-column gap-3 ms-2">
@@ -138,7 +137,8 @@ const HomePage = () => {
                                 {menuContext === "reports" && (
                                     <span className="d-flex align-items-center gap-2 report-title">
                                         <>
-                                            <FaChartColumn />Relatórios
+                                            <FaChartColumn />
+                                            {!collapsed && "Relatórios"}
                                         </>
 
                                     </span>
@@ -148,12 +148,15 @@ const HomePage = () => {
                                         <span className="d-flex align-items-center gap-2 report-title">
                                             {reportType === "byBranch" && (
                                                 <>
-                                                    <FaWallet /> <span>Por carteira</span>
+                                                    <FaWallet />
+                                                    {!collapsed && <span>Por carteira</span>}
                                                 </>
                                             )}
                                             {reportType === "byTechnician" && (
                                                 <>
-                                                    <FaUser />Por técnico
+                                                    <FaUser />
+                                                    {!collapsed && <span>Por técnico</span>}
+
                                                 </>
                                             )}
                                         </span>
@@ -174,10 +177,11 @@ const HomePage = () => {
                                                 "default"
                                     );
                                 }}>
-                                    <FaChevronLeft /> <span>Voltar</span>
+                                    <FaChevronLeft />
+                                    {!collapsed && <span>Voltar</span>}
                                 </button>
 
-                                {menuContext === "reportType" && (
+                                {menuContext === "reportType" && !collapsed && (
                                     <SideBarPagenable
                                         currentPage={reportType === "byBranch" ? branchPage : userPage}
                                         totalPages={reportType === "byBranch" ? branchTotalPages : userTotalPages}
@@ -201,7 +205,8 @@ const HomePage = () => {
                                         (viewType === "familyGroup" ? " active" : "")
                                     }
                                 >
-                                    <FaUserGroup />Grupo Familiar
+                                    <FaUserGroup />
+                                    {!collapsed && "Grupo Familiar"}
                                 </li>
                                 <li
                                     onClick={() => setViewType("farmer")}
@@ -210,7 +215,8 @@ const HomePage = () => {
                                         (viewType === "farmer" ? " active" : "")
                                     }
                                 >
-                                    <FaWheatAwn />Produtores
+                                    <FaWheatAwn />
+                                    {!collapsed && "Produtores"}
                                 </li>
                                 {canViewUsers && (
                                     <>
@@ -221,7 +227,8 @@ const HomePage = () => {
                                                 (viewType === "user" ? " active" : "")
                                             }
                                         >
-                                            <FaUser />Usuários
+                                            <FaUser />
+                                            {!collapsed && "Usuários"}
                                         </li>
                                         <li
                                             onClick={() => setViewType("branch")}
@@ -230,22 +237,30 @@ const HomePage = () => {
                                                 (viewType === "branch" ? " active" : "")
                                             }
                                         >
-                                            <FaWallet />Carteiras
+                                            <FaWallet />
+                                            {!collapsed && "Carteiras"}
                                         </li>
                                         <li
                                             // onClick={() => setViewType("report")}
-                                            onClick={() => setMenuContext("reports")}
+                                            onClick={() => {
+                                                setViewType(null);
+                                                setMenuContext("reports");
+                                            }}
                                             className={
                                                 "d-flex align-items-center gap-2"
                                             }
                                         >
-                                            <FaChartColumn />Relatórios <span className="ms-auto"><FaChevronRight /></span>
+                                            <FaChartColumn />
+                                            {!collapsed && (
+                                                <>Relatórios <span className="ms-auto"><FaChevronRight /></span></>
+                                            )}
                                         </li>
                                         <li
                                             onClick={() => setShow(true)}
                                             className="d-flex align-items-center gap-2"
                                         >
-                                            <FaUpload />Enviar Dados
+                                            <FaUpload />
+                                            {!collapsed && "Enviar Dados"}
                                         </li>
                                     </>
                                 )}
@@ -262,7 +277,8 @@ const HomePage = () => {
                                     }}
                                     className="d-flex align-items-center gap-2"
                                 >
-                                    <FaWallet /> Por Carteira
+                                    <FaWallet />
+                                    {!collapsed && "Por Carteira"}
                                 </li>
                                 <li
                                     onClick={() => {
@@ -272,7 +288,8 @@ const HomePage = () => {
                                     }}
                                     className="d-flex align-items-center gap-2"
                                 >
-                                    <FaUser /> Por Técnico
+                                    <FaUser />
+                                    {!collapsed && "Por Técnico"}
                                 </li>
                             </>
                         )}
@@ -300,6 +317,18 @@ const HomePage = () => {
 
                         {menuContext === "reportType" && reportType === "byTechnician" && users && (
                             <>
+                                <li
+                                    onClick={() => {
+                                        setSelectedUser(null);
+                                        setMenuContext("reportDetailUser");
+                                    }}
+                                    className={
+                                        "d-flex align-items-center gap-2" +
+                                        (selectedUser === null ? " active" : "")
+                                    }
+                                >
+                                    Sem Técnico Vinculado
+                                </li>
                                 {users.map((user) => (
                                     <li
                                         key={user.id}
@@ -330,41 +359,54 @@ const HomePage = () => {
                                         (viewType === "report_by_technician_farmer" ? " active" : "")
                                     }
                                 >
-                                    <FaWheatAwn /> Por produtor
+                                    <FaWheatAwn />
+                                    {!collapsed && "Por produtor"}
                                 </li>
-                                <li
-                                    onClick={() => {
-                                        setViewType("report_by_technician_familyGroup");
-                                    }}
-                                    className={
-                                        "d-flex align-items-center gap-2" +
-                                        (viewType === "report_by_technician_familyGroup" ? " active" : "")
-                                    }
-                                >
+                                {selectedUser && (
+                                    <li
+                                        onClick={() => {
+                                            setViewType("report_by_technician_familyGroup");
+                                        }}
+                                        className={
+                                            "d-flex align-items-center gap-2" +
+                                            (viewType === "report_by_technician_familyGroup" ? " active" : "")
+                                        }
+                                    >
+                                        <FaUserGroup />
+                                        {!collapsed && "Por grupo familiar"}
 
-                                    <FaUserGroup /> Por grupo familiar
-                                </li>
+                                    </li>
+                                )}
+
                             </>
                         )}
                     </ul>
 
                     <div className="logout_box mt-auto">
-                        <button className="btn_logout w-100" onClick={logout}>
-                            Sair
+                        <button className="btn_logout w-100 d-flex gap-2 align-items-center justify-content-center" onClick={logout}>
+                            <FaArrowRightFromBracket />
+                            {!collapsed && "Sair"}
                         </button>
                     </div>
                 </div>
             </div>
 
             <div className="col">
-                {selectedUser && (
-                    <div className="d-flex justify-content-between report-header">
-                        <h4 className="fw-bold m-0 p-0">Técnico: {selectedUser.name}</h4>
-                        {totalItems && (
-                            <h4 className="fw-bold m-0 p-0">Total de itens: {totalItems}</h4>
-                        )}
-                    </div>
-                )}
+                {(viewType === "report_by_technician_farmer" ||
+                    viewType === "report_by_technician_familyGroup") && (
+                        <div className="d-flex justify-content-between report-header">
+                            <h4 className="fw-bold m-0 p-0">
+                                Técnico:&nbsp;
+                                {selectedUser ? selectedUser.name : "Sem técnico vinculado"}
+                            </h4>
+
+                            {totalItems != null && (
+                                <h4 className="fw-bold m-0 p-0">
+                                    Total de itens:&nbsp;{totalItems}
+                                </h4>
+                            )}
+                        </div>
+                    )}
                 {selectedBranch && (
                     <div className="d-flex justify-content-between report-header">
                         <h4 className="fw-bold m-0 p-0">Carteira: {selectedBranch.name}</h4>
@@ -385,8 +427,11 @@ const HomePage = () => {
                             {viewType === "report_by_branch" && selectedBranch && (
                                 <ReportByFarmer branch={selectedBranch} setTotalItems={setTotalItems} />
                             )}
-                            {viewType === "report_by_technician_farmer" && selectedUser && (
-                                <ReportByFarmer technician={selectedUser} setTotalItems={setTotalItems} />
+                            {viewType === "report_by_technician_farmer" && (
+                                <ReportByFarmer
+                                    technician={selectedUser ?? undefined}
+                                    setTotalItems={setTotalItems}
+                                />
                             )}
                             {viewType === "report_by_technician_familyGroup" && selectedUser && (
                                 <ReportByFamilyGroup technician={selectedUser} setTotalItems={setTotalItems} />

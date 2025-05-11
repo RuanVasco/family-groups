@@ -64,7 +64,7 @@ const Branch = () => {
     }, []);
 
     return (
-        <div className="container-fluid">
+        <div className="pt-3 px-4 pb-5">
             <div className="my-3 floating_panel">
                 <button
                     type="button"

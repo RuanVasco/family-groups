@@ -1,13 +1,19 @@
-@use "../../assets/styles/variables" as var;
+@use "../../../assets/styles/variables" as var;
 @use "sass:color";
 
 .custom_table {
   color: var.$secondary-color;
   width: 100%;
-  border-collapse: separate;
+  border-collapse: collapse;
   border-spacing: 0;
   overflow: hidden;
   table-layout: fixed;
+}
+
+.custom_table td {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .custom_table th {
