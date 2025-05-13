@@ -2,10 +2,7 @@ package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
 import br.com.cotrisoja.familyGroups.Entity.*;
-import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
-import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
-import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
-import br.com.cotrisoja.familyGroups.Repository.UserRepository;
+import br.com.cotrisoja.familyGroups.Repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,11 +21,13 @@ public class FarmerService {
     private final FamilyGroupRepository familyGroupRepository;
     private final UserRepository userRepository;
     private final TypeRepository typeRepository;
+    private final BranchRepository branchRepository;
 
     public Farmer createFarmer(FarmerRequestDTO farmerRequestDTO) {
         FamilyGroup familyGroup = null;
         User user = null;
         Type type = null;
+        Branch branch = null;
 
         if (farmerRequestDTO.technicianId() != null) {
             user = userRepository.findById(farmerRequestDTO.technicianId())
@@ -45,7 +44,12 @@ public class FarmerService {
                     .orElseThrow(() -> new RuntimeException("Tipo não encontrado"));
         }
 
-        Farmer farmer = farmerRequestDTO.toEntity(familyGroup, user, type);
+        if (farmerRequestDTO.branch() != null) {
+            branch = branchRepository.findById(farmerRequestDTO.branch())
+                    .orElseThrow(() -> new RuntimeException("Carteira não encontrada"));
+        }
+
+        Farmer farmer = farmerRequestDTO.toEntity(familyGroup, user, type, branch);
         return farmerRepository.save(farmer);
     }
 
@@ -77,14 +81,40 @@ public class FarmerService {
         return farmerRepository.findWithoutTechnician(pageable);
     }
 
+    public Page<Farmer> findByTechnicianAndType(User technician, Integer typeId, Pageable pageable) {
+        var typeOpt = typeRepository.findById(typeId);
+        if (typeOpt.isEmpty()) {
+            throw new IllegalArgumentException("Tipo de produtor não encontrado.");
+        }
+        return farmerRepository.findByTechnicianAndType(technician, typeOpt.get(), pageable);
+    }
+
+    public Page<Farmer> findWithoutTechnicianAndType(Integer typeId, Pageable pageable) {
+        var typeOpt = typeRepository.findById(typeId);
+        if (typeOpt.isEmpty()) {
+            throw new IllegalArgumentException("Tipo de produtor não encontrado.");
+        }
+        return farmerRepository.findWithoutTechnicianAndType(typeOpt.get(), pageable);
+    }
+
     public Page<Farmer> findByEffectiveBranch(Branch branch, Pageable pageable) {
         return farmerRepository.findByEffectiveBranch(branch, pageable);
+    }
+
+    public Page<Farmer> findByEffectiveBranchAndType(
+            Branch branch, Integer typeId, Pageable pageable) {
+
+        Type type = typeRepository.findById(typeId)
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de produtor não encontrado."));
+
+        return farmerRepository.findByEffectiveBranchAndType(branch, type, pageable);
     }
 
     public Farmer updateFarmer(Farmer farmer, FarmerRequestDTO farmerRequestDTO) {
         FamilyGroup familyGroup = null;
         User user = null;
         Type type = null;
+        Branch branch = null;
 
         farmer.setName(farmerRequestDTO.name());
         farmer.setStatus(farmerRequestDTO.status());
@@ -108,6 +138,12 @@ public class FarmerService {
             type = typeRepository.findById(farmerRequestDTO.typeId())
                     .orElseThrow(() -> new RuntimeException("Tipo não encontrado"));
             farmer.setType(type);
+        }
+
+        if (farmerRequestDTO.branch() != null) {
+            branch = branchRepository.findById(farmerRequestDTO.branch())
+                    .orElseThrow(() -> new RuntimeException("Carteira não encontrada"));
+            farmer.setBranch(branch);
         }
 
         return farmerRepository.save(farmer);

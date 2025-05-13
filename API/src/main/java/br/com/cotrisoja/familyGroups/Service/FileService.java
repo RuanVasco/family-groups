@@ -1,14 +1,8 @@
 package br.com.cotrisoja.familyGroups.Service;
 
-import br.com.cotrisoja.familyGroups.Entity.Branch;
-import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
-import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Entity.*;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
-import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
-import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
-import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
-import br.com.cotrisoja.familyGroups.Repository.UserRepository;
+import br.com.cotrisoja.familyGroups.Repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -31,6 +25,7 @@ public class FileService {
     private final UserRepository userRepository;
     private final FarmerRepository farmerRepository;
     private final FamilyGroupRepository familyGroupRepository;
+    private final TypeRepository typeRepository;
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
     @Async("fileUploadExecutor")
@@ -41,7 +36,11 @@ public class FileService {
 
             for (String row : lines) {
                 try {
-                    processFarmerRow(row);
+                    if ("dados_produtores.csv".equals(file.getOriginalFilename())) {
+                        processTypeUpdate(row);
+                    } else {
+                        processFarmerRow(row);
+                    }
                 } catch (Exception e) {
                     log.warn("Erro ao processar linha: {}\nMotivo: {}", row, e.getMessage());
                 }
@@ -49,7 +48,9 @@ public class FileService {
 
             for (String row : lines) {
                 try {
-                    associateFarmerToGroup(row);
+                    if (!"dados_produtores.csv".equals(file.getOriginalFilename())) {
+                        associateFarmerToGroup(row);
+                    }
                 } catch (Exception e) {
                     log.warn("Erro ao associar produtor ao grupo: {}\nMotivo: {}", row, e.getMessage());
                 }
@@ -57,6 +58,37 @@ public class FileService {
         } catch (IOException e) {
             log.error("Erro ao ler o arquivo CSV: {}", e.getMessage());
             throw e;
+        }
+    }
+
+    private void processTypeUpdate(String row) {
+        String[] columns = row.split(";", -1);
+
+        if (columns.length < 2) {
+            log.warn("Linha inválida: {}", row);
+            return;
+        }
+
+        String registrationNumber = columns[0].trim();
+        String groupIdRaw = columns[1].replaceAll("^G0*", "").trim();
+
+        try {
+            Integer groupID = Integer.parseInt(groupIdRaw);
+
+            farmerRepository.findById(registrationNumber).ifPresent(farmer -> {
+                if (farmer.getType() != null && farmer.getType().getId() == 1) return;
+
+                typeRepository.findById(groupID)
+                        .filter(type -> !type.equals(farmer.getType()))
+                        .ifPresent(type -> {
+                            farmer.setType(type);
+                            farmerRepository.save(farmer);
+                            log.info("Produtor {} atualizado para tipo {}", registrationNumber, type.getDescription());
+                        });
+            });
+
+        } catch (NumberFormatException e) {
+            log.warn("Group ID inválido na linha: {}", row);
         }
     }
 
@@ -79,12 +111,11 @@ public class FileService {
 //        double soybeanArea = parseDouble(columns, 13, "soybeanArea", row);
 
         String branchName = getCol(columns, 14);
-
         Branch branch = findOrCreateBranch(branchName);
 
         User technician;
         if (!technicianName.equals("SEM TECNICO")) {
-            technician = findOrCreateUser(technicianName, branch);
+            technician = findOrCreateUser(technicianName);
         } else {
             technician = null;
         }
@@ -96,10 +127,9 @@ public class FileService {
 
             if (technician != null) {
                 f.setTechnician(technician);
-            } else {
-                f.setBranch(branch);
             }
 
+            f.setBranch(branch);
             f.setOwnedArea(ownedArea);
             f.setLeasedArea(leasedArea);
             f.setStatus("Normal".equalsIgnoreCase(farmerStatus) ? StatusEnum.ACTIVE : StatusEnum.DECEASED);
@@ -161,27 +191,18 @@ public class FileService {
         }
     }
 
-    private Long parseLong(String value) {
-        try {
-            return StringUtils.hasText(value.trim()) ? Long.parseLong(value.trim()) : null;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
     private Branch findOrCreateBranch(String name) {
         return branchRepository.findByName(name)
                 .orElseGet(() -> branchRepository.save(new Branch(name)));
     }
 
-    private User findOrCreateUser(String name, Branch branch) {
+    private User findOrCreateUser(String name) {
         if (name == null || name.isEmpty()) return null;
 
         return userRepository.findByUsername(generateUsersname(name)).orElseGet(() -> {
             User user = new User();
             user.setUsername(generateUsersname(name));
             user.setName(name);
-            user.setBranch(branch);
             user.setRoles(Set.of("ROLE_USER", "ROLE_TECHNICIAN"));
             user.setPassword("!");
             return userRepository.save(user);

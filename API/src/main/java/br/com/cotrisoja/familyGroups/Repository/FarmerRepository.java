@@ -2,6 +2,7 @@ package br.com.cotrisoja.familyGroups.Repository;
 
 import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
+import br.com.cotrisoja.familyGroups.Entity.Type;
 import br.com.cotrisoja.familyGroups.Entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,14 +33,28 @@ public interface FarmerRepository extends JpaRepository<Farmer, String> {
     Page<Farmer> findByTechnician(@Param("technician") User technician, Pageable pageable);
 
     @Query("""
-    SELECT f FROM Farmer f
-    LEFT JOIN f.technician t
-    LEFT JOIN t.branch tb
-    WHERE (t IS NOT NULL AND tb = :branch)
-       OR (t IS NULL  AND f.branch = :branch)
-""")
+        SELECT f FROM Farmer f
+        WHERE f.branch = :branch
+    """)
     Page<Farmer> findByEffectiveBranch(@Param("branch") Branch branch, Pageable pageable);
+
+    @Query("""
+        SELECT f FROM Farmer f
+        WHERE f.branch = :branch
+        AND f.type = :type
+    """)
+    Page<Farmer> findByEffectiveBranchAndType(
+            @Param("branch") Branch branch,
+            @Param("type") Type type,
+            Pageable pageable
+    );
 
     @Query("SELECT f FROM Farmer f WHERE f.technician IS NULL")
     Page<Farmer> findWithoutTechnician(Pageable pageable);
+
+    @Query("SELECT f FROM Farmer f WHERE f.technician = :technician AND f.type = :type")
+    Page<Farmer> findByTechnicianAndType(@Param("technician") User technician, @Param("type") Type type, Pageable pageable);
+
+    @Query("SELECT f FROM Farmer f WHERE f.technician IS NULL AND f.type = :type")
+    Page<Farmer> findWithoutTechnicianAndType(@Param("type") Type type, Pageable pageable);
 }

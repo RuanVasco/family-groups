@@ -32,18 +32,19 @@ const FamilyGroupTable = ({
     return (
         <div>
             <div key={familyGroup.id}>
-                <div className="mb-4">
-                    <h4 className="fw-bold d-flex">
+                <div className="mb-3">
+                    <h5 className="fw-bold d-flex">
                         Grupo Familiar #{familyGroup.id} - Principal: {familyGroup.principal.name}
                         <span className="ms-auto me-3">Área total do grupo familiar: {totalArea} ha</span>
-                    </h4>
+                    </h5>
                 </div>
                 <CustomTable
                     headers={[
                         "Matrícula",
+                        "Tipo",
                         "Nome",
                         "Situação",
-                        "Tipo",
+                        "Carteira",
                         "Técnico",
                         "Área própria",
                         "Área arrendada",
@@ -52,9 +53,10 @@ const FamilyGroupTable = ({
                     ]}
                     columnWidths={[
                         "90px",
+                        "90px",
                         "230px",
                         "90px",
-                        "90px",
+                        undefined,
                         "230px",
                         "140px",
                         "170px",
@@ -65,9 +67,10 @@ const FamilyGroupTable = ({
                     {farmers.map((f) => (
                         <tr key={Number(f.registrationNumber)}>
                             <td>{f.registrationNumber}</td>
+                            <td>{f.type?.id ?? "-"}</td>
                             <td>{f.name}</td>
                             <td>{StatusLabels[f.status]}</td>
-                            <td>{f.type?.description || "-"}</td>
+                            <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
                             <td>{f.technician?.name || "Sem técnico"}</td>
                             <td>{f.ownedArea} ha</td>
                             <td>{f.leasedArea} ha</td>
@@ -77,22 +80,25 @@ const FamilyGroupTable = ({
                                     <button
                                         className="button_edit btn_sm"
                                         onClick={() => onEditFarmer && onEditFarmer(f)}
+                                        title="Editar Produtor"
                                     >
-                                        <FaPen /> Editar
+                                        <FaPen />
                                     </button>
                                     {f.registrationNumber !== familyGroup.principal.registrationNumber && (
                                         <>
                                             <button
                                                 className="button_neutral btn_sm"
                                                 onClick={() => onMakePrincipal && onMakePrincipal(f)}
+                                                title="Tornar Principal"
                                             >
-                                                <FaChessKing /> Principal
+                                                <FaChessKing />
                                             </button>
                                             <button
                                                 className="button_remove btn_sm"
                                                 onClick={() => onRemoveFarmer && onRemoveFarmer(f)}
+                                                title="Remover Produtor do Grupo Familiar"
                                             >
-                                                <FaMinus /> Remover
+                                                <FaMinus />
                                             </button>
                                         </>
                                     )}
@@ -101,10 +107,10 @@ const FamilyGroupTable = ({
                         </tr>
                     ))}
                 </CustomTable>
-                <div className="mt-5">
-                    <h4 className="fw-bold border-top pt-3">
+                <div className="mt-2">
+                    <h5 className="fw-bold">
                         Cultivos
-                    </h4>
+                    </h5>
                 </div>
                 <CustomTable
                     headers={[

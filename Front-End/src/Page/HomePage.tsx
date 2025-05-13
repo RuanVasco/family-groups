@@ -274,6 +274,7 @@ const HomePage = () => {
                                         setReportType("byBranch");
                                         setMenuContext("reportType");
                                         fetchBranchs(1);
+                                        setCollapsed(false);
                                     }}
                                     className="d-flex align-items-center gap-2"
                                 >
@@ -285,6 +286,7 @@ const HomePage = () => {
                                         setReportType("byTechnician");
                                         setMenuContext("reportType");
                                         fetchUsers(1);
+                                        setCollapsed(false);
                                     }}
                                     className="d-flex align-items-center gap-2"
                                 >
@@ -391,9 +393,10 @@ const HomePage = () => {
                 </div>
             </div>
 
-            <div className="col">
+            <div className="col overflow-hidden" style={{ minWidth: 0 }}>
                 {(viewType === "report_by_technician_farmer" ||
-                    viewType === "report_by_technician_familyGroup") && (
+                    viewType === "report_by_technician_familyGroup" ||
+                    selectedUser) && (
                         <div className="d-flex justify-content-between report-header">
                             <h4 className="fw-bold m-0 p-0">
                                 Técnico:&nbsp;
@@ -415,8 +418,8 @@ const HomePage = () => {
                         )}
                     </div>
                 )}
-                <div className="content">
 
+                <div className="content">
                     {!viewType && (<></>)}
                     {viewType === "familyGroup" && <FamilyGroup />}
                     {viewType === "farmer" && <Farmer />}

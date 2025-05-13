@@ -1,9 +1,6 @@
 package br.com.cotrisoja.familyGroups.DTO.Farmer;
 
-import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
-import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Entity.Type;
-import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Entity.*;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 
 public record FarmerRequestDTO (
@@ -14,9 +11,10 @@ public record FarmerRequestDTO (
         Long technicianId,
         Integer typeId,
         double ownedArea,
-        double leasedArea
+        double leasedArea,
+        Long branch
 ) {
-    public Farmer toEntity(FamilyGroup familyGroup, User user, Type type) {
+    public Farmer toEntity(FamilyGroup familyGroup, User user, Type type, Branch branch) {
         Farmer farmer = new Farmer();
         farmer.setRegistrationNumber(this.registrationNumber);
         farmer.setName(this.name);
@@ -24,6 +22,7 @@ public record FarmerRequestDTO (
         farmer.setFamilyGroup(familyGroup);
         farmer.setOwnedArea(this.ownedArea);
         farmer.setLeasedArea(this.leasedArea);
+        farmer.setBranch(branch);
         farmer.setTechnician(user);
 
         if (type != null) {

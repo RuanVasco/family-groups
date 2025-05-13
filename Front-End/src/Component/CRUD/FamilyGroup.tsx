@@ -226,7 +226,8 @@ const FamilyGroup = () => {
                 familyGroupId: currentFarmer.familyGroup?.id,
                 technicianId: currentFarmer.technician?.id,
                 ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea
+                leasedArea: currentFarmer.leasedArea,
+                branch: currentFarmer.branch?.id
             }
 
             const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, data);

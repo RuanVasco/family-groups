@@ -36,12 +36,19 @@ interface FamilyGroupReport {
 }
 
 const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupProps) => {
-    const { data: familyGroups, loading, refetch } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
+    const { data: familyGroups, loading } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
     const [show, setShow] = useState(false);
     const [cultivationModalShow, setCultivationModalShow] = useState(false);
     const [editCultivation, setEditCultivation] = useState<CultivationType>({});
     const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<FamilyGroupType | null>(null);
+    const [useFamilyGroups, setUseFamilyGroups] = useState<FamilyGroupReport[]>([]);
+
+    useEffect(() => {
+        if (familyGroups) {
+            setUseFamilyGroups(familyGroups);
+        }
+    }, [familyGroups]);
 
     const handleCultivationModalClose = () => {
         setCultivationModalShow(false)
@@ -62,14 +69,21 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
             );
 
             if (res.status === 200 || res.status === 201) {
-                refetch();
+                // refetch();
+
+                setUseFamilyGroups(prevGroups =>
+                    prevGroups.map(fg =>
+                        fg.familyGroupId === selectedFamilyGroup.id
+                            ? { ...fg, ...editCultivation }
+                            : fg
+                    )
+                );
+
+                setCultivationModalShow(false)
                 toast.success("Culturas atualizadas com sucesso");
-                setShow(false);
             }
         } catch (error) {
             toast.error("Erro ao atualizar culturas");
-        } finally {
-            setShow(false);
         }
     };
 
@@ -87,13 +101,34 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                 familyGroupId: currentFarmer.familyGroup?.id,
                 technicianId: currentFarmer.technician?.id,
                 ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea
+                leasedArea: currentFarmer.leasedArea,
+                branch: currentFarmer.branch?.id
             }
 
             const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, data);
 
             if (res.status === 200 || res.status === 201) {
-                refetch();
+
+                if (useFamilyGroups) {
+                    const group = useFamilyGroups.find(fg =>
+                        fg.members.some(member => member.registrationNumber === currentFarmer.registrationNumber)
+                    );
+
+                    if (group) {
+                        const member = group.members.find(m => m.registrationNumber === currentFarmer.registrationNumber);
+                        if (member) {
+                            member.registrationNumber = currentFarmer.registrationNumber;
+                            member.name = currentFarmer.name;
+                            member.status = currentFarmer.status;
+                            member.familyGroup = currentFarmer.familyGroup;
+                            member.technician = currentFarmer.technician;
+                            member.ownedArea = currentFarmer.ownedArea;
+                            member.leasedArea = currentFarmer.leasedArea;
+                            member.branch = currentFarmer.branch;
+                        }
+                    }
+                }
+
                 toast.success("Produtor atualizado com sucesso!");
                 setShow(false);
             }
@@ -102,12 +137,19 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
         }
     };
 
-    const handlePrincipalChange = async (farmerId: String, familyGroupId: String) => {
+    const handlePrincipalChange = async (farmer: FarmerType, familyGroup: FamilyGroupReport) => {
         try {
-            const res = await axiosInstance.put(`/family-group/change-principal/${familyGroupId}/${farmerId}`);
+            const res = await axiosInstance.put(`/family-group/change-principal/${familyGroup.familyGroupId}/${farmer.registrationNumber}`);
 
             if (res.status === 200 || res.status === 201) {
-                refetch();
+                setUseFamilyGroups(prevGroups =>
+                    prevGroups.map(group =>
+                        group.familyGroupId === familyGroup.familyGroupId
+                            ? { ...group, principal: farmer }
+                            : group
+                    )
+                );
+
                 toast.success("Principal atualizado.");
             }
         } catch (error) {
@@ -115,58 +157,53 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
         }
     };
 
-    const handleRemoveMember = async (farmer: String, familyGroupId: String) => {
+    const handleRemoveMember = async (farmer: String, familyGroupId: string) => {
         try {
-            const res = await axiosInstance.put(`/family-group/remove-member/${familyGroupId}/${farmer}`);
+            const res = await axiosInstance.put(
+                `/family-group/remove-member/${familyGroupId}/${farmer}`
+            );
 
             if (res.status === 200 || res.status === 201) {
-                refetch();
+                setUseFamilyGroups(prevGroups =>
+                    prevGroups.map(group =>
+                        group.familyGroupId === Number(familyGroupId)
+                            ? {
+                                ...group,
+                                members: group.members.filter(member => member.registrationNumber !== farmer)
+                            }
+                            : group
+                    )
+                );
+
                 toast.success("Produtor removido com sucesso!");
             }
         } catch (error) {
             toast.error("Erro ao remover o produtor do grupo familiar.");
         }
-    }
+    };
 
     useEffect(() => {
-        if (familyGroups) {
-            setTotalItems(familyGroups.length);
+        if (useFamilyGroups) {
+            setTotalItems(useFamilyGroups.length);
         }
-    }, [familyGroups]);
+    }, [useFamilyGroups]);
 
     return (
         <div className="p-4">
             {loading ? (
                 <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
-                    <div className="spinner-border text-primary" role="status">
+                    <div className="spinner-border" role="status">
                         <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
             ) : (
-                familyGroups && familyGroups.map((f) => (
-                    <div className="floating_panel my-3">
-                        <FamilyGroupTable
-                            key={f.familyGroupId}
-                            familyGroup={{
-                                id: f.familyGroupId,
-                                principal: f.principal,
-                                members: f.members,
-                                canolaArea: f.canolaArea,
-                                wheatArea: f.wheatArea,
-                                cornSilageArea: f.cornSilageArea,
-                                grainCornArea: f.grainCornArea,
-                                beanArea: f.beanArea,
-                                soybeanArea: f.soybeanArea,
-                            }}
-                            showActions={true}
-                            onMakePrincipal={
-                                (farmer) => handlePrincipalChange(farmer.registrationNumber, String(f.familyGroupId))
-                            }
-                            onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber, String(f.familyGroupId))}
-                            onEditFarmer={handleEditFarmer}
-                            onEditCultivation={() => {
-                                setSelectedFamilyGroup(
-                                    {
+                <div style={{ overflowY: "auto", height: "85vh" }}>
+                    {
+                        useFamilyGroups && useFamilyGroups.map((f) => (
+                            <div className="floating_panel my-3">
+                                <FamilyGroupTable
+                                    key={f.familyGroupId}
+                                    familyGroup={{
                                         id: f.familyGroupId,
                                         principal: f.principal,
                                         members: f.members,
@@ -176,13 +213,44 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                                         grainCornArea: f.grainCornArea,
                                         beanArea: f.beanArea,
                                         soybeanArea: f.soybeanArea,
+                                    }}
+                                    showActions={true}
+                                    onMakePrincipal={
+                                        (farmer) => handlePrincipalChange(farmer, f)
                                     }
-                                );
-                                setCultivationModalShow(true);
-                            }}
-                        />
-                    </div>
-                ))
+                                    onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber, String(f.familyGroupId))}
+                                    onEditFarmer={handleEditFarmer}
+                                    onEditCultivation={() => {
+                                        setSelectedFamilyGroup(
+                                            {
+                                                id: f.familyGroupId,
+                                                principal: f.principal,
+                                                members: f.members,
+                                                canolaArea: f.canolaArea,
+                                                wheatArea: f.wheatArea,
+                                                cornSilageArea: f.cornSilageArea,
+                                                grainCornArea: f.grainCornArea,
+                                                beanArea: f.beanArea,
+                                                soybeanArea: f.soybeanArea,
+                                            }
+                                        );
+
+                                        setEditCultivation({
+                                            canolaArea: f.canolaArea,
+                                            wheatArea: f.wheatArea,
+                                            cornSilageArea: f.cornSilageArea,
+                                            grainCornArea: f.grainCornArea,
+                                            beanArea: f.beanArea,
+                                            soybeanArea: f.soybeanArea,
+                                        });
+
+                                        setCultivationModalShow(true);
+                                    }}
+                                />
+                            </div>
+                        ))
+                    }
+                </div>
             )}
 
             <FarmerModal
@@ -213,12 +281,10 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             </Form.Label>
                             <Form.Control
                                 type="number"
-                                value={editCultivation.canolaArea ?? 0}
+                                value={editCultivation.canolaArea !== undefined ? editCultivation.canolaArea : ""}
                                 onChange={(e) => {
-                                    setEditCultivation(prev => ({
-                                        ...prev,
-                                        canolaArea: parseFloat(e.target.value)
-                                    }))
+                                    const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                                    setEditCultivation(prev => ({ ...prev, canolaArea: value }));
                                 }}
                             />
                         </Form.Group>
@@ -226,11 +292,11 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             <Form.Label>Trigo</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={editCultivation.wheatArea ?? 0}
-                                onChange={(e) =>
+                                value={editCultivation.wheatArea !== undefined ? editCultivation.wheatArea : ""}
+                                onChange={e =>
                                     setEditCultivation(prev => ({
                                         ...prev,
-                                        wheatArea: parseFloat(e.target.value) || 0,
+                                        wheatArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                     }))
                                 }
                             />
@@ -240,11 +306,11 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             <Form.Label>Milho silagem</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={editCultivation.cornSilageArea ?? 0}
-                                onChange={(e) =>
+                                value={editCultivation.cornSilageArea !== undefined ? editCultivation.cornSilageArea : ""}
+                                onChange={e =>
                                     setEditCultivation(prev => ({
                                         ...prev,
-                                        cornSilageArea: parseFloat(e.target.value) || 0,
+                                        cornSilageArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                     }))
                                 }
                             />
@@ -254,11 +320,11 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             <Form.Label>Milho grão</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={editCultivation.grainCornArea ?? 0}
-                                onChange={(e) =>
+                                value={editCultivation.grainCornArea !== undefined ? editCultivation.grainCornArea : ""}
+                                onChange={e =>
                                     setEditCultivation(prev => ({
                                         ...prev,
-                                        grainCornArea: parseFloat(e.target.value) || 0,
+                                        grainCornArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                     }))
                                 }
                             />
@@ -268,11 +334,11 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             <Form.Label>Feijão</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={editCultivation.beanArea ?? 0}
-                                onChange={(e) =>
+                                value={editCultivation.beanArea !== undefined ? editCultivation.beanArea : ""}
+                                onChange={e =>
                                     setEditCultivation(prev => ({
                                         ...prev,
-                                        beanArea: parseFloat(e.target.value) || 0,
+                                        beanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                     }))
                                 }
                             />
@@ -282,11 +348,11 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             <Form.Label>Soja</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={editCultivation.soybeanArea ?? 0}
-                                onChange={(e) =>
+                                value={editCultivation.soybeanArea !== undefined ? editCultivation.soybeanArea : ""}
+                                onChange={e =>
                                     setEditCultivation(prev => ({
                                         ...prev,
-                                        soybeanArea: parseFloat(e.target.value) || 0,
+                                        soybeanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                     }))
                                 }
                             />

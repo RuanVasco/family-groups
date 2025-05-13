@@ -12,6 +12,7 @@ import CustomTable from "../Common/CustomTable";
 import Pagination from "../Common/Pagination";
 import FarmerModal from "../FarmerModal";
 import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
+import Select from "react-select";
 
 interface Props {
     branch?: BranchType;
@@ -52,35 +53,43 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         setPageSize: updatePageSize,
     } = usePaginatedFetchData<FarmerType>(endpoint, pageSize, baseParams);
 
+    const [selectedType, setSelectedType] = useState<{ label: string; value: string } | null>({
+        label: "Todos",
+        value: "",
+    });
+
+
     /* mapeia header → campo da API */
     const fieldMap: Record<string, string> = {
         "Matrícula": "registrationNumber",
+        "Tipo": "type",
         "Nome": "name",
         "Situação": "status",
         "Técnico": "technician.name",
+        "Carteira": "branch",
         "Área própria": "ownedArea",
         "Área arrendada": "leasedArea",
-        "Área total": "totalArea",          // ajuste se o backend tiver campo diferente
+        "Área total": "totalArea",
     };
-
-    /* total para cabeçalho do relatório */
-    useEffect(() => {
-        if (!sortFieldUi) return;
-        const apiField = fieldMap[sortFieldUi];
-        fetchPage(1, { sort: `${apiField},${sortDirUi}` });
-    }, [sortFieldUi, sortDirUi]);
 
     /* primeira carga */
     useEffect(() => {
-        fetchPage(1);       // ← não retorna nada
+        setSelectedType({
+            label: "Todos",
+            value: "",
+        });
+        fetchPage(1);
     }, [endpoint]);
 
     /* quando sort muda → recarrega página 1 */
     useEffect(() => {
         if (!sortFieldUi) return;
         const apiField = fieldMap[sortFieldUi];
-        fetchPage(1, { sort: `${apiField},${sortDirUi}` });
-    }, [sortFieldUi, sortDirUi]);
+        fetchPage(1, {
+            sort: `${apiField},${sortDirUi}`,
+            typeId: selectedType?.value || undefined,
+        });
+    }, [sortFieldUi, sortDirUi, selectedType]);
 
     useEffect(() => {
         if (setTotalItems && totalItems) {
@@ -90,10 +99,22 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
 
     /* clique no cabeçalho */
     const handleSort = (header: string) => {
-        const nextDir =
-            sortFieldUi === header && sortDirUi === "asc" ? "desc" : "asc";
+        const nextDir = sortFieldUi === header && sortDirUi === "asc" ? "desc" : "asc";
         setSortFieldUi(header);
         setSortDirUi(nextDir);
+
+        const apiField = fieldMap[header];
+        fetchPage(1, {
+            sort: `${apiField},${nextDir}`,
+            typeId: selectedType?.value || undefined,
+        });
+    };
+
+
+    const handleType = (selectedOption: any) => {
+        setSelectedType(selectedOption);
+        const typeFilter = selectedOption?.value || undefined;
+        fetchPage(1, { typeId: typeFilter });
     };
 
     /* editar produtor */
@@ -110,6 +131,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 technicianId: currentFarmer.technician?.id,
                 ownedArea: currentFarmer.ownedArea,
                 leasedArea: currentFarmer.leasedArea,
+                branch: currentFarmer.branch?.id
             };
             const res = await axiosInstance.put(
                 `/farmer/${currentFarmer.registrationNumber}`, body
@@ -127,16 +149,30 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
     /* loading / vazio */
     if (isLoading)
         return (
-            <div className="d-flex justify-content-center py-5">
-                <div className="spinner-border" />
+            <div className="d-flex justify-content-center align-items-center py-5" style={{ height: "100px" }}>
+                <div className="spinner-border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
             </div>
         );
-    if (!farmers.length) return <p className="p-3">Nenhum dado encontrado.</p>;
+
 
     /* tabela + paginação */
     return (
         <div className="pt-3 px-4 pb-5">
             <div className="floating_panel my-4 px-4">
+                <Select
+                    className="my-2 w-25"
+                    options={[
+                        { label: "Todos", value: "" },
+                        { label: "1 - Pessoa Física Associado", value: "1" },
+                        { label: "2 - Pessoa Física Terceiro", value: "2" },
+                        { label: "3 - Pessoa Juridica Associado", value: "3" },
+                        { label: "4 - Pessoa Juridica Terceiro", value: "4" },
+                    ]}
+                    onChange={handleType}
+                    value={selectedType}
+                />
                 <Pagination
                     itemsPerPage={pageSize}
                     onItemsPerPageChange={(val) => { setPageSize(val); updatePageSize(val); }}
@@ -144,33 +180,45 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                     totalPages={totalPages}
                     onPageChange={fetchPage}
                 >
-                    <CustomTable
-                        headers={[
-                            "Matrícula", "Nome", "Situação", "Técnico",
-                            "Área própria", "Área arrendada", "Área total", "Ações",
-                        ]}
-                        sortField={sortFieldUi}
-                        sortDir={sortDirUi}
-                        onSort={handleSort}
-                    >
-                        {farmers.map(f => (
-                            <tr key={Number(f.registrationNumber)}>
-                                <td>{f.registrationNumber}</td>
-                                <td>{f.name}</td>
-                                <td>{StatusLabels[f.status]}</td>
-                                <td>{f.technician?.name ?? "Sem técnico"}</td>
-                                <td>{f.ownedArea} ha</td>
-                                <td>{f.leasedArea} ha</td>
-                                <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
-                                <td>
-                                    <button className="button_edit"
-                                        onClick={() => { setCurrentFarmer(f); setShow(true); }}>
-                                        <FaPen /> Editar
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </CustomTable>
+                    {!farmers.length ? (
+                        <h5 className="fw-bold mx-auto my-3">Nenhum dado encontrado.</h5>
+                    ) : (
+                        <CustomTable
+                            headers={[
+                                "Matrícula", "Tipo", "Nome", "Situação", "Carteira", "Técnico",
+                                "Área própria", "Área arrendada", "Área total", "Ações",
+                            ]}
+                            columnWidths={[
+                                "100px",
+                                "90px",
+                                "undefined",
+                                "100px"
+                            ]}
+                            sortField={sortFieldUi}
+                            sortDir={sortDirUi}
+                            onSort={handleSort}
+                        >
+                            {farmers.map(f => (
+                                <tr key={Number(f.registrationNumber)}>
+                                    <td>{f.registrationNumber}</td>
+                                    <td>{f.type?.id ?? "-"}</td>
+                                    <td>{f.name}</td>
+                                    <td>{StatusLabels[f.status]}</td>
+                                    <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                    <td>{f.technician?.name ?? "Sem técnico"}</td>
+                                    <td>{f.ownedArea} ha</td>
+                                    <td>{f.leasedArea} ha</td>
+                                    <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
+                                    <td>
+                                        <button className="button_edit"
+                                            onClick={() => { setCurrentFarmer(f); setShow(true); }}>
+                                            <FaPen /> Editar
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </CustomTable>
+                    )}
                 </Pagination>
             </div>
 

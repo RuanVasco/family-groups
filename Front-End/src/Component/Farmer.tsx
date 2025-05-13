@@ -8,6 +8,7 @@ import { StatusLabels } from "../Enum/StatusEnum";
 import Pagination from "./Common/Pagination";
 import FarmerModal from "./FarmerModal";
 import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
+import CustomTable from "./Common/CustomTable";
 
 const Farmer = () => {
     /** ───────────────────────   estados de filtro  ─────────────────────── */
@@ -74,6 +75,7 @@ const Farmer = () => {
                 technicianId: currentFarmer.technician?.id,
                 ownedArea: currentFarmer.ownedArea,
                 leasedArea: currentFarmer.leasedArea,
+                branch: currentFarmer.branch?.id
             };
 
             const res =
@@ -90,7 +92,7 @@ const Farmer = () => {
                         ? "Produtor criado com sucesso!"
                         : "Produtor atualizado com sucesso!"
                 );
-                fetchPage(currentPage); // recarrega lista mantendo filtros atuais
+                fetchPage(currentPage);
             }
         } catch {
             toast.error("Erro ao salvar produtor.");
@@ -122,8 +124,8 @@ const Farmer = () => {
             <Pagination
                 itemsPerPage={pageSize}
                 onItemsPerPageChange={(val) => {
-                    setPageSize(val);       // atualiza select
-                    hookSetPageSize(val);   // dispara fetchPage(1) já preservando filtros
+                    setPageSize(val);
+                    hookSetPageSize(val);
                 }}
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -141,49 +143,56 @@ const Farmer = () => {
                     ) : farmers.length === 0 ? (
                         <p className="p-3">Nenhum produtor encontrado.</p>
                     ) : (
-                        <table className="custom_table">
-                            <thead>
-                                <tr>
-                                    <th>Ações</th>
-                                    <th>Matrícula</th>
-                                    <th>Nome</th>
-                                    <th>Situação</th>
-                                    <th>Tipo</th>
-                                    <th>Técnico</th>
-                                    <th>Grupo familiar</th>
-                                    <th>Terra própria</th>
-                                    <th>Terra arrendada</th>
-                                    <th>Terra total</th>
+                        <CustomTable
+                            headers={[
+                                "Ações", "Matrícula", "Nome", "Situação", "Técnico", "Carteira", "Grupo familiar", "Terra própria", "Terra arrendada", "Terra total"
+                            ]}
+                        >
+                            {farmers.map((f) => (
+                                <tr key={Number(f.registrationNumber)}>
+                                    <td>
+                                        <button
+                                            className="button_edit"
+                                            onClick={() => openModal("edit", f)}
+                                        >
+                                            <FaPen /> Editar
+                                        </button>
+                                    </td>
+                                    <td>{f.registrationNumber}</td>
+                                    <td>{f.name}</td>
+                                    <td>{StatusLabels[f.status]}</td>
+                                    <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
+                                    <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                    <td>
+                                        {f.familyGroup
+                                            ? f.familyGroup.principal.name
+                                            : "Sem grupo familiar"}
+                                    </td>
+                                    <td>{f.ownedArea ?? 0} ha</td>
+                                    <td>{f.leasedArea ?? 0} ha</td>
+                                    <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {farmers.map((f) => (
-                                    <tr key={Number(f.registrationNumber)}>
-                                        <td>
-                                            <button
-                                                className="button_edit"
-                                                onClick={() => openModal("edit", f)}
-                                            >
-                                                <FaPen /> Editar
-                                            </button>
-                                        </td>
-                                        <td>{f.registrationNumber}</td>
-                                        <td>{f.name}</td>
-                                        <td>{StatusLabels[f.status]}</td>
-                                        <td>{f.type?.description ?? "-"}</td>
-                                        <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
-                                        <td>
-                                            {f.familyGroup
-                                                ? f.familyGroup.principal.name
-                                                : "Sem grupo familiar"}
-                                        </td>
-                                        <td>{f.ownedArea ?? 0} ha</td>
-                                        <td>{f.leasedArea ?? 0} ha</td>
-                                        <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                            ))}
+                        </CustomTable>
+                        // <table className="custom_table">
+                        //     <thead>
+                        //         <tr>
+                        //             <th>Ações</th>
+                        //             <th>Matrícula</th>
+                        //             <th>Nome</th>
+                        //             <th>Situação</th>
+                        //             <th>Técnico</th>
+                        //             <th>Carteira</th>
+                        //             <th>Grupo familiar</th>
+                        //             <th>Terra própria</th>
+                        //             <th>Terra arrendada</th>
+                        //             <th>Terra total</th>
+                        //         </tr>
+                        //     </thead>
+                        //     <tbody>
+
+                        //     </tbody>
+                        // </table>
                     )}
                 </div>
             </Pagination>

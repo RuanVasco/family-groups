@@ -16,7 +16,7 @@ public record FarmerResponseDTO(
         UserResponseDTO technician,
         BranchResponseDTO branch,
         FamilyGroupMinimalDTO familyGroup,
-        TypeDTO typeDTO,
+        TypeDTO type,
         double ownedArea,
         double leasedArea
 ) {

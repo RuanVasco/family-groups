@@ -136,6 +136,32 @@ const FarmerModal = ({
                             />
                         </Form.Group>
                     )}
+                    <Form.Group className="mb-3">
+                        <Form.Label>Carteira</Form.Label>
+                        <AsyncSelect
+                            cacheOptions
+                            loadOptions={async (inputValue) => {
+                                try {
+                                    const res = await axiosInstance.get(`/branch`, { params: { search: inputValue, size: 10 } });
+                                    return res.data.content.map((group: FamilyGroupType) => ({
+                                        value: group,
+                                        label: group.principal.name
+                                    }));
+                                } catch (error) {
+                                    return [];
+                                }
+                            }}
+                            defaultOptions
+                            value={
+                                currentFarmer?.branch
+                                    ? { value: currentFarmer.branch, label: currentFarmer.branch.name }
+                                    : null
+                            }
+                            onChange={(selectedOption) => onChange("branch", selectedOption?.value)}
+                            placeholder="Buscar caretira..."
+                            isClearable
+                        />
+                    </Form.Group>
                 </Form>
             </Modal.Body>
             <Modal.Footer>

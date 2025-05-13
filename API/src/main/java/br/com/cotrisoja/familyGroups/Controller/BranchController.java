@@ -1,6 +1,7 @@
 package br.com.cotrisoja.familyGroups.Controller;
 
 import br.com.cotrisoja.familyGroups.DTO.Branch.BranchRequestDTO;
+import br.com.cotrisoja.familyGroups.DTO.Branch.BranchResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
 import br.com.cotrisoja.familyGroups.Service.BranchService;
@@ -10,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/branch")
@@ -44,13 +47,22 @@ public class BranchController {
 
     @GetMapping
     public ResponseEntity<?> getAll(@RequestParam(required = false) Integer page,
-                                    @RequestParam(required = false) Integer size) {
-        if (page != null && size != null) {
-            Pageable pageable = PageRequest.of(page, size);
-            return ResponseEntity.ok(branchRepository.findAll(pageable));
+                                    @RequestParam(required = false) Integer size,
+                                    @RequestParam(required = false) String search) {
+        if (search != null && !search.isBlank()) {
+            return ResponseEntity.ok(branchRepository.findByValue(search)
+                    .stream()
+                    .map(BranchResponseDTO::from)
+                    .toList());
         } else {
-            return ResponseEntity.ok(branchRepository.findAll());
+            if (page != null && size != null) {
+                Pageable pageable = PageRequest.of(page, size);
+                return ResponseEntity.ok(branchRepository.findAll(pageable));
+            } else {
+                return ResponseEntity.ok(branchRepository.findAll());
+            }
         }
+
     }
 
 

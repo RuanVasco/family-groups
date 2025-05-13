@@ -1,12 +1,8 @@
 package br.com.cotrisoja.familyGroups.Controller;
 
-import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupMembersResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
-import br.com.cotrisoja.familyGroups.DTO.User.UserResponseDTO;
-import br.com.cotrisoja.familyGroups.Entity.Branch;
-import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
@@ -86,6 +82,7 @@ public class FarmerController {
     @GetMapping("/by-technician")
     public ResponseEntity<?> getByTechnician(
             @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Integer typeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "registrationNumber,asc") String sort
@@ -93,32 +90,47 @@ public class FarmerController {
         Pageable pageable = PageRequest.of(page, size, buildSort(sort));
         Page<Farmer> farmersPage;
 
-        if (userId == null) {
-            farmersPage = farmerService.findWithoutTechnician(pageable);
+        if (userId != null) {
+            Optional<User> technicianOpt = userRepository.findById(userId);
+            if (technicianOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Usuário não encontrado");
+            }
+
+            farmersPage = (typeId == null)
+                    ? farmerService.findByTechnician(technicianOpt.get(), pageable)
+                    : farmerService.findByTechnicianAndType(technicianOpt.get(), typeId, pageable);
+
         } else {
-            return userRepository.findById(userId)
-                    .<ResponseEntity<?>>map(tech -> ResponseEntity.ok(
-                            farmerService.findByTechnician(tech, pageable)
-                                    .map(FarmerResponseDTO::fromEntity)))
-                    .orElseGet(() -> ResponseEntity.badRequest().body("Usuário não encontrado"));
+            farmersPage = (typeId == null)
+                    ? farmerService.findWithoutTechnician(pageable)
+                    : farmerService.findWithoutTechnicianAndType(typeId, pageable);
         }
 
         return ResponseEntity.ok(farmersPage.map(FarmerResponseDTO::fromEntity));
     }
 
-
     @GetMapping("/by-branch/{branchId}")
     public ResponseEntity<?> getByBranch(
             @PathVariable Long branchId,
+            @RequestParam(required = false) Integer typeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "registrationNumber,asc") String sort)
-    {
+            @RequestParam(defaultValue = "registrationNumber,asc") String sort) {
+
         return branchRepository.findById(branchId)
                 .<ResponseEntity<?>>map(branch -> {
                     Pageable pageable = PageRequest.of(page, size, buildSort(sort));
-                    Page<Farmer> p = farmerService.findByEffectiveBranch(branch, pageable);
-                    return ResponseEntity.ok(p.map(FarmerResponseDTO::fromEntity));
+
+                    Page<Farmer> farmersPage;
+                    try {
+                        farmersPage = (typeId == null)
+                                ? farmerService.findByEffectiveBranch(branch, pageable)
+                                : farmerService.findByEffectiveBranchAndType(branch, typeId, pageable);
+                    } catch (IllegalArgumentException ex) {
+                        return ResponseEntity.badRequest().body(ex.getMessage());
+                    }
+
+                    return ResponseEntity.ok(farmersPage.map(FarmerResponseDTO::fromEntity));
                 })
                 .orElseGet(() -> ResponseEntity.badRequest().body("Carteira não encontrada"));
     }
