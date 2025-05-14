@@ -10,7 +10,6 @@ import Select from "react-select";
 import Pagination from "../Common/Pagination";
 import CustomTable from "../Common/CustomTable";
 import { useFetchItem } from "../../Hook/useFetchItem";
-import { useFetchData } from "../../Hook/useFetchData";
 import { FarmerType } from "../../Type/FarmerType";
 import { FaPlus } from "react-icons/fa6";
 import FarmerModal from "../FarmerModal";
@@ -45,6 +44,7 @@ const FamilyGroup = () => {
     const [selectedPrincipalId, setSelectedPrincipalId] = useState<string>("");
     const [selectedMembers, setSelectedMembers] = useState<FarmerType[]>([]);
     const [editCultivation, setEditCultivation] = useState<CultivationType>({});
+    const [availableSearchValue, setAvailableSearchValue] = useState<string>("");
 
     const {
         data: initialFamilyGroups,
@@ -67,7 +67,15 @@ const FamilyGroup = () => {
         !!selectedFamilyGroup
     );
 
-    const { data: avaibleFarmers, fetch: fetchFarmers } = useFetchData<FarmerType[]>();
+    const {
+        data: availableFarmers,
+        fetchPage: fetchAvailableFarmersPage,
+        currentPage: availableCurrentPage,
+        totalPages: availableTotalPages,
+        pageSize: availablePageSize,
+        isLoading: isLoadingAvailableFarmers,
+        setPageSize: setAvailablePageSize
+    } = usePaginatedFetchData<FarmerType>("/farmer/available", 10);
 
     const params = {
         search: searchValue?.length >= 3 ? searchValue : null,
@@ -102,11 +110,17 @@ const FamilyGroup = () => {
         if (mode === "select") fetchPage(currentPage);
 
         if (mode === "add-farmer" || mode === "create") {
-            await fetchFarmers("/farmer/avaible", "Erro ao buscar os produtores");
+            fetchAvailableFarmersPage(1);
         }
 
         setShow(true);
     };
+
+    useEffect(() => {
+        if (availableSearchValue.length > 3) {
+            fetchAvailableFarmersPage(1, { search: availableSearchValue });
+        }
+    }, [availableSearchValue]);
 
     const handleEditCultivation = async () => {
         try {
@@ -367,32 +381,63 @@ const FamilyGroup = () => {
                                 </CustomTable>
                             )}
                         </ Pagination>
-                    ) : modalMode === "add-farmer" && avaibleFarmers ? (
-                        <CustomTable
-                            headers={[
-                                "Ações",
-                                "Matrícula",
-                                "Nome",
-                                "Técnico"
-                            ]}
+                    ) : modalMode === "add-farmer" && availableFarmers ? (
+                        <Pagination
+                            itemsPerPage={availablePageSize}
+                            onItemsPerPageChange={(val) => setAvailablePageSize(val)}
+                            currentPage={availableCurrentPage}
+                            totalPages={availableTotalPages}
+                            onPageChange={(page) => fetchAvailableFarmersPage(page)}
                         >
-                            {avaibleFarmers.map((p) => (
-                                <tr key={Number(p.registrationNumber)}>
-                                    <td>
-                                        <button
-                                            className="button_agree btn_sm"
-                                            onClick={() => handleAddMember(String(p.registrationNumber))}
-                                        >
-                                            <FaPlus />
-                                            Adicionar
-                                        </button>
-                                    </td>
-                                    <td>{p.registrationNumber}</td>
-                                    <td>{p.name}</td>
-                                    <td>{p.technician?.username || "Sem técnico vinculado"}</td>
-                                </tr>
-                            ))}
-                        </CustomTable>
+                            <>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar produtor..."
+                                    className="mb-3 w-50"
+                                    value={availableSearchValue}
+                                    onChange={(e) => {
+                                        setAvailableSearchValue(e.target.value);
+                                        if (e.target.value.length >= 3) {
+                                            fetchAvailableFarmersPage(1, { search: e.target.value });
+                                        }
+                                    }}
+                                />
+
+                                {isLoadingAvailableFarmers ? (
+                                    <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
+                                        <div className="spinner-border text-primary" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <CustomTable
+                                        headers={[
+                                            "Ações",
+                                            "Matrícula",
+                                            "Nome",
+                                            "Técnico"
+                                        ]}
+                                    >
+                                        {availableFarmers.map((p) => (
+                                            <tr key={Number(p.registrationNumber)}>
+                                                <td>
+                                                    <button
+                                                        className="button_agree btn_sm"
+                                                        onClick={() => handleAddMember(String(p.registrationNumber))}
+                                                    >
+                                                        <FaPlus />
+                                                        Adicionar
+                                                    </button>
+                                                </td>
+                                                <td>{p.registrationNumber}</td>
+                                                <td>{p.name}</td>
+                                                <td>{p.technician?.username || "Sem técnico vinculado"}</td>
+                                            </tr>
+                                        ))}
+                                    </CustomTable>
+                                )}
+                            </>
+                        </Pagination>
                     ) : modalMode === "add-cultivation" ? (
                         <Form>
                             <Form.Group className="mb-2">
@@ -482,7 +527,7 @@ const FamilyGroup = () => {
                         </Form>
                     ) : (
                         <Form>
-                            {avaibleFarmers && (
+                            {availableFarmers && (
                                 <>
                                     <Form.Group>
                                         <Form.Label>Produtor Principal</Form.Label>
@@ -491,7 +536,7 @@ const FamilyGroup = () => {
                                             onChange={(e) => setSelectedPrincipalId(e.target.value)}
                                         >
                                             <option value="">Selecione</option>
-                                            {avaibleFarmers.map((farmer) => (
+                                            {availableFarmers.map((farmer) => (
                                                 <option
                                                     key={Number(farmer.registrationNumber)}
                                                     value={Number(farmer.registrationNumber)}
@@ -506,7 +551,7 @@ const FamilyGroup = () => {
                                         <Form.Label>Participantes</Form.Label>
                                         <Select
                                             isMulti
-                                            options={avaibleFarmers
+                                            options={availableFarmers
                                                 .filter(farmer => farmer.registrationNumber !== selectedPrincipalId)
                                                 .map(farmer => ({
                                                     value: farmer,

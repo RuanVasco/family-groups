@@ -2,40 +2,40 @@
 @use "sass:color";
 
 .custom_table_container {
-  overflow: auto;
-  max-height: 70vh;
-  width: 100%;
+    overflow: auto;
+    max-height: 75vh;
+    width: 100%;
 }
 
 .custom_table {
-  color: var.$secondary-color;
-  min-width: 800px;
-  width: 100%;
-  border-collapse: collapse;
-  border-spacing: 0;
-  table-layout: auto;
+    color: var.$secondary-color;
+    min-width: 800px;
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: auto;
 }
 
 .custom_table td {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .custom_table th {
-  font-size: 1.1rem;
-  position: sticky;
-  top: 0;
-  background-color: var.$tertiary-color;
+    font-size: 1.1rem;
+    position: sticky;
+    top: 0;
+    background-color: var.$tertiary-color;
 }
 
 .custom_table th,
 .custom_table td {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid color.adjust(var.$light-gray-color, $lightness: -10%);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid color.adjust(var.$light-gray-color, $lightness: -10%);
 }
 
 .custom_table tr:last-child td {
-  border-bottom: none;
+    border-bottom: none;
 }

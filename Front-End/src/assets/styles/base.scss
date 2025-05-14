@@ -15,9 +15,7 @@ body {
   height: 100%;
   font-family: var.$font-family-base, sans-serif;
   background-color: var.$tertiary-color;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: 90%; 
+  font-size: 90%;
 }
 
 ul,
@@ -30,6 +28,7 @@ ol {
 a {
   text-decoration: none;
   color: inherit;
+
   &:hover {
     text-decoration: underline;
   }
@@ -71,30 +70,6 @@ input {
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-// select {
-//   background-color: transparent;
-//   border: 1px solid var.$primary-color;
-//   padding: 0.5rem 1rem;
-//   border-radius: 8px;
-//   color: var.$secondary-color;
-//   font-size: 1rem;
-//   outline: none;
-//   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-
-//   &:hover {
-//     cursor: pointer;
-//   }
-
-//   &:focus {
-//     border-color: var.$secondary-color;
-//   }
-
-//   option {
-//     background-color: var.$tertiary-color;
-//     color: var.$secondary-color;
-//   }
-// }
-
 .floating_panel {
   background-color: var.$light-gray-color;
   padding: 1rem;
@@ -123,5 +98,4 @@ h5 {
   min-height: 0;
   height: 100vh;
   overflow-y: auto;
-  padding-bottom: 5px;
 }

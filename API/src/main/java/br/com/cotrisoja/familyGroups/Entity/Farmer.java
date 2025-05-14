@@ -40,6 +40,8 @@ public class Farmer {
     private Type type;
 
     public boolean isValid() {
-        return this.status == StatusEnum.ACTIVE && this.familyGroup == null;
+        return this.status == StatusEnum.ACTIVE &&
+                (this.familyGroup == null ||
+                        (this.familyGroup.getMembers() != null && this.familyGroup.getMembers().size() < 2));
     }
 }

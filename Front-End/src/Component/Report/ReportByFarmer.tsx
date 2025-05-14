@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+/* ReportByFarmer.tsx */
+import { useEffect, useMemo, useState } from "react";
 import { FaPen } from "react-icons/fa6";
 import axiosInstance from "../../axiosInstance";
 import { toast } from "react-toastify";
@@ -14,9 +15,21 @@ import FarmerModal from "../FarmerModal";
 import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
 import Select from "react-select";
 
+/* ————————————————————————————————————————————————————— */
+/* pequeno hook de debounce */
+function useDebouncedValue<T>(value: T, delay = 300) {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+        const id = setTimeout(() => setDebounced(value), delay);
+        return () => clearTimeout(id);
+    }, [value, delay]);
+    return debounced;
+}
+/* ————————————————————————————————————————————————————— */
+
 interface Props {
     branch?: BranchType;
-    technician?: UserType;
+    technician?: UserType;          // null → “sem técnico”
     setTotalItems?: (total: number) => void;
 }
 
@@ -28,19 +41,30 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
     const [sortFieldUi, setSortFieldUi] = useState<string>();
     const [sortDirUi, setSortDirUi] = useState<"asc" | "desc">("asc");
 
-    /* endpoint + filtros base */
+    /* busca */
+    const [searchFarmer, setSearchFarmer] = useState("");
+    const debouncedSearch = useDebouncedValue(searchFarmer.trim(), 200);
+
+    /* filtro tipo */
+    const [selectedType, setSelectedType] = useState<{ label: string; value: string } | null>({
+        label: "Todos",
+        value: ""
+    });
+
+    /* objeto de filtros unificado */
+    const [filters, setFilters] = useState<Record<string, string>>({});
+
+    /* endpoint base */
     const endpoint = branch
         ? `/farmer/by-branch/${branch.id}`
         : "/farmer/by-technician";
 
-    const baseParams =
-        !branch && technician           // technician = null quando “sem técnico”
-            ? { userId: technician.id }   // só envia se houver técnico
-            : undefined;
+    // const baseParams =
+    //     !branch && technician ? { userId: technician.id } : undefined;
 
-    /* modal */
-    const [show, setShow] = useState(false);
-    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+    const baseParams = useMemo(() => {
+        return !branch && technician ? { userId: technician.id } : undefined;
+    }, [branch, technician?.id]);
 
     /* hook paginado */
     const {
@@ -50,74 +74,94 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         totalItems,
         isLoading,
         fetchPage,
-        setPageSize: updatePageSize,
-    } = usePaginatedFetchData<FarmerType>(endpoint, pageSize, baseParams);
-
-    const [selectedType, setSelectedType] = useState<{ label: string; value: string } | null>({
-        label: "Todos",
-        value: "",
-    });
-
+        setPageSize: updatePageSize
+    } = usePaginatedFetchData<FarmerType>(endpoint, pageSize, { ...baseParams, ...filters });
 
     /* mapeia header → campo da API */
     const fieldMap: Record<string, string> = {
-        "Matrícula": "registrationNumber",
-        "Tipo": "type",
-        "Nome": "name",
-        "Situação": "status",
-        "Técnico": "technician.name",
-        "Carteira": "branch",
-        "Própria": "ownedArea",
-        "Arrendada": "leasedArea",
-        "Total": "totalArea",
+        Matrícula: "registrationNumber",
+        Tipo: "type",
+        Nome: "name",
+        Situação: "status",
+        Técnico: "technician.name",
+        Carteira: "branch",
+        Própria: "ownedArea",
+        Arrendada: "leasedArea",
+        Total: "totalArea",
     };
 
-    /* primeira carga */
+    /* efeito inicial (mudou endpoint) */
     useEffect(() => {
-        setSelectedType({
-            label: "Todos",
-            value: "",
-        });
-        fetchPage(1);
+        setFilters({});
+        setSelectedType({ label: "Todos", value: "" });
+        setSortFieldUi(undefined);
+        fetchPage(1, baseParams);
     }, [endpoint]);
 
-    /* quando sort muda → recarrega página 1 */
+
+
     useEffect(() => {
-        if (!sortFieldUi) return;
-        const apiField = fieldMap[sortFieldUi];
-        fetchPage(1, {
-            sort: `${apiField},${sortDirUi}`,
-            typeId: selectedType?.value || undefined,
+        setFilters(prev => {
+            /* copia mutável */
+            const next = { ...prev };
+            let changed = false;
+
+            if (debouncedSearch.length >= 3) {
+                if (next.search !== debouncedSearch) {
+                    next.search = debouncedSearch;
+                    changed = true;
+                }
+            } else {
+                if ("search" in next) {
+                    delete next.search;         // limpa filtro quando < 3 caracteres
+                    changed = true;
+                }
+            }
+
+            return changed ? next : prev;   // evita render extra se nada mudou
         });
-    }, [sortFieldUi, sortDirUi, selectedType]);
+    }, [debouncedSearch]);
+
+    /* -----------------------------------------------------------
+     * efeito: sempre que filters OU baseParams mudarem → nova busca
+     * ----------------------------------------------------------- */
+    useEffect(() => {
+        fetchPage(1, { ...baseParams, ...filters });
+    }, [baseParams, filters]);
 
     useEffect(() => {
-        if (setTotalItems && totalItems) {
-            setTotalItems(totalItems);
-        }
-    }, [setTotalItems, totalItems]);
+        if (setTotalItems && totalItems !== undefined) setTotalItems(totalItems);
+    }, [totalItems]);
 
-    /* clique no cabeçalho */
+    /* SORT */
     const handleSort = (header: string) => {
         const nextDir = sortFieldUi === header && sortDirUi === "asc" ? "desc" : "asc";
         setSortFieldUi(header);
         setSortDirUi(nextDir);
 
         const apiField = fieldMap[header];
-        fetchPage(1, {
-            sort: `${apiField},${nextDir}`,
-            typeId: selectedType?.value || undefined,
-        });
+        const newFilters = { ...filters, sort: `${apiField},${nextDir}` };
+        setFilters(newFilters);
+        fetchPage(1, { ...baseParams, ...newFilters });
     };
 
-
-    const handleType = (selectedOption: any) => {
-        setSelectedType(selectedOption);
-        const typeFilter = selectedOption?.value || undefined;
-        fetchPage(1, { typeId: typeFilter });
+    /* FILTRO TIPO */
+    const handleType = (opt: any) => {
+        setSelectedType(opt);
+        const newFilters = { ...filters };
+        if (opt?.value) {
+            newFilters.typeId = opt.value;
+        } else {
+            delete newFilters.typeId;
+        }
+        setFilters(newFilters);
+        fetchPage(1, { ...baseParams, ...newFilters });
     };
 
-    /* editar produtor */
+    /* MODAL editar */
+    const [show, setShow] = useState(false);
+    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+
     const handleSubmitFarmer = async () => {
         if (!currentFarmer?.registrationNumber || !currentFarmer.name) {
             toast.warn("Preencha todos os campos obrigatórios."); return;
@@ -133,12 +177,10 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 leasedArea: currentFarmer.leasedArea,
                 branch: currentFarmer.branch?.id
             };
-            const res = await axiosInstance.put(
-                `/farmer/${currentFarmer.registrationNumber}`, body
-            );
+            const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, body);
             if (res.status === 200 || res.status === 201) {
                 toast.success("Produtor atualizado com sucesso!");
-                fetchPage(currentPage);
+                fetchPage(currentPage, { ...baseParams, ...filters });
                 setShow(false);
             }
         } catch {
@@ -146,53 +188,51 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         }
     };
 
-    /* loading / vazio */
-    if (isLoading)
-        return (
-            <div className="d-flex justify-content-center align-items-center py-5" style={{ height: "100px" }}>
-                <div className="spinner-border" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        );
-
-
-    /* tabela + paginação */
+    /* UI */
     return (
         <div className="pt-3 px-4 pb-5">
             <div className="floating_panel my-4 px-4">
-                <Select
-                    className="my-2 w-25"
-                    options={[
-                        { label: "Todos", value: "" },
-                        { label: "1 - Pessoa Física Associado", value: "1" },
-                        { label: "2 - Pessoa Física Terceiro", value: "2" },
-                        { label: "3 - Pessoa Juridica Associado", value: "3" },
-                        { label: "4 - Pessoa Juridica Terceiro", value: "4" },
-                    ]}
-                    onChange={handleType}
-                    value={selectedType}
-                />
+                <div className="d-flex align-items-center justify-content-between my-3">
+                    <Select
+                        className="w-25"
+                        options={[
+                            { label: "Todos", value: "" },
+                            { label: "1 - Pessoa Física Associado", value: "1" },
+                            { label: "2 - Pessoa Física Terceiro", value: "2" },
+                            { label: "3 - Pessoa Jurídica Associado", value: "3" },
+                            { label: "4 - Pessoa Jurídica Terceiro", value: "4" },
+                        ]}
+                        onChange={handleType}
+                        value={selectedType}
+                    />
+
+                    <input
+                        type="text"
+                        placeholder="Buscar produtor..."
+                        className="w-25"
+                        value={searchFarmer}
+                        onChange={e => setSearchFarmer(e.target.value)}
+                    />
+                </div>
+
                 <Pagination
                     itemsPerPage={pageSize}
-                    onItemsPerPageChange={(val) => { setPageSize(val); updatePageSize(val); }}
+                    onItemsPerPageChange={val => { setPageSize(val); updatePageSize(val); }}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={fetchPage}
+                    onPageChange={page => fetchPage(page, { ...baseParams, ...filters })}
                 >
                     {!farmers.length ? (
                         <h5 className="fw-bold mx-auto my-3">Nenhum dado encontrado.</h5>
+                    ) : isLoading ? (
+                        <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
+                            <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
+                        </div>
                     ) : (
                         <CustomTable
                             headers={[
                                 "Matrícula", "Tipo", "Nome", "Situação", "Carteira", "Técnico",
-                                "Própria", "Arrendada", "Total", "Ações",
-                            ]}
-                            columnWidths={[
-                                "100px",
-                                "90px",
-                                "undefined",
-                                "100px"
+                                "Própria", "Arrendada", "Total", "Ações"
                             ]}
                             sortField={sortFieldUi}
                             sortDir={sortDirUi}
@@ -206,9 +246,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                     <td>{StatusLabels[f.status]}</td>
                                     <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
                                     <td>{f.technician?.name ?? "Sem técnico"}</td>
-                                    <td>{f.ownedArea} ha</td>
-                                    <td>{f.leasedArea} ha</td>
-                                    <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
+                                    <td>{f.ownedArea} ha</td>
+                                    <td>{f.leasedArea} ha</td>
+                                    <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
                                     <td>
                                         <button className="button_edit"
                                             onClick={() => { setCurrentFarmer(f); setShow(true); }}>
@@ -222,16 +262,14 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 </Pagination>
             </div>
 
-            {/* modal */}
+            {/* modal editar */}
             <FarmerModal
                 show={show}
                 onClose={() => { setShow(false); setCurrentFarmer(null); }}
                 onSubmit={handleSubmitFarmer}
                 currentFarmer={currentFarmer}
                 modalMode="edit"
-                onChange={(field, value) =>
-                    setCurrentFarmer(p => p ? { ...p, [field]: value } : p)
-                }
+                onChange={(field, value) => setCurrentFarmer(p => p ? { ...p, [field]: value } : p)}
             />
         </div>
     );

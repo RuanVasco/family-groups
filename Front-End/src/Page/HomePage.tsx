@@ -122,278 +122,276 @@ const HomePage = () => {
     };
 
     return (
-        <div className="row g-0">
-            <div className={collapsed ? "col-auto" : "col-2"}>
-                <div className={collapsed ? "sidebar collapsed d-flex flex-column" : "sidebar d-flex flex-column"}>
-                    <div className="logo_box">
-                        <ButtonCollapse collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-                        {!collapsed && (
-                            <img src={logo} alt="Logo" className="logo" />
-                        )}
-                    </div>
-                    {menuContext !== "default" && (
-                        <div className="back_header d-flex flex-column gap-3 ms-2">
-                            <div className="d-flex justify-content-start align-items-center fw-bold">
-                                {menuContext === "reports" && (
-                                    <span className="d-flex align-items-center gap-2 report-title">
-                                        <>
-                                            <FaChartColumn />
-                                            {!collapsed && "Relatórios"}
-                                        </>
-
-                                    </span>
-                                )}
-                                {(menuContext === "reportType" || menuContext === "reportDetailUser") && (
-                                    <>
-                                        <span className="d-flex align-items-center gap-2 report-title">
-                                            {reportType === "byBranch" && (
-                                                <>
-                                                    <FaWallet />
-                                                    {!collapsed && <span>Por carteira</span>}
-                                                </>
-                                            )}
-                                            {reportType === "byTechnician" && (
-                                                <>
-                                                    <FaUser />
-                                                    {!collapsed && <span>Por técnico</span>}
-
-                                                </>
-                                            )}
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-
-                            <div className="d-flex align-items-center justify-content-between">
-                                <button className="back_button" onClick={() => {
-                                    setTotalItems(null);
-                                    setSelectedBranch(null);
-                                    setSelectedUser(null);
-                                    setViewType(null);
-
-                                    setMenuContext(prev =>
-                                        prev === "reportDetailUser" ? "reportType" :
-                                            prev === "reportType" ? "reports" :
-                                                "default"
-                                    );
-                                }}>
-                                    <FaChevronLeft />
-                                    {!collapsed && <span>Voltar</span>}
-                                </button>
-
-                                {menuContext === "reportType" && !collapsed && (
-                                    <SideBarPagenable
-                                        currentPage={reportType === "byBranch" ? branchPage : userPage}
-                                        totalPages={reportType === "byBranch" ? branchTotalPages : userTotalPages}
-                                        onPageChange={(page) =>
-                                            reportType === "byBranch"
-                                                ? fetchBranchs(page)
-                                                : fetchUsers(page)
-                                        }
-                                    />
-                                )}
-                            </div>
-                        </div>
+        <div className="layout d-flex">
+            <aside className={collapsed ? "sidebar collapsed" : "sidebar"}>
+                <div className="logo_box">
+                    <ButtonCollapse collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+                    {!collapsed && (
+                        <img src={logo} alt="Logo" className="logo" />
                     )}
-                    <ul className="sidebar_menu flex-grow-1">
-                        {menuContext === "default" && (
-                            <>
-                                <li
-                                    onClick={() => setViewType("familyGroup")}
-                                    className={
-                                        "d-flex align-items-center gap-2" +
-                                        (viewType === "familyGroup" ? " active" : "")
-                                    }
-                                >
-                                    <FaUserGroup />
-                                    {!collapsed && "Grupo Familiar"}
-                                </li>
-                                <li
-                                    onClick={() => setViewType("farmer")}
-                                    className={
-                                        "d-flex align-items-center gap-2" +
-                                        (viewType === "farmer" ? " active" : "")
-                                    }
-                                >
-                                    <FaWheatAwn />
-                                    {!collapsed && "Produtores"}
-                                </li>
-                                {canViewUsers && (
+                </div>
+                {menuContext !== "default" && (
+                    <div className="back_header d-flex flex-column gap-3 ms-2">
+                        <div className="d-flex justify-content-start align-items-center fw-bold">
+                            {menuContext === "reports" && (
+                                <span className="d-flex align-items-center gap-2 report-title">
                                     <>
-                                        <li
-                                            onClick={() => setViewType("user")}
-                                            className={
-                                                "d-flex align-items-center gap-2" +
-                                                (viewType === "user" ? " active" : "")
-                                            }
-                                        >
-                                            <FaUser />
-                                            {!collapsed && "Usuários"}
-                                        </li>
-                                        <li
-                                            onClick={() => setViewType("branch")}
-                                            className={
-                                                "d-flex align-items-center gap-2" +
-                                                (viewType === "branch" ? " active" : "")
-                                            }
-                                        >
-                                            <FaWallet />
-                                            {!collapsed && "Carteiras"}
-                                        </li>
-                                        <li
-                                            // onClick={() => setViewType("report")}
-                                            onClick={() => {
-                                                setViewType(null);
-                                                setMenuContext("reports");
-                                            }}
-                                            className={
-                                                "d-flex align-items-center gap-2"
-                                            }
-                                        >
-                                            <FaChartColumn />
-                                            {!collapsed && (
-                                                <>Relatórios <span className="ms-auto"><FaChevronRight /></span></>
-                                            )}
-                                        </li>
-                                        <li
-                                            onClick={() => setShow(true)}
-                                            className="d-flex align-items-center gap-2"
-                                        >
-                                            <FaUpload />
-                                            {!collapsed && "Enviar Dados"}
-                                        </li>
+                                        <FaChartColumn />
+                                        {!collapsed && "Relatórios"}
                                     </>
-                                )}
-                            </>
-                        )}
 
-                        {menuContext === "reports" && (
-                            <>
-                                <li
-                                    onClick={() => {
-                                        setReportType("byBranch");
-                                        setMenuContext("reportType");
-                                        fetchBranchs(1);
-                                        setCollapsed(false);
-                                    }}
-                                    className="d-flex align-items-center gap-2"
-                                >
-                                    <FaWallet />
-                                    {!collapsed && "Por Carteira"}
-                                </li>
-                                <li
-                                    onClick={() => {
-                                        setReportType("byTechnician");
-                                        setMenuContext("reportType");
-                                        fetchUsers(1);
-                                        setCollapsed(false);
-                                    }}
-                                    className="d-flex align-items-center gap-2"
-                                >
-                                    <FaUser />
-                                    {!collapsed && "Por Técnico"}
-                                </li>
-                            </>
-                        )}
+                                </span>
+                            )}
+                            {(menuContext === "reportType" || menuContext === "reportDetailUser") && (
+                                <>
+                                    <span className="d-flex align-items-center gap-2 report-title">
+                                        {reportType === "byBranch" && (
+                                            <>
+                                                <FaWallet />
+                                                {!collapsed && <span>Por carteira</span>}
+                                            </>
+                                        )}
+                                        {reportType === "byTechnician" && (
+                                            <>
+                                                <FaUser />
+                                                {!collapsed && <span>Por técnico</span>}
 
-                        {menuContext === "reportType" && reportType === "byBranch" && branchs && (
-                            <>
-                                {branchs.map((branch) => (
+                                            </>
+                                        )}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="d-flex align-items-center justify-content-between">
+                            <button className="back_button" onClick={() => {
+                                setTotalItems(null);
+                                setSelectedBranch(null);
+                                setSelectedUser(null);
+                                setViewType(null);
+
+                                setMenuContext(prev =>
+                                    prev === "reportDetailUser" ? "reportType" :
+                                        prev === "reportType" ? "reports" :
+                                            "default"
+                                );
+                            }}>
+                                <FaChevronLeft />
+                                {!collapsed && <span>Voltar</span>}
+                            </button>
+
+                            {menuContext === "reportType" && !collapsed && (
+                                <SideBarPagenable
+                                    currentPage={reportType === "byBranch" ? branchPage : userPage}
+                                    totalPages={reportType === "byBranch" ? branchTotalPages : userTotalPages}
+                                    onPageChange={(page) =>
+                                        reportType === "byBranch"
+                                            ? fetchBranchs(page)
+                                            : fetchUsers(page)
+                                    }
+                                />
+                            )}
+                        </div>
+                    </div>
+                )}
+                <ul className="flex-grow-1">
+                    {menuContext === "default" && (
+                        <>
+                            <li
+                                onClick={() => setViewType("familyGroup")}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (viewType === "familyGroup" ? " active" : "")
+                                }
+                            >
+                                <FaUserGroup />
+                                {!collapsed && "Grupo Familiar"}
+                            </li>
+                            <li
+                                onClick={() => setViewType("farmer")}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (viewType === "farmer" ? " active" : "")
+                                }
+                            >
+                                <FaWheatAwn />
+                                {!collapsed && "Produtores"}
+                            </li>
+                            {canViewUsers && (
+                                <>
                                     <li
-                                        key={branch.id}
-                                        onClick={() => {
-                                            setSelectedBranch(branch);
-                                            setViewType("report_by_branch");
-                                        }}
+                                        onClick={() => setViewType("user")}
                                         className={
                                             "d-flex align-items-center gap-2" +
-                                            (selectedBranch?.id === branch.id ? " active" : "")
+                                            (viewType === "user" ? " active" : "")
                                         }
                                     >
-                                        {branch.name}
+                                        <FaUser />
+                                        {!collapsed && "Usuários"}
                                     </li>
-                                ))}
+                                    <li
+                                        onClick={() => setViewType("branch")}
+                                        className={
+                                            "d-flex align-items-center gap-2" +
+                                            (viewType === "branch" ? " active" : "")
+                                        }
+                                    >
+                                        <FaWallet />
+                                        {!collapsed && "Carteiras"}
+                                    </li>
+                                    <li
+                                        // onClick={() => setViewType("report")}
+                                        onClick={() => {
+                                            setViewType(null);
+                                            setMenuContext("reports");
+                                        }}
+                                        className={
+                                            "d-flex align-items-center gap-2"
+                                        }
+                                    >
+                                        <FaChartColumn />
+                                        {!collapsed && (
+                                            <>Relatórios <span className="ms-auto"><FaChevronRight /></span></>
+                                        )}
+                                    </li>
+                                    <li
+                                        onClick={() => setShow(true)}
+                                        className="d-flex align-items-center gap-2"
+                                    >
+                                        <FaUpload />
+                                        {!collapsed && "Enviar Dados"}
+                                    </li>
+                                </>
+                            )}
+                        </>
+                    )}
 
-                            </>
-                        )}
+                    {menuContext === "reports" && (
+                        <>
+                            <li
+                                onClick={() => {
+                                    setReportType("byBranch");
+                                    setMenuContext("reportType");
+                                    fetchBranchs(1);
+                                    setCollapsed(false);
+                                }}
+                                className="d-flex align-items-center gap-2"
+                            >
+                                <FaWallet />
+                                {!collapsed && "Por Carteira"}
+                            </li>
+                            <li
+                                onClick={() => {
+                                    setReportType("byTechnician");
+                                    setMenuContext("reportType");
+                                    fetchUsers(1);
+                                    setCollapsed(false);
+                                }}
+                                className="d-flex align-items-center gap-2"
+                            >
+                                <FaUser />
+                                {!collapsed && "Por Técnico"}
+                            </li>
+                        </>
+                    )}
 
-                        {menuContext === "reportType" && reportType === "byTechnician" && users && (
-                            <>
+                    {menuContext === "reportType" && reportType === "byBranch" && branchs && (
+                        <>
+                            {branchs.map((branch) => (
                                 <li
+                                    key={branch.id}
                                     onClick={() => {
-                                        setSelectedUser(null);
+                                        setSelectedBranch(branch);
+                                        setViewType("report_by_branch");
+                                    }}
+                                    className={
+                                        "d-flex align-items-center gap-2" +
+                                        (selectedBranch?.id === branch.id ? " active" : "")
+                                    }
+                                >
+                                    {branch.name}
+                                </li>
+                            ))}
+
+                        </>
+                    )}
+
+                    {menuContext === "reportType" && reportType === "byTechnician" && users && (
+                        <>
+                            <li
+                                onClick={() => {
+                                    setSelectedUser(null);
+                                    setMenuContext("reportDetailUser");
+                                }}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (selectedUser === null ? " active" : "")
+                                }
+                            >
+                                Sem Técnico Vinculado
+                            </li>
+                            {users.map((user) => (
+                                <li
+                                    key={user.id}
+                                    onClick={() => {
+                                        setSelectedUser(user);
                                         setMenuContext("reportDetailUser");
                                     }}
                                     className={
                                         "d-flex align-items-center gap-2" +
-                                        (selectedUser === null ? " active" : "")
+                                        (selectedUser?.id === user.id ? " active" : "")
                                     }
                                 >
-                                    Sem Técnico Vinculado
+                                    {user.name}
                                 </li>
-                                {users.map((user) => (
-                                    <li
-                                        key={user.id}
-                                        onClick={() => {
-                                            setSelectedUser(user);
-                                            setMenuContext("reportDetailUser");
-                                        }}
-                                        className={
-                                            "d-flex align-items-center gap-2" +
-                                            (selectedUser?.id === user.id ? " active" : "")
-                                        }
-                                    >
-                                        {user.name}
-                                    </li>
-                                ))}
+                            ))}
 
-                            </>
-                        )}
+                        </>
+                    )}
 
-                        {menuContext === "reportDetailUser" && reportType === "byTechnician" && (
-                            <>
+                    {menuContext === "reportDetailUser" && reportType === "byTechnician" && (
+                        <>
+                            <li
+                                onClick={() => {
+                                    setViewType("report_by_technician_farmer");
+                                }}
+                                className={
+                                    "d-flex align-items-center gap-2" +
+                                    (viewType === "report_by_technician_farmer" ? " active" : "")
+                                }
+                            >
+                                <FaWheatAwn />
+                                {!collapsed && "Por produtor"}
+                            </li>
+                            {selectedUser && (
                                 <li
                                     onClick={() => {
-                                        setViewType("report_by_technician_farmer");
+                                        setViewType("report_by_technician_familyGroup");
                                     }}
                                     className={
                                         "d-flex align-items-center gap-2" +
-                                        (viewType === "report_by_technician_farmer" ? " active" : "")
+                                        (viewType === "report_by_technician_familyGroup" ? " active" : "")
                                     }
                                 >
-                                    <FaWheatAwn />
-                                    {!collapsed && "Por produtor"}
+                                    <FaUserGroup />
+                                    {!collapsed && "Por grupo familiar"}
+
                                 </li>
-                                {selectedUser && (
-                                    <li
-                                        onClick={() => {
-                                            setViewType("report_by_technician_familyGroup");
-                                        }}
-                                        className={
-                                            "d-flex align-items-center gap-2" +
-                                            (viewType === "report_by_technician_familyGroup" ? " active" : "")
-                                        }
-                                    >
-                                        <FaUserGroup />
-                                        {!collapsed && "Por grupo familiar"}
+                            )}
 
-                                    </li>
-                                )}
+                        </>
+                    )}
+                </ul>
 
-                            </>
-                        )}
-                    </ul>
-
-                    <div className="logout_box mt-auto">
-                        <button className="btn_logout w-100 d-flex gap-2 align-items-center justify-content-center" onClick={logout}>
-                            <FaArrowRightFromBracket />
-                            {!collapsed && "Sair"}
-                        </button>
-                    </div>
+                <div className="logout_box mt-auto">
+                    <button className="btn_logout w-100 d-flex gap-2 align-items-center justify-content-center" onClick={logout}>
+                        <FaArrowRightFromBracket />
+                        {!collapsed && "Sair"}
+                    </button>
                 </div>
-            </div>
+            </aside>
 
-            <div className="col" style={{ minWidth: 0, overflow: "hidden" }}>
+            <main className="content flex-grow-1">
                 {(viewType === "report_by_technician_farmer" ||
                     viewType === "report_by_technician_familyGroup" ||
                     selectedUser) && (
@@ -471,7 +469,7 @@ const HomePage = () => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
-            </div>
+            </main>
         </div >
     );
 };

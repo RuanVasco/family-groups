@@ -70,11 +70,19 @@ const FamilyGroupTable = ({
                             <td>{f.type?.id ?? "-"}</td>
                             <td>{f.name}</td>
                             <td>{StatusLabels[f.status]}</td>
-                            <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
-                            <td>{f.technician?.name || "Sem técnico"}</td>
-                            <td>{f.ownedArea} ha</td>
-                            <td>{f.leasedArea} ha</td>
-                            <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
+                            <td
+                                className={f.branch?.id != familyGroup.principal.branch?.id ? "text-danger" : ""}
+                            >
+                                {f.branch?.name ?? "Sem carteira vinculada"}
+                            </td>
+                            <td
+                                className={f.technician?.id != familyGroup.principal.technician?.id ? "text-danger" : ""}
+                            >
+                                {f.technician?.name || "Sem técnico"}
+                            </td>
+                            <td>{(f.ownedArea ?? 0).toFixed(2)} ha</td>
+                            <td>{(f.leasedArea ?? 0).toFixed(2)} ha</td>
+                            <td>{((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2)} ha</td>
                             {showActions && (
                                 <td className="d-flex gap-2">
                                     <button
@@ -125,12 +133,12 @@ const FamilyGroupTable = ({
                 >
                     <tr>
                         <td>2025/2026</td>
-                        <td>{familyGroup.canolaArea} ha</td>
-                        <td>{familyGroup.wheatArea} ha</td>
-                        <td>{familyGroup.cornSilageArea} ha</td>
-                        <td>{familyGroup.grainCornArea} ha</td>
-                        <td>{familyGroup.beanArea} ha</td>
-                        <td>{familyGroup.soybeanArea} ha</td>
+                        <td>{familyGroup.canolaArea?.toFixed(2) ?? "0.00"} ha</td>
+                        <td>{familyGroup.wheatArea?.toFixed(2) ?? "0.00"} ha</td>
+                        <td>{familyGroup.cornSilageArea?.toFixed(2) ?? "0.00"} ha</td>
+                        <td>{familyGroup.grainCornArea?.toFixed(2) ?? "0.00"} ha</td>
+                        <td>{familyGroup.beanArea?.toFixed(2) ?? "0.00"} ha</td>
+                        <td>{familyGroup.soybeanArea?.toFixed(2) ?? "0.00"} ha</td>
                     </tr>
                 </CustomTable>
 

@@ -141,7 +141,7 @@ const Farmer = () => {
                             </div>
                         </div>
                     ) : farmers.length === 0 ? (
-                        <p className="p-3">Nenhum produtor encontrado.</p>
+                        <h4 className="py-3 text-center fw-bold">Nenhum produtor encontrado.</h4>
                     ) : (
                         <div style={{ overflowX: "auto" }}>
                             <CustomTable

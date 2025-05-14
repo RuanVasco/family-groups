@@ -4,28 +4,15 @@
 .sidebar {
   background-color: var.$primary-color;
   min-height: 100vh;
-  padding: 20px;
-  overflow-y: hidden;
+  width: 250px;
+  padding: 20px 10px;
+  transition: width 0.3s ease;
 
   * {
     color: var.$tertiary-color;
   }
 
-  &.collapsed {
-    width: 80px;
-  }
-
-  & svg {
-    font-size: 1.1rem;
-    min-width: 24px;
-  }
-}
-
-.sidebar_menu {
-  max-height: 60vh;
-  overflow-y: auto;
-
-  li {
+  & li {
     margin-bottom: 5px;
     padding: 0.8rem 1rem;
     background-color: transparent;
@@ -36,19 +23,27 @@
     display: flex;
     justify-content: start;
     transition: justify-content 0.3s;
-  }
 
-  li:hover {
-    cursor: pointer;
-    background-color: color.adjust(var.$secondary-color, $lightness: 2%);
-  }
+    &:hover {
+      background-color: var.$secondary-color;
+      cursor: pointer;
+    }
 
-  & .active {
-    background-color: var.$secondary-color;
+    &.active {
+      background-color: var.$secondary-color;
+    }
   }
 }
 
-.sidebar.collapsed .sidebar_menu li {
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed .logo_box {
+  justify-content: center;
+}
+
+.sidebar.collapsed li {
   justify-content: center;
 }
 
@@ -117,6 +112,7 @@
   padding: 0.3rem;
   justify-content: center;
 }
+
 .pageable {
   color: var.$tertiary-color;
   display: flex;

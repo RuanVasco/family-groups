@@ -62,8 +62,17 @@ public class FarmerService {
         return farmerRepository.findByValue(value, pageable);
     }
 
-    public Set<Farmer> findAvaibleFarmers() {
-        return farmerRepository.findAvaibleFarmers();
+    public Page<Farmer> findAvailableFarmers(
+            Pageable pageable
+    ) {
+        return farmerRepository.findAvailableFarmers(pageable);
+    }
+
+    public Page<Farmer> findAvailableFarmersByName(
+            String search,
+            Pageable pageable
+    ) {
+        return farmerRepository.findAvailableFarmersByName(search, pageable);
     }
 
     public List<Farmer> findByFamilyGroup(Long familyGroupID) {
@@ -71,43 +80,6 @@ public class FarmerService {
                 .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
 
         return familyGroup.getMembers();
-    }
-
-    public Page<Farmer> findByTechnician(User technician, Pageable pageable) {
-        return farmerRepository.findByTechnician(technician, pageable);
-    }
-
-    public Page<Farmer> findWithoutTechnician(Pageable pageable) {
-        return farmerRepository.findWithoutTechnician(pageable);
-    }
-
-    public Page<Farmer> findByTechnicianAndType(User technician, Integer typeId, Pageable pageable) {
-        var typeOpt = typeRepository.findById(typeId);
-        if (typeOpt.isEmpty()) {
-            throw new IllegalArgumentException("Tipo de produtor não encontrado.");
-        }
-        return farmerRepository.findByTechnicianAndType(technician, typeOpt.get(), pageable);
-    }
-
-    public Page<Farmer> findWithoutTechnicianAndType(Integer typeId, Pageable pageable) {
-        var typeOpt = typeRepository.findById(typeId);
-        if (typeOpt.isEmpty()) {
-            throw new IllegalArgumentException("Tipo de produtor não encontrado.");
-        }
-        return farmerRepository.findWithoutTechnicianAndType(typeOpt.get(), pageable);
-    }
-
-    public Page<Farmer> findByEffectiveBranch(Branch branch, Pageable pageable) {
-        return farmerRepository.findByEffectiveBranch(branch, pageable);
-    }
-
-    public Page<Farmer> findByEffectiveBranchAndType(
-            Branch branch, Integer typeId, Pageable pageable) {
-
-        Type type = typeRepository.findById(typeId)
-                .orElseThrow(() -> new IllegalArgumentException("Tipo de produtor não encontrado."));
-
-        return farmerRepository.findByEffectiveBranchAndType(branch, type, pageable);
     }
 
     public Farmer updateFarmer(Farmer farmer, FarmerRequestDTO farmerRequestDTO) {
@@ -151,5 +123,84 @@ public class FarmerService {
 
     public Optional<Farmer> findById(String farmerRegistration) {
         return farmerRepository.findById(farmerRegistration);
+    }
+
+    public Page<Farmer> findByTechnician(User technician,
+                                         String search,
+                                         Pageable pageable) {
+
+        String s = (search == null || search.isBlank()) ? null : search.trim();
+
+        return (s == null)
+                ? farmerRepository.findByTechnician(technician, pageable)               // sem filtro
+                : farmerRepository.findByTechnicianWithSearch(technician, s, pageable); // com filtro
+    }
+
+    public Page<Farmer> findWithoutTechnician(String search,
+                                              Pageable pageable) {
+
+        String s = (search == null || search.isBlank()) ? null : search.trim();
+
+        return (s == null)
+                ? farmerRepository.findWithoutTechnician(pageable)
+                : farmerRepository.findWithoutTechnicianWithSearch(s, pageable);
+    }
+
+    public Page<Farmer> findByTechnicianAndType(User technician,
+                                                Integer typeId,
+                                                String search,
+                                                Pageable pageable) {
+
+        Type type = typeRepository.findById(typeId)
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de produtor não encontrado."));
+
+        String s = (search == null || search.isBlank()) ? null : search.trim();
+
+        return (s == null)
+                ? farmerRepository.findByTechnicianAndType(technician, type, pageable)
+                : farmerRepository.findByTechnicianAndTypeWithSearch(technician, type, s, pageable);
+    }
+
+    public Page<Farmer> findWithoutTechnicianAndType(Integer typeId,
+                                                     String search,
+                                                     Pageable pageable) {
+
+        Type type = typeRepository.findById(typeId)
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de produtor não encontrado."));
+
+        String s = (search == null || search.isBlank()) ? null : search.trim();
+
+        return (s == null)
+                ? farmerRepository.findWithoutTechnicianAndType(type, pageable)
+                : farmerRepository.findWithoutTechnicianAndTypeWithSearch(type, s, pageable);
+    }
+
+    /* ----------------------------------------------------------
+     * BUSCA POR BRANCH
+     * ---------------------------------------------------------- */
+    public Page<Farmer> findByEffectiveBranch(Branch branch,
+                                              String search,
+                                              Pageable pageable) {
+
+        String s = (search == null || search.isBlank()) ? null : search.trim();
+
+        return (s == null)
+                ? farmerRepository.findByEffectiveBranch(branch, pageable)
+                : farmerRepository.findByEffectiveBranchWithSearch(branch, s, pageable);
+    }
+
+    public Page<Farmer> findByEffectiveBranchAndType(Branch branch,
+                                                     Integer typeId,
+                                                     String search,
+                                                     Pageable pageable) {
+
+        Type type = typeRepository.findById(typeId)
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de produtor não encontrado."));
+
+        String s = (search == null || search.isBlank()) ? null : search.trim();
+
+        return (s == null)
+                ? farmerRepository.findByEffectiveBranchAndType(branch, type, pageable)
+                : farmerRepository.findByEffectiveBranchAndTypeWithSearch(branch, type, s, pageable);
     }
 }
