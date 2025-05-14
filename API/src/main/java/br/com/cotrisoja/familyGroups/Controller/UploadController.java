@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/upload")
@@ -20,6 +21,10 @@ public class UploadController {
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty() || !file.getOriginalFilename().endsWith(".csv")) {
             return ResponseEntity.badRequest().body("Arquivo inválido. Envie um arquivo .csv.");
+        }
+
+        if (!"data.csv".equalsIgnoreCase(file.getOriginalFilename()) && !"farmer_update.csv".equalsIgnoreCase(file.getOriginalFilename())) {
+            return ResponseEntity.badRequest().body("Arquivo inválido.");
         }
 
         try {

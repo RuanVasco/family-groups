@@ -194,7 +194,7 @@ const HomePage = () => {
                         </div>
                     </div>
                 )}
-                <ul className="flex-grow-1">
+                <ul>
                     {menuContext === "default" && (
                         <>
                             <li

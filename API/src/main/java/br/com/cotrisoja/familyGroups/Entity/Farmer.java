@@ -39,8 +39,10 @@ public class Farmer {
     @JoinColumn(name = "type_id")
     private Type type;
 
+    private Boolean blocked = false;
+
     public boolean isValid() {
-        return this.status == StatusEnum.ACTIVE &&
+        return this.status == StatusEnum.ACTIVE && !this.blocked &&
                 (this.familyGroup == null ||
                         (this.familyGroup.getMembers() != null && this.familyGroup.getMembers().size() < 2));
     }
