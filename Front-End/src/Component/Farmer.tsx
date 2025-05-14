@@ -143,37 +143,39 @@ const Farmer = () => {
                     ) : farmers.length === 0 ? (
                         <p className="p-3">Nenhum produtor encontrado.</p>
                     ) : (
-                        <CustomTable
-                            headers={[
-                                "Ações", "Matrícula", "Nome", "Situação", "Técnico", "Carteira", "Grupo familiar", "Terra própria", "Terra arrendada", "Terra total"
-                            ]}
-                        >
-                            {farmers.map((f) => (
-                                <tr key={Number(f.registrationNumber)}>
-                                    <td>
-                                        <button
-                                            className="button_edit"
-                                            onClick={() => openModal("edit", f)}
-                                        >
-                                            <FaPen /> Editar
-                                        </button>
-                                    </td>
-                                    <td>{f.registrationNumber}</td>
-                                    <td>{f.name}</td>
-                                    <td>{StatusLabels[f.status]}</td>
-                                    <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
-                                    <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
-                                    <td>
-                                        {f.familyGroup
-                                            ? f.familyGroup.principal.name
-                                            : "Sem grupo familiar"}
-                                    </td>
-                                    <td>{f.ownedArea ?? 0} ha</td>
-                                    <td>{f.leasedArea ?? 0} ha</td>
-                                    <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
-                                </tr>
-                            ))}
-                        </CustomTable>
+                        <div style={{ overflowX: "auto" }}>
+                            <CustomTable
+                                headers={[
+                                    "Ações", "Matrícula", "Nome", "Situação", "Técnico", "Carteira", "Grupo familiar", "Terra própria", "Terra arrendada", "Terra total"
+                                ]}
+                            >
+                                {farmers.map((f) => (
+                                    <tr key={Number(f.registrationNumber)}>
+                                        <td>
+                                            <button
+                                                className="button_edit"
+                                                onClick={() => openModal("edit", f)}
+                                            >
+                                                <FaPen /> Editar
+                                            </button>
+                                        </td>
+                                        <td>{f.registrationNumber}</td>
+                                        <td>{f.name}</td>
+                                        <td>{StatusLabels[f.status]}</td>
+                                        <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
+                                        <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                        <td>
+                                            {f.familyGroup
+                                                ? f.familyGroup.principal.name
+                                                : "Sem grupo familiar"}
+                                        </td>
+                                        <td>{f.ownedArea ?? 0} ha</td>
+                                        <td>{f.leasedArea ?? 0} ha</td>
+                                        <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
+                                    </tr>
+                                ))}
+                            </CustomTable>
+                        </div>
                         // <table className="custom_table">
                         //     <thead>
                         //         <tr>

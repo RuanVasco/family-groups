@@ -67,9 +67,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         "Situação": "status",
         "Técnico": "technician.name",
         "Carteira": "branch",
-        "Área própria": "ownedArea",
-        "Área arrendada": "leasedArea",
-        "Área total": "totalArea",
+        "Própria": "ownedArea",
+        "Arrendada": "leasedArea",
+        "Total": "totalArea",
     };
 
     /* primeira carga */
@@ -186,7 +186,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                         <CustomTable
                             headers={[
                                 "Matrícula", "Tipo", "Nome", "Situação", "Carteira", "Técnico",
-                                "Área própria", "Área arrendada", "Área total", "Ações",
+                                "Própria", "Arrendada", "Total", "Ações",
                             ]}
                             columnWidths={[
                                 "100px",

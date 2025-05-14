@@ -46,9 +46,9 @@ const FamilyGroupTable = ({
                         "Situação",
                         "Carteira",
                         "Técnico",
-                        "Área própria",
-                        "Área arrendada",
-                        "Área total",
+                        "Própria",
+                        "Arrendada",
+                        "Total",
                         ...showActions ? ["Ações"] : []
                     ]}
                     columnWidths={[

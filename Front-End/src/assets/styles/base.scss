@@ -17,6 +17,7 @@ body {
   background-color: var.$tertiary-color;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 90%; 
 }
 
 ul,
@@ -120,6 +121,7 @@ h5 {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  height: 90vh;
-  overflow-y: hidden;
+  height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 5px;
 }

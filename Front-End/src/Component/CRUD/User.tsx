@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import axiosInstance from "../axiosInstance";
+import axiosInstance from "../../axiosInstance";
 import { toast } from "react-toastify";
-import { UserType } from "../Type/UserType";
-import { BranchType } from "../Type/BranchType";
+import { UserType } from "../../Type/UserType";
+import { BranchType } from "../../Type/BranchType";
 import { FaPen, FaPlus } from "react-icons/fa6";
 import { Modal, Button, Form } from "react-bootstrap";
 import Select from "react-select";
-import Pagination from "./Common/Pagination";
-import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
+import Pagination from "../Common/Pagination";
+import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
+import CustomTable from "../Common/CustomTable";
 
 const roleOptions = [
     { value: "ROLE_ADMIN", label: "Administrador" },
@@ -144,18 +145,10 @@ const User = () => {
                     ) : users.length === 0 ? (
                         <p className="p-3">Nenhum usuário encontrado.</p>
                     ) : (
-                        <table className="custom_table">
-                            <thead>
-                                <tr>
-                                    <th>Ações</th>
-                                    <th>ID</th>
-                                    <th>Usuário</th>
-                                    <th>Nome</th>
-                                    <th>Perfis</th>
-                                    <th>Carteira</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <CustomTable
+                        headers={["Ações", "ID", "Usuário", "Nome", "Perfis", "Carteira"]}                           
+                        >
+                       
                                 {users.map((u) => (
                                     <tr key={u.id}>
                                         <td>
@@ -173,8 +166,7 @@ const User = () => {
                                         <td>{u.branch?.name ?? "Sem carteira"}</td>
                                     </tr>
                                 ))}
-                            </tbody>
-                        </table>
+                        </CustomTable>
                     )}
                 </div>
             </Pagination>

@@ -8,6 +8,7 @@ import AsyncSelect from 'react-select/async';
 import axiosInstance from "../axiosInstance";
 import { useFetchData } from "../Hook/useFetchData";
 import { useEffect } from "react";
+import { BranchType } from "../Type/BranchType";
 
 interface FarmerModalProps {
     show: boolean;
@@ -143,9 +144,9 @@ const FarmerModal = ({
                             loadOptions={async (inputValue) => {
                                 try {
                                     const res = await axiosInstance.get(`/branch`, { params: { search: inputValue, size: 10 } });
-                                    return res.data.content.map((group: FamilyGroupType) => ({
-                                        value: group,
-                                        label: group.principal.name
+                                    return res.data.map((branch: BranchType) => ({
+                                        value: branch,
+                                        label: branch.name
                                     }));
                                 } catch (error) {
                                     return [];
@@ -158,7 +159,7 @@ const FarmerModal = ({
                                     : null
                             }
                             onChange={(selectedOption) => onChange("branch", selectedOption?.value)}
-                            placeholder="Buscar caretira..."
+                            placeholder="Buscar carteira..."
                             isClearable
                         />
                     </Form.Group>

@@ -4,7 +4,7 @@ import { useAuthorization } from '../Context/AuthorizationContext';
 import Farmer from '../Component/Farmer';
 import logo from '../assets/logo.png';
 import FamilyGroup from '../Component/CRUD/FamilyGroup';
-import User from '../Component/User';
+import User from '../Component/CRUD/User';
 import "../assets/styles/_sidebar.scss";
 import Branch from '../Component/Branch';
 import { Button, Form, Modal } from 'react-bootstrap';
@@ -393,7 +393,7 @@ const HomePage = () => {
                 </div>
             </div>
 
-            <div className="col overflow-hidden" style={{ minWidth: 0 }}>
+            <div className="col" style={{ minWidth: 0, overflow: "hidden" }}>
                 {(viewType === "report_by_technician_farmer" ||
                     viewType === "report_by_technician_familyGroup" ||
                     selectedUser) && (
