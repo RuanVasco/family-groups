@@ -1,8 +1,10 @@
-import { FaChessKing, FaMinus, FaPen, FaPlus } from "react-icons/fa6";
+import { FaChessKing, FaMinus, FaPen, FaPlus, FaTractor } from "react-icons/fa6";
 import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { FarmerType } from "../Type/FarmerType";
 import { StatusLabels } from "../Enum/StatusEnum";
 import CustomTable from "./Common/CustomTable";
+import { useState } from "react";
+import AssetModal from "./AssetModal";
 
 interface FamilyGroupTableProps {
     familyGroup: FamilyGroupType;
@@ -23,11 +25,27 @@ const FamilyGroupTable = ({
     onAddFarmer,
     onEditCultivation
 }: FamilyGroupTableProps) => {
+    const [show, setShow] = useState<boolean>(false);
+    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+
     const farmers = familyGroup.members || [];
     const totalArea = farmers.reduce(
         (acc, farmer) => acc + (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0),
         0
     );
+
+    const openAssetModal = (farmer: FarmerType) => {
+        setCurrentFarmer(farmer);
+        setShow(true);
+    }
+
+    const handleFarmerUpdated = (updatedFarmer: FarmerType) => {
+        const updatedFarmers = (familyGroup.members ?? []).map(f =>
+            f.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : f
+        );
+        familyGroup.members = updatedFarmers;
+        setCurrentFarmer(updatedFarmer);
+    };
 
     return (
         <div>
@@ -46,22 +64,12 @@ const FamilyGroupTable = ({
                         "Situação",
                         "Carteira",
                         "Técnico",
+                        "SAP Própria",
+                        "SAP Arrendada",
                         "Própria",
                         "Arrendada",
                         "Total",
                         ...showActions ? ["Ações"] : []
-                    ]}
-                    columnWidths={[
-                        "90px",
-                        "90px",
-                        "230px",
-                        "90px",
-                        undefined,
-                        "230px",
-                        "140px",
-                        "170px",
-                        "120px",
-                        undefined
                     ]}
                 >
                     {farmers.map((f) => (
@@ -80,11 +88,20 @@ const FamilyGroupTable = ({
                             >
                                 {f.technician?.name || "Sem técnico"}
                             </td>
+                            <td>56 ha</td>
+                            <td>32 ha</td>
                             <td>{(f.ownedArea ?? 0).toFixed(2)} ha</td>
                             <td>{(f.leasedArea ?? 0).toFixed(2)} ha</td>
                             <td>{((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2)} ha</td>
                             {showActions && (
                                 <td className="d-flex gap-2">
+                                    <button
+                                        className="button_info btn_sm"
+                                        onClick={() => openAssetModal(f)}
+                                        title="Editar Bens"
+                                    >
+                                        <FaTractor />
+                                    </button>
                                     <button
                                         className="button_edit btn_sm"
                                         onClick={() => onEditFarmer && onEditFarmer(f)}
@@ -114,6 +131,28 @@ const FamilyGroupTable = ({
                             )}
                         </tr>
                     ))}
+                </CustomTable>
+                <div className="mt-2">
+                    <h5 className="fw-bold">
+                        Arrendadores
+                    </h5>
+                </div>
+                <CustomTable
+                    headers={[
+                        "Matrícula",
+                        "Nome",
+                        "Carteira",
+                        "Técnico",
+                        "Própria",
+                    ]}
+                >
+                    <tr>
+                        <td>1234</td>
+                        <td>Teste</td>
+                        <td>UR LAGOA 3 CANTOS</td>
+                        <td>CESER FERNANDO TELOKEN</td>
+                        <td>23 ha</td>
+                    </tr>
                 </CustomTable>
                 <div className="mt-2">
                     <h5 className="fw-bold">
@@ -164,8 +203,13 @@ const FamilyGroupTable = ({
                     </div>
                 )}
             </div>
-
-
+            <AssetModal
+                show={show}
+                onClose={() => setShow(false)}
+                farmer={currentFarmer}
+                onChange={() => { }}
+                onFarmerUpdated={handleFarmerUpdated}
+            />
         </div>
     );
 };

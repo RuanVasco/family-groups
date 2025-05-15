@@ -55,12 +55,15 @@ public class FarmerController {
         return ResponseEntity.ok(response);
     }
 
-//    @GetMapping("/available")
-//    public ResponseEntity<Page<FarmerResponseDTO>> findAvailableFarmers(Pageable pageable) {
-//        Page<Farmer> farmers = farmerService.findAvailableFarmers(pageable);
-//        Page<FarmerResponseDTO> response = farmers.map(FarmerResponseDTO::fromEntity);
-//        return ResponseEntity.ok(response);
-//    }
+    @GetMapping("/{farmerRegistration}")
+    public ResponseEntity<?> getFarmer(
+            @PathVariable String farmerRegistration
+    ) {
+        Farmer farmer = farmerService.findById(farmerRegistration)
+                .orElseThrow(() -> new RuntimeException("Produtor não encontrado"));
+
+        return ResponseEntity.ok(FarmerResponseDTO.fromEntity(farmer));
+    }
 
     @GetMapping("/available")
     public ResponseEntity<Page<FarmerResponseDTO>> findAvailableFarmers(
@@ -163,6 +166,8 @@ public class FarmerController {
 
         return ResponseEntity.ok(farmerService.updateFarmer(farmer, farmerRequestDTO));
     }
+
+
 
     private Sort buildSort(String sortParam) {
         String[] s = sortParam.split(",");

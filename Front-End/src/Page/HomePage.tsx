@@ -123,7 +123,7 @@ const HomePage = () => {
 
     return (
         <div className="layout d-flex">
-            <aside className={collapsed ? "sidebar collapsed" : "sidebar"}>
+            <aside className={`${collapsed ? "sidebar collapsed" : "sidebar"} d-flex flex-column`}>
                 <div className="logo_box">
                     <ButtonCollapse collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
                     {!collapsed && (

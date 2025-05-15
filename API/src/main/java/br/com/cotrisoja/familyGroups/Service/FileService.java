@@ -6,7 +6,6 @@ import br.com.cotrisoja.familyGroups.Repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -96,10 +95,7 @@ public class FileService {
 
                 typeRepository.findById(groupID)
                         .filter(type -> !type.equals(farmer.getType()))
-                        .ifPresent(type -> {
-                            farmer.setType(type);
-                            log.info("Produtor {} atualizado para tipo {}", registrationNumber, type.getDescription());
-                        });
+                        .ifPresent(farmer::setType);
 
                 if (deathDate != null) {
                     farmer.setStatus(StatusEnum.DECEASED);
@@ -128,12 +124,6 @@ public class FileService {
 
         double ownedArea = parseDouble(columns, 6, "ownedArea", row);
         double leasedArea = parseDouble(columns, 7, "leasedArea", row);
-//        double canolaArea = parseDouble(columns, 8, "canolaArea", row);
-//        double wheatArea = parseDouble(columns, 9, "wheatArea", row);
-//        double cornSilageArea = parseDouble(columns, 10, "cornSilageArea", row);
-//        double grainCornArea = parseDouble(columns, 11, "grainCornArea", row);
-//        double beanArea = parseDouble(columns, 12, "beanArea", row);
-//        double soybeanArea = parseDouble(columns, 13, "soybeanArea", row);
 
         String branchName = getCol(columns, 14);
         Branch branch = findOrCreateBranch(branchName);
@@ -154,22 +144,22 @@ public class FileService {
                 f.setTechnician(technician);
             }
 
-            f.setBranch(branch);
+            if (branch != null) {
+                f.setBranch(branch);
+            }
+
             f.setOwnedArea(ownedArea);
             f.setLeasedArea(leasedArea);
             f.setStatus("Normal".equalsIgnoreCase(farmerStatus) ? StatusEnum.ACTIVE : StatusEnum.DECEASED);
             return farmerRepository.save(f);
         });
 
-        if (farmer.getRegistrationNumber().equals(principalRegistration)) {
+        if (
+                farmer.getRegistrationNumber().equals(principalRegistration) &&
+                        farmer.getFamilyGroup() == null
+        ) {
             FamilyGroup group = new FamilyGroup();
             group.setPrincipal(farmer);
-//            group.setCanolaArea(canolaArea);
-//            group.setWheatArea(wheatArea);
-//            group.setCornSilageArea(cornSilageArea);
-//            group.setGrainCornArea(grainCornArea);
-//            group.setBeanArea(beanArea);
-//            group.setSoybeanArea(soybeanArea);
             familyGroupRepository.save(group);
             farmer.setFamilyGroup(group);
             farmerRepository.save(farmer);
@@ -217,6 +207,8 @@ public class FileService {
     }
 
     private Branch findOrCreateBranch(String name) {
+        if (name.isEmpty()) return null;
+
         return branchRepository.findByName(name)
                 .orElseGet(() -> branchRepository.save(new Branch(name)));
     }
