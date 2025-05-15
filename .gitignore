@@ -1,4 +1,4 @@
 .env
-logs/*
+logs/
 .idea/
 node_modules/
