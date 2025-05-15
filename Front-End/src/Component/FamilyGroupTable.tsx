@@ -3,8 +3,9 @@ import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { FarmerType } from "../Type/FarmerType";
 import { StatusLabels } from "../Enum/StatusEnum";
 import CustomTable from "./Common/CustomTable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AssetModal from "./AssetModal";
+import axiosInstance from "../axiosInstance";
 
 interface FamilyGroupTableProps {
     familyGroup: FamilyGroupType;
@@ -27,6 +28,19 @@ const FamilyGroupTable = ({
 }: FamilyGroupTableProps) => {
     const [show, setShow] = useState<boolean>(false);
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+    const [lessors, setLessors] = useState<FarmerType[]>([]);
+
+    useEffect(() => {
+        const fetchLessors = async () => {
+            const res = await axiosInstance(`/family-group/lessors/${familyGroup.id}`);
+
+            if (res.status === 200) {
+                setLessors(res.data)
+            }
+        }
+
+        fetchLessors();
+    }, [])
 
     const farmers = familyGroup.members || [];
     const totalArea = farmers.reduce(
@@ -46,6 +60,7 @@ const FamilyGroupTable = ({
         familyGroup.members = updatedFarmers;
         setCurrentFarmer(updatedFarmer);
     };
+
 
     return (
         <div>
@@ -146,13 +161,16 @@ const FamilyGroupTable = ({
                         "Própria",
                     ]}
                 >
-                    <tr>
-                        <td>1234</td>
-                        <td>Teste</td>
-                        <td>UR LAGOA 3 CANTOS</td>
-                        <td>CESER FERNANDO TELOKEN</td>
-                        <td>23 ha</td>
-                    </tr>
+                    {lessors.map((lessor) => (
+                        <tr key={Number(lessor.registrationNumber)}>
+                            <td>{lessor.registrationNumber}</td>
+                            <td>{lessor.name}</td>
+                            <td>{lessor.branch?.name ?? "Sem carteira vinculada."}</td>
+                            <td>{lessor.technician?.name}</td>
+                            <td>43 h</td>
+                        </tr>
+                    ))}
+
                 </CustomTable>
                 <div className="mt-2">
                     <h5 className="fw-bold">

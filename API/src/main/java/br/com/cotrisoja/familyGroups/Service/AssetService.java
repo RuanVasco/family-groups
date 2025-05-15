@@ -1,10 +1,10 @@
 package br.com.cotrisoja.familyGroups.Service;
 
-import br.com.cotrisoja.familyGroups.DTO.Asset.AssetDTO;
 import br.com.cotrisoja.familyGroups.Entity.Asset;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Enum.AssetTypeEnum;
 import br.com.cotrisoja.familyGroups.Repository.AssetRepository;
+import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
+import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,8 @@ import java.util.Optional;
 public class AssetService {
 
 	private final AssetRepository assetRepository;
+	private final AssetTypeRepository assetTypeRepository;
+	private final FarmerRepository farmerRepository;
 
 	public Optional<Asset> findById(Long assetId) {
 		return assetRepository.findById(assetId);
@@ -31,13 +33,34 @@ public class AssetService {
 		asset.setOwner(owner);
 
 		if (leasedTo != null) {
-			asset.setAssetType(AssetTypeEnum.LEASED);
+			assetTypeRepository.findById(2L).ifPresent(asset::setAssetType);
 			asset.setLeasedTo(leasedTo);
+
+			owner.setFamilyGroup(null);
+			farmerRepository.save(owner);
 		} else {
-			asset.setAssetType(AssetTypeEnum.OWNED);
+			assetTypeRepository.findById(1L).ifPresent(asset::setAssetType);
+			asset.setLeasedTo(null);
 		}
 
 		assetRepository.save(asset);
 	}
 
+	public void update(Asset asset, String description, Farmer owner, Farmer leasedTo) {
+		asset.setDescription(description);
+		asset.setOwner(owner);
+
+		if (leasedTo != null) {
+			assetTypeRepository.findById(2L).ifPresent(asset::setAssetType);
+
+			asset.setLeasedTo(leasedTo);
+			owner.setFamilyGroup(null);
+			farmerRepository.save(owner);
+		} else {
+			assetTypeRepository.findById(1L).ifPresent(asset::setAssetType);
+			asset.setLeasedTo(null);
+		}
+
+		assetRepository.save(asset);
+	}
 }

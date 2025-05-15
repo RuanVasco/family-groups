@@ -240,7 +240,6 @@ const HomePage = () => {
                                         {!collapsed && "Carteiras"}
                                     </li>
                                     <li
-                                        // onClick={() => setViewType("report")}
                                         onClick={() => {
                                             setViewType(null);
                                             setMenuContext("reports");

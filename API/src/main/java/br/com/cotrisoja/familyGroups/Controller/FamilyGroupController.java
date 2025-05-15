@@ -5,6 +5,7 @@ import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupMembersResponseD
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
+import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
@@ -121,5 +122,26 @@ public class FamilyGroupController {
         familyGroupService.changePrincipal(familyGroupId, principalId);
 
         return ResponseEntity.ok("Principal atualizado");
+    }
+
+    @GetMapping("/lessors/{familyGroupId}")
+    public ResponseEntity<?> findLessorsByFamilyGroup(
+            @PathVariable Long familyGroupId
+    ) {
+        FamilyGroup familyGroup = null;
+        Optional<FamilyGroup> familyGroupOptional = familyGroupService.findById(familyGroupId);
+
+        if (familyGroupOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("Grupo familiar não encontrado");
+        };
+
+        familyGroup = familyGroupOptional.get();
+
+        List<Farmer> lessors = familyGroupService.findLessorsByFamilyGroup(familyGroup);
+        List<FarmerResponseDTO> response = lessors.stream()
+                .map(FarmerResponseDTO::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }

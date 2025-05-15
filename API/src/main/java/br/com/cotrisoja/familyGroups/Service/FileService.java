@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
 public class FileService {
 
     private final BranchRepository branchRepository;
+    private final AssetRepository assetRepository;
+    private final AssetCategoryRepository assetCategoryRepository;
+    private final AssetTypeRepository assetTypeRepository;
     private final UserRepository userRepository;
     private final FarmerRepository farmerRepository;
     private final FamilyGroupRepository familyGroupRepository;
@@ -64,6 +67,14 @@ public class FileService {
                         processTypeUpdate(row);
                     } catch (Exception e) {
                         log.warn("Erro ao processar tipo da linha: {}\nMotivo: {}", row, e.getMessage());
+                    }
+                }
+            } else if ("assets.csv".equalsIgnoreCase(filename)) {
+                for (String row : lines) {
+                    try {
+                        processAsset(row);
+                    } catch (Exception e) {
+                        log.warn("Erro ao processar asset da linha: {}\nMotivo: {}", row, e.getMessage());
                     }
                 }
             } else {
@@ -111,6 +122,55 @@ public class FileService {
         } catch (NumberFormatException e) {
             log.warn("Group ID inválido na linha: {}", row);
         }
+    }
+
+    private void processAsset(String row) {
+        String[] columns = row.split(";", -1);
+
+        String ownerRegistration = getCol(columns, 0);
+        String idSAP = getCol(columns, 1);
+        String rawAssetType = getCol(columns, 2);
+        String description = getCol(columns, 3);
+        String rawAssetCategory = getCol(columns, 4);
+        double amount = parseDouble(columns, 5, "Amount", row);
+        String address = getCol(columns, 6);
+        String lessorRegistration = getCol(columns, 7);
+
+        Optional<AssetCategory> optionalAssetCategory = assetCategoryRepository.findById(Long.valueOf(rawAssetCategory));
+        AssetCategory assetCategory = optionalAssetCategory.orElse(null);
+
+        Optional<AssetType> optionalAssetType = assetTypeRepository.findById(Long.valueOf(rawAssetType));
+        AssetType assetType = optionalAssetType.orElse(null);
+
+        Optional<Farmer> optionalOwner = farmerRepository.findById(ownerRegistration);
+        Optional<Farmer> optionalLessor = farmerRepository.findById(lessorRegistration);
+
+        if (optionalOwner.isEmpty()) return;
+
+        Farmer owner = optionalOwner.get();
+        Farmer lessor = optionalLessor.orElse(null);
+
+        assetRepository.findByIdSap(Long.valueOf(idSAP)).ifPresentOrElse(asset -> {
+            asset.setOwner(owner);
+            asset.setDescription(description);
+            asset.setAddress(address);
+            asset.setAmount(amount);
+            asset.setAssetCategory(assetCategory);
+            asset.setAssetType(assetType);
+            asset.setLeasedTo(lessor);
+            assetRepository.save(asset);
+        }, () -> {
+            Asset newAsset = new Asset();
+            newAsset.setIdSap(Long.valueOf(idSAP));
+            newAsset.setOwner(owner);
+            newAsset.setDescription(description);
+            newAsset.setAddress(address);
+            newAsset.setAmount(amount);
+            newAsset.setAssetCategory(assetCategory);
+            newAsset.setAssetType(assetType);
+            newAsset.setLeasedTo(lessor);
+            assetRepository.save(newAsset);
+        });
     }
 
     private void processFarmerRow(String row) {

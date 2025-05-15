@@ -1,8 +1,12 @@
 package br.com.cotrisoja.familyGroups;
 
 
+import br.com.cotrisoja.familyGroups.Entity.AssetCategory;
+import br.com.cotrisoja.familyGroups.Entity.AssetType;
 import br.com.cotrisoja.familyGroups.Entity.Type;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Repository.AssetCategoryRepository;
+import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +24,8 @@ public class DataInitializer {
 
     private final UserRepository userRepository;
     private final TypeRepository typeRepository;
+    private final AssetTypeRepository assetTypeRepository;
+    private final AssetCategoryRepository assetCategoryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -60,6 +66,36 @@ public class DataInitializer {
             pjt.setId(4);
             pjt.setDescription("Pessoa Juridica Terceiro");
             typeRepository.save(pjt);
+
+            if (assetTypeRepository.count() == 0) {
+                assetTypeRepository.save(new AssetType(1L, "Terras cultivo"));
+                assetTypeRepository.save(new AssetType(2L, "Terras campo"));
+                assetTypeRepository.save(new AssetType(3L, "Terreno"));
+                assetTypeRepository.save(new AssetType(4L, "Bov. Leite"));
+                assetTypeRepository.save(new AssetType(5L, "Bov. Corte"));
+                assetTypeRepository.save(new AssetType(6L, "Casa"));
+                assetTypeRepository.save(new AssetType(7L, "Apartamento"));
+                assetTypeRepository.save(new AssetType(8L, "Automóvel"));
+                assetTypeRepository.save(new AssetType(9L, "Trator"));
+                assetTypeRepository.save(new AssetType(10L, "Plantadeira"));
+                assetTypeRepository.save(new AssetType(11L, "Colheitadeira"));
+                assetTypeRepository.save(new AssetType(12L, "Pulverizador"));
+                assetTypeRepository.save(new AssetType(13L, "Suínos"));
+                assetTypeRepository.save(new AssetType(14L, "Aves"));
+                assetTypeRepository.save(new AssetType(15L, "Caprinos e ovinos"));
+                assetTypeRepository.save(new AssetType(16L, "Equinos"));
+                assetTypeRepository.save(new AssetType(17L, "Caminhão"));
+                assetTypeRepository.save(new AssetType(18L, "Galpão"));
+                assetTypeRepository.save(new AssetType(19L, "Aviário"));
+                assetTypeRepository.save(new AssetType(20L, "Moto"));
+                assetTypeRepository.save(new AssetType(99L, "Não possui bens"));
+            }
+
+            if (assetCategoryRepository.count() == 0) {
+                assetCategoryRepository.save(new AssetCategory(1L, "Próprio"));
+                assetCategoryRepository.save(new AssetCategory(2L, "Arrendado"));
+                assetCategoryRepository.save(new AssetCategory(3L, "Comodato"));
+            }
         };
     }
 }

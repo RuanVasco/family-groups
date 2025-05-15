@@ -6,7 +6,7 @@ export interface AssetType {
   description: string;
   assetType?: AssetEnum;
   leasedTo?: FarmerType | null;
-  owner: FarmerType;
+  owner?: FarmerType | null;
 }
 
 export default AssetType;

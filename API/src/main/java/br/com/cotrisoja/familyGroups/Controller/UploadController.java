@@ -23,7 +23,11 @@ public class UploadController {
             return ResponseEntity.badRequest().body("Arquivo inválido. Envie um arquivo .csv.");
         }
 
-        if (!"data.csv".equalsIgnoreCase(file.getOriginalFilename()) && !"farmer_update.csv".equalsIgnoreCase(file.getOriginalFilename())) {
+        if (
+                !"data.csv".equalsIgnoreCase(file.getOriginalFilename()) &&
+                        !"farmer_update.csv".equalsIgnoreCase(file.getOriginalFilename()) &&
+                            !"assets.csv".equalsIgnoreCase(file.getOriginalFilename())
+        ) {
             return ResponseEntity.badRequest().body("Arquivo inválido.");
         }
 

@@ -1,234 +1,482 @@
-import { Button, Form, Modal } from "react-bootstrap";
-import { FarmerType } from "../Type/FarmerType";
-import CustomTable from "./Common/CustomTable";
 import { useEffect, useState } from "react";
-import { FaFloppyDisk, FaMinus, FaPencil, FaPlus } from "react-icons/fa6";
-import AssetType from "../Type/AssetType";
-import { v4 as uuidv4 } from "uuid";
-import "../assets/styles/Components/_button.scss";
+import {
+    FaFloppyDisk,
+    FaMinus,
+    FaPencil,
+    FaPlus,
+    FaXmark,
+} from "react-icons/fa6";
+import { Button, Form, Modal } from "react-bootstrap";
 import AsyncSelect from "react-select/async";
+import Select from "react-select";
 import axiosInstance from "../axiosInstance";
 import { toast } from "react-toastify";
+
+import { FarmerType } from "../Type/FarmerType";
+import AssetType from "../Type/AssetType";
+import { AssetEnum, AssetLabels } from "../Enum/AssetEnum";
+import CustomTable from "./Common/CustomTable";
+
+import "../assets/styles/Components/_button.scss";
+import { v4 as uuidv4 } from "uuid";
 
 interface AssetModalProps {
     show: boolean;
     onClose: () => void;
     farmer: FarmerType | null;
-    onFarmerUpdated: (updatedFarmer: FarmerType) => void;
+    onFarmerUpdated: (f: FarmerType) => void;
     onChange: (field: keyof FarmerType, value: any) => void;
 }
+
 
 const AssetModal = ({
     show,
     onClose,
     farmer,
-    onFarmerUpdated
+    onFarmerUpdated,
 }: AssetModalProps) => {
-    const [newAssets, setNewAssets] = useState<AssetType[]>([]);
     const [updatedFarmer, setUpdatedFarmer] = useState<FarmerType | null>(null);
+    const [mergedAssets, setMergedAssets] = useState<AssetType[]>([]);
 
-    useEffect(() => {
-        if (farmer) {
-            setUpdatedFarmer(farmer)
-        }
-    }, [farmer])
+    const [newAssets, setNewAssets] = useState<AssetType[]>([]);
 
-    const handleAddNewAsset = () => {
-        if (updatedFarmer) {
-            const tempId = uuidToNumber(uuidv4());
-            setNewAssets([...newAssets, { id: tempId, description: "", owner: updatedFarmer }]);
-        }
-    };
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [draftAssets, setDraftAssets] = useState<Record<number, AssetType>>({});
+
+    const assetOptions = [
+        { value: AssetEnum.OWNED, label: AssetLabels[AssetEnum.OWNED] },
+        { value: AssetEnum.LEASED, label: AssetLabels[AssetEnum.LEASED] },
+    ];
+
+    const uuidToNumber = (uuid: string) =>
+        parseInt(uuid.replace(/-/g, "").slice(-12), 16);
 
     const reFetchUpdatedFarmer = async () => {
         if (!updatedFarmer) return;
-
         try {
-            const res = await axiosInstance.get(`/farmer/${updatedFarmer.registrationNumber}`);
+            const res = await axiosInstance.get(
+                `/farmer/${updatedFarmer.registrationNumber}`
+            );
             if (res.status === 200) {
                 setUpdatedFarmer(res.data);
                 onFarmerUpdated(res.data);
             }
-        } catch (error) {
-            toast.error("Erro ao atualizar dados do produtor.");
+        } catch {
+            toast.error("Erro ao buscar produtor atualizado");
         }
     };
 
-    const handleSaveNewAsset = async (tempId: number) => {
-        const asset = newAssets.find(a => a.id === tempId);
-        if (asset && asset.description.trim() !== "") {
+    useEffect(() => {
+        if (!show || !farmer) return;
+
+        const fetchFreshFarmer = async () => {
             try {
-                const res = await axiosInstance.post("/asset", {
-                    description: asset.description,
-                    ownerRegistrationNumber: updatedFarmer?.registrationNumber,
-                    leasedToRegistrationNumber: asset.leasedTo?.registrationNumber ?? ""
-                })
-
-                if (res.status === 200) {
-                    reFetchUpdatedFarmer();
-                    setNewAssets(prev => prev.filter(a => a.id !== tempId));
-                }
-            } catch (error) {
-                toast.error("Erro ao salvar o bem.")
+                const res = await axiosInstance.get(`/farmer/${farmer.registrationNumber}`);
+                setUpdatedFarmer(res.data);
+                onFarmerUpdated(res.data);
+            } catch {
+                toast.error("Erro ao buscar dados do produtor");
             }
+        };
 
-        } else {
-            console.error("Descrição não pode ser vazia.");
-        }
+        fetchFreshFarmer();
+    }, [show, farmer?.registrationNumber]);
+
+    useEffect(() => {
+        setMergedAssets([
+            ...(updatedFarmer?.ownedAssets ?? []),
+            ...(updatedFarmer?.leasedAssets ?? []),
+        ]);
+    }, [updatedFarmer?.ownedAssets, updatedFarmer?.leasedAssets]);
+
+    const handleAddNewAsset = () => {
+        if (!updatedFarmer) return;
+        const tmpId = uuidToNumber(uuidv4());
+        setNewAssets((prev) => [
+            ...prev,
+            { id: tmpId, description: "", owner: updatedFarmer },
+        ]);
     };
 
-    const handleRemoveAsset = async (assetId: number) => {
+    const handleSaveNewAsset = async (tmpId: number) => {
+        const asset = newAssets.find((a) => a.id === tmpId);
+        if (!asset || !asset.description.trim()) {
+            toast.warn("Descrição é obrigatória");
+            return;
+        }
         try {
-            const res = await axiosInstance.delete(`/asset/${assetId}`);
-
-            if (res.status === 200) {
-                reFetchUpdatedFarmer();
-                setNewAssets(prev => prev.filter(a => a.id !== assetId));
-            }
-        } catch (error) {
-            toast.error("Erro ao remover o bem.")
+            await axiosInstance.post("/asset", {
+                description: asset.description,
+                ownerRegistrationNumber:
+                    asset.owner?.registrationNumber ?? "",
+                leasedToRegistrationNumber: asset.leasedTo?.registrationNumber ?? "",
+            });
+            toast.success("Bem cadastrado");
+            setNewAssets((prev) => prev.filter((a) => a.id !== tmpId));
+            reFetchUpdatedFarmer();
+        } catch {
+            toast.error("Erro ao salvar o bem");
         }
     };
 
-    const handleDescriptionChange = (tempId: number, value: string) => {
-        setNewAssets(newAssets.map(asset =>
-            asset.id === tempId ? { ...asset, description: value } : asset
-        ));
+    const handleRemoveAsset = async (id: number) => {
+        try {
+            await axiosInstance.delete(`/asset/${id}`);
+            toast.success("Bem removido");
+            reFetchUpdatedFarmer();
+        } catch {
+            toast.error("Erro ao remover o bem");
+        }
     };
 
-    const uuidToNumber = (uuid: string): number => {
-        const cleanUuid = uuid.replace(/-/g, "").slice(-12);
-        return parseInt(cleanUuid, 16);
+    const startEdit = (asset: AssetType) => {
+        setEditingId(asset.id!);
+        setDraftAssets((d) => ({ ...d, [asset.id!]: { ...asset } }));
+    };
+
+    const cancelEdit = (id: number) => {
+        setEditingId(null);
+        setDraftAssets((d) => {
+            const { [id]: _, ...rest } = d;
+            return rest;
+        });
+    };
+
+    const handleUpdateAsset = async (id: number) => {
+        const asset = draftAssets[id];
+        if (!asset || !asset.description.trim()) {
+            toast.warn("Descrição é obrigatória");
+            return;
+        }
+        try {
+            await axiosInstance.put(`/asset/${id}`, {
+                description: asset.description,
+                ownerRegistrationNumber: asset.owner?.registrationNumber ?? "",
+                leasedToRegistrationNumber: asset.leasedTo?.registrationNumber ?? "",
+            });
+            toast.success("Bem atualizado");
+            setEditingId(null);
+            reFetchUpdatedFarmer();
+        } catch {
+            toast.error("Erro ao atualizar o bem");
+        }
+    };
+
+    const commonSelectStyles = {
+        menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+        control: (base: any) => ({ ...base, minWidth: "250px" }),
+    };
+
+    const loadFarmers = async (input: string) => {
+        try {
+            const res = await axiosInstance.get("/farmer", {
+                params: { value: input, size: 10 },
+            });
+            return res.data.content.map((f: FarmerType) => ({
+                value: f,
+                label: `${f.registrationNumber} - ${f.name}`,
+            }));
+        } catch {
+            return [];
+        }
     };
 
     return (
         <Modal show={show} onHide={onClose} size="xl">
             <Modal.Header closeButton>
-                <Modal.Title>
-                    {`Editar bens do produtor ${updatedFarmer?.name}`}
-                </Modal.Title>
+                <Modal.Title>Editar bens do produtor {updatedFarmer?.name}</Modal.Title>
             </Modal.Header>
+
             <Modal.Body>
-                <div className="d-flex align-items-center justify-content-between mb-2">
-                    <h5 className="fw-bold">Áreas Próprias</h5>
+                <div className="d-flex justify-content-between mb-2">
+                    <h5 className="fw-bold">Bens</h5>
                     <button className="button_agree" onClick={handleAddNewAsset}>
-                        <FaPlus /> Adicionar Bem
+                        <FaPlus /> Adicionar bem
                     </button>
                 </div>
-                <CustomTable headers={["Id", "Descrição", "Arrendado para", "Ações"]}>
-                    {updatedFarmer?.ownedAssets?.map((ownArea) => (
-                        <tr key={ownArea.id}>
-                            <td>{ownArea.id}</td>
-                            <td>{ownArea.description}</td>
-                            <td>
-                                {ownArea.leasedTo
-                                    ? `${ownArea.leasedTo.registrationNumber} - ${ownArea.leasedTo.name}`
-                                    : "-"}
-                            </td>
-                            <td>
-                                <div className="d-flex align-items-center justify-content-start gap-2">
-                                    <button className="button_edit button_sm">
-                                        <FaPencil /> Editar Bem
-                                    </button>
-                                    {ownArea.id !== undefined && (
+
+                <CustomTable
+                    headers={[
+                        "Id",
+                        "Descrição",
+                        "Tipo",
+                        "Arrendador",
+                        "Arrendatário",
+                        "Ações",
+                    ]}
+                >
+                    {mergedAssets.map(asset => {
+                        const isEditing = editingId === asset.id;
+
+                        const row = isEditing ? draftAssets[asset.id!] : asset;
+
+                        const isOwnedByMe = row.owner?.registrationNumber === updatedFarmer?.registrationNumber;
+                        const currentType = isOwnedByMe ? AssetEnum.OWNED : AssetEnum.LEASED;
+                        const typeValue = assetOptions.find(o => o.value === currentType) ?? null;
+
+                        if (isEditing) {
+                            return (
+                                <tr key={asset.id}>
+                                    <td>{asset.id}</td>
+
+                                    <td>
+                                        <Form.Control
+                                            value={row.description}
+                                            onChange={e =>
+                                                setDraftAssets(d => ({
+                                                    ...d,
+                                                    [asset.id!]: { ...d[asset.id!], description: e.target.value },
+                                                }))
+                                            }
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <Select
+                                            options={assetOptions}
+                                            value={typeValue}
+                                            onChange={opt =>
+                                                setDraftAssets(d => {
+                                                    const type = opt?.value as AssetEnum;
+                                                    const cur = d[asset.id!];
+                                                    return {
+                                                        ...d,
+                                                        [asset.id!]: {
+                                                            ...cur,
+                                                            assetType: type,
+                                                            owner: type === AssetEnum.OWNED ? updatedFarmer ?? undefined : undefined,
+                                                            leasedTo: type === AssetEnum.LEASED ? updatedFarmer ?? undefined : undefined,
+                                                        },
+                                                    };
+                                                })
+                                            }
+                                            styles={commonSelectStyles}
+                                            menuPortalTarget={document.body}
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <AsyncSelect
+                                            isDisabled={row.assetType !== AssetEnum.LEASED}
+                                            loadOptions={loadFarmers}
+                                            defaultOptions
+                                            value={
+                                                row.owner
+                                                    ? { value: row.owner, label: `${row.owner.registrationNumber} - ${row.owner.name}` }
+                                                    : null
+                                            }
+                                            onChange={opt =>
+                                                setDraftAssets(d => ({
+                                                    ...d,
+                                                    [asset.id!]: { ...d[asset.id!], owner: opt?.value },
+                                                }))
+                                            }
+                                            styles={commonSelectStyles}
+                                            menuPortalTarget={document.body}
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <AsyncSelect
+                                            isDisabled={row.assetType !== AssetEnum.OWNED}
+                                            loadOptions={loadFarmers}
+                                            defaultOptions
+                                            value={
+                                                row.leasedTo
+                                                    ? { value: row.leasedTo, label: `${row.leasedTo.registrationNumber} - ${row.leasedTo.name}` }
+                                                    : null
+                                            }
+                                            onChange={opt =>
+                                                setDraftAssets(d => ({
+                                                    ...d,
+                                                    [asset.id!]: { ...d[asset.id!], leasedTo: opt?.value },
+                                                }))
+                                            }
+                                            styles={commonSelectStyles}
+                                            menuPortalTarget={document.body}
+                                        />
+                                    </td>
+
+                                    <td className="d-flex gap-2">
+                                        <button
+                                            className="button_info button_sm"
+                                            onClick={() => handleUpdateAsset(asset.id!)}
+                                        >
+                                            <FaFloppyDisk /> Salvar
+                                        </button>
                                         <button
                                             className="button_remove button_sm"
-                                            onClick={() => handleRemoveAsset(ownArea.id!)}
+                                            onClick={() => cancelEdit(asset.id!)}
                                         >
-                                            <FaMinus /> Remover Bem
+                                            <FaXmark /> Cancelar
                                         </button>
-                                    )}
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                    {newAssets.map((newAsset) => (
-                        <tr key={newAsset.id}>
+                                    </td>
+                                </tr>
+                            );
+                        }
+
+                        return (
+                            <tr key={asset.id}>
+                                <td>{asset.id}</td>
+                                <td>{asset.description}</td>
+                                <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendado"} </td>
+                                <td>
+                                    {asset.owner
+                                        ? `${asset.owner.registrationNumber} - ${asset.owner.name}`
+                                        : "-"}
+                                </td>
+                                <td>
+                                    {asset.leasedTo
+                                        ? `${asset.leasedTo.registrationNumber} - ${asset.leasedTo.name}`
+                                        : "-"}
+                                </td>
+                                <td>
+                                    <div className="d-flex gap-2">
+                                        <button className="button_edit button_sm" onClick={() => startEdit(asset)}>
+                                            <FaPencil />
+                                        </button>
+                                        <button
+                                            className="button_remove button_sm"
+                                            onClick={() => handleRemoveAsset(asset.id!)}
+                                        >
+                                            <FaMinus />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+
+                    {/* linhas de novos bens */}
+                    {newAssets.map((a) => (
+                        <tr key={a.id}>
                             <td>-</td>
+
+                            {/* descrição */}
                             <td>
                                 <Form.Control
-                                    value={newAsset.description}
-                                    onChange={(e) => {
-                                        handleDescriptionChange(newAsset.id!, e.target.value);
-                                    }}
-                                    placeholder="Descrição do bem"
+                                    value={a.description}
+                                    onChange={(e) =>
+                                        setNewAssets((prev) =>
+                                            prev.map((x) =>
+                                                x.id === a.id ? { ...x, description: e.target.value } : x
+                                            )
+                                        )
+                                    }
                                 />
                             </td>
+
+                            {/* tipo */}
                             <td>
-                                <AsyncSelect
-                                    cacheOptions
-                                    loadOptions={async (inputValue) => {
-                                        try {
-                                            const res = await axiosInstance.get(`/farmer`, { params: { value: inputValue, size: 10 } });
-                                            return res.data.content.map((farmer: FarmerType) => ({
-                                                value: farmer,
-                                                label: `${farmer.registrationNumber} - ${farmer.name}`
-                                            }));
-                                        } catch (error) {
-                                            console.error("Erro ao buscar produtores:", error);
-                                            return [];
-                                        }
-                                    }}
-                                    defaultOptions
-                                    menuPortalTarget={document.body}
-                                    styles={{
-                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                        control: (base) => ({ ...base, minWidth: '250px' }),
-                                    }}
-                                    placeholder="Buscar arrendatário..."
-                                    isClearable
+                                <Select
+                                    options={assetOptions}
                                     value={
-                                        newAsset.leasedTo
-                                            ? { value: newAsset.leasedTo, label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}` }
+                                        a.assetType
+                                            ? assetOptions.find((o) => o.value === a.assetType)
                                             : null
                                     }
-                                    onChange={(selectedOption) => {
-                                        setNewAssets(prev => prev.map(asset =>
-                                            asset.id === newAsset.id
-                                                ? { ...asset, leasedTo: selectedOption ? selectedOption.value : undefined }
-                                                : asset
-                                        ));
-                                    }}
+                                    onChange={(opt) =>
+                                        setNewAssets((prev) =>
+                                            prev.map((x) =>
+                                                x.id === a.id
+                                                    ? {
+                                                        ...x,
+                                                        assetType: opt?.value as AssetEnum,
+                                                        owner:
+                                                            opt?.value === AssetEnum.OWNED
+                                                                ? updatedFarmer ?? undefined
+                                                                : undefined,
+                                                        leasedTo:
+                                                            opt?.value === AssetEnum.LEASED
+                                                                ? updatedFarmer ?? undefined
+                                                                : undefined,
+                                                    }
+                                                    : x
+                                            )
+                                        )
+                                    }
+                                    styles={commonSelectStyles}
+                                    menuPortalTarget={document.body}
                                 />
                             </td>
+
+                            {/* arrendador */}
                             <td>
+                                <AsyncSelect
+                                    isDisabled={a.assetType !== AssetEnum.LEASED}
+                                    loadOptions={loadFarmers}
+                                    defaultOptions
+                                    value={
+                                        a.owner
+                                            ? {
+                                                value: a.owner,
+                                                label: `${a.owner.registrationNumber} - ${a.owner.name}`,
+                                            }
+                                            : null
+                                    }
+                                    onChange={(opt) =>
+                                        setNewAssets((prev) =>
+                                            prev.map((x) =>
+                                                x.id === a.id ? { ...x, owner: opt?.value } : x
+                                            )
+                                        )
+                                    }
+                                    styles={commonSelectStyles}
+                                    menuPortalTarget={document.body}
+                                />
+                            </td>
+
+                            {/* arrendatário */}
+                            <td>
+                                <AsyncSelect
+                                    isDisabled={a.assetType !== AssetEnum.OWNED}
+                                    loadOptions={loadFarmers}
+                                    defaultOptions
+                                    value={
+                                        a.leasedTo
+                                            ? {
+                                                value: a.leasedTo,
+                                                label: `${a.leasedTo.registrationNumber} - ${a.leasedTo.name}`,
+                                            }
+                                            : null
+                                    }
+                                    onChange={(opt) =>
+                                        setNewAssets((prev) =>
+                                            prev.map((x) =>
+                                                x.id === a.id ? { ...x, leasedTo: opt?.value } : x
+                                            )
+                                        )
+                                    }
+                                    styles={commonSelectStyles}
+                                    menuPortalTarget={document.body}
+                                />
+                            </td>
+
+                            <td className="d-flex gap-2">
                                 <button
-                                    onClick={() => newAsset.id !== undefined && handleSaveNewAsset(newAsset.id)}
-                                    className="button_info btn_sm"
+                                    className="button_info button_sm"
+                                    onClick={() => handleSaveNewAsset(a.id!)}
                                 >
-                                    <FaFloppyDisk /> Salvar
+                                    <FaFloppyDisk />
+                                </button>
+                                <button
+                                    className="button_remove button_sm"
+                                    onClick={() =>
+                                        setNewAssets((prev) => prev.filter((x) => x.id !== a.id))
+                                    }
+                                >
+                                    <FaXmark />
                                 </button>
                             </td>
                         </tr>
                     ))}
                 </CustomTable>
-
-                <div className="d-flex align-items-center justify-content-between mt-5 mb-2">
-                    <h5 className="fw-bold">Áreas Arrendadas</h5>
-                    <button className="button_agree">
-                        <FaPlus /> Adicionar Bem
-                    </button>
-                </div>
-                <CustomTable headers={["Id", "Descrição", "Arrendador", "Ações"]}>
-                    {updatedFarmer?.leasedAssets?.map((leaArea) => (
-                        <tr key={leaArea.id}>
-                            <td>{leaArea.id}</td>
-                            <td>{leaArea.description}</td>
-                            <td>{`${leaArea.owner.registrationNumber} - ${leaArea.owner.name}`}</td>
-                            <td>
-                                <button>Encerrar o arrendamento</button>
-                            </td>
-                        </tr>
-                    ))}
-                </CustomTable>
             </Modal.Body>
+
             <Modal.Footer>
                 <Button variant="secondary" onClick={onClose}>
                     Fechar
                 </Button>
-                {/* <Button variant="primary" onClick={handleSubmit}>
-                    Salvar
-                </Button> */}
             </Modal.Footer>
         </Modal>
     );

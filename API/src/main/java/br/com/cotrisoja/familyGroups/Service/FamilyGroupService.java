@@ -160,4 +160,8 @@ public class FamilyGroupService {
     public Page<FamilyGroup> findByValue(String value, Pageable pageable) {
         return familyGroupRepository.findByValue(value, pageable);
     }
+
+    public List<Farmer> findLessorsByFamilyGroup(FamilyGroup familyGroup) {
+        return familyGroupRepository.findLessorsByFamilyGroup(familyGroup);
+    }
 }

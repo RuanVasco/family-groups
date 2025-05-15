@@ -36,4 +36,18 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
            OR CAST(fg.id AS string) LIKE CONCAT('%', :value, '%')
         """)
     Page<FamilyGroup> findByValue(@Param("value") String value, Pageable pageable);
+
+    @Query("""
+        SELECT DISTINCT a.owner
+        FROM Asset a
+        WHERE EXISTS (
+            SELECT 1 FROM FamilyGroup fg
+            JOIN fg.members m
+            WHERE fg = :familyGroup AND a.leasedTo = m
+        )
+    """)
+    List<Farmer> findLessorsByFamilyGroup(@Param("familyGroup") FamilyGroup familyGroup);
+
+
+
 }
