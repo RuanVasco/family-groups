@@ -1,12 +1,16 @@
-import { AssetEnum } from "../Enum/AssetEnum";
+import AssetCategoryType from "./AssetCategoryType";
+import AssetTypeType from "./AssetTypeType";
 import { FarmerType } from "./FarmerType";
 
 export interface AssetType {
-  id?: number;
+  id?: string;
   description: string;
-  assetType?: AssetEnum;
-  leasedTo?: FarmerType | null;
-  owner?: FarmerType | null;
+  address: string;
+  amount: number;
+  owner?: FarmerType;
+  leasedTo?: FarmerType;
+  assetCategory: AssetCategoryType;
+  assetType: AssetTypeType;
 }
 
 export default AssetType;

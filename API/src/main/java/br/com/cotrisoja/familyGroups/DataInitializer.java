@@ -1,14 +1,9 @@
 package br.com.cotrisoja.familyGroups;
 
 
-import br.com.cotrisoja.familyGroups.Entity.AssetCategory;
-import br.com.cotrisoja.familyGroups.Entity.AssetType;
-import br.com.cotrisoja.familyGroups.Entity.Type;
-import br.com.cotrisoja.familyGroups.Entity.User;
-import br.com.cotrisoja.familyGroups.Repository.AssetCategoryRepository;
-import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
-import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
-import br.com.cotrisoja.familyGroups.Repository.UserRepository;
+import br.com.cotrisoja.familyGroups.Entity.*;
+import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
+import br.com.cotrisoja.familyGroups.Repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +21,7 @@ public class DataInitializer {
     private final TypeRepository typeRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final AssetCategoryRepository assetCategoryRepository;
+    private final FarmerRepository farmerRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -95,6 +91,15 @@ public class DataInitializer {
                 assetCategoryRepository.save(new AssetCategory(1L, "Próprio"));
                 assetCategoryRepository.save(new AssetCategory(2L, "Arrendado"));
                 assetCategoryRepository.save(new AssetCategory(3L, "Comodato"));
+            }
+
+            if (farmerRepository.findById("-1").isEmpty()) {
+                Farmer notInformedLessor = new Farmer();
+                notInformedLessor.setRegistrationNumber("-1");
+                notInformedLessor.setName("Não Informado");
+                notInformedLessor.setStatus(StatusEnum.ACTIVE);
+
+                farmerRepository.save(notInformedLessor);
             }
         };
     }

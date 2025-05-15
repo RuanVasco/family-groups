@@ -6,9 +6,11 @@ import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Service.AssetService;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -48,9 +50,18 @@ public class AssetController {
 
 	@DeleteMapping("/{assetId}")
 	public ResponseEntity<?> deleteAsset(
-			@PathVariable Long assetId
+			@PathVariable String assetId
 	) {
-		Optional<Asset> assetOptional = assetService.findById(assetId);
+		Optional<Map.Entry<String, Long>> parsedId = assetService.parseAssetId(assetId);
+
+		if (parsedId.isEmpty()) {
+			return ResponseEntity.badRequest().body("Formato de assetId inválido. Use 'registrationNumber-sapId'.");
+		}
+
+		String registrationNumber = parsedId.get().getKey();
+		Long sapId = parsedId.get().getValue();
+
+		Optional<Asset> assetOptional = assetService.findById(registrationNumber, sapId);
 
 		if (assetOptional.isEmpty()) {
 			return ResponseEntity.badRequest().body("Bem não encontrado.");
@@ -63,10 +74,19 @@ public class AssetController {
 
 	@PutMapping("{assetId}")
 	public ResponseEntity<?> updateAsset(
-			@PathVariable Long assetId,
+			@PathVariable String assetId,
 			@RequestBody AssetRequestDTO asset
 	) {
-		Optional<Asset> assetOptional = assetService.findById(assetId);
+		Optional<Map.Entry<String, Long>> parsedId = assetService.parseAssetId(assetId);
+
+		if (parsedId.isEmpty()) {
+			return ResponseEntity.badRequest().body("Formato de assetId inválido. Use 'registrationNumber-sapId'.");
+		}
+
+		String registrationNumber = parsedId.get().getKey();
+		Long sapId = parsedId.get().getValue();
+
+		Optional<Asset> assetOptional = assetService.findById(registrationNumber, sapId);
 
 		if (assetOptional.isEmpty()) {
 			return ResponseEntity.badRequest().body("Bem não encontrado.");

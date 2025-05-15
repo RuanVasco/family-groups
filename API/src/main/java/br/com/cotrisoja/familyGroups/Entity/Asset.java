@@ -7,18 +7,17 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
+@IdClass(AssetId.class)
 @Table(name = "assets")
 public class Asset {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-
-	@Column(name = "idSap", unique = true)
+	@Column(name = "idSap")
 	private Long idSap;
 
+	@Id
 	@ManyToOne
-	@JoinColumn(name = "farmer_id")
+	@JoinColumn(name = "farmer_id", referencedColumnName = "registration_number")
 	private Farmer owner;
 
 	private String description;
@@ -41,7 +40,7 @@ public class Asset {
 	@PrePersist
 	@PreUpdate
 	private void validateAsset() {
-		if (assetCategory.getId() == 1 && leasedTo == null) {
+		if (assetCategory.getId() == 2 && leasedTo == null) {
 			throw new IllegalStateException("Bem arrendado deve ter um 'leasedTo' representado.");
 		}
 	}

@@ -3,6 +3,7 @@ package br.com.cotrisoja.familyGroups.Service;
 import br.com.cotrisoja.familyGroups.Entity.*;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 import br.com.cotrisoja.familyGroups.Repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class FileService {
                         log.warn("Erro ao processar linha: {}\nMotivo: {}", row, e.getMessage());
                     }
                 }
+
                 for (String row : lines) {
                     try {
                         associateFarmerToGroup(row);
@@ -61,6 +63,7 @@ public class FileService {
                         log.warn("Erro ao associar linha: {}\nMotivo: {}", row, e.getMessage());
                     }
                 }
+                System.out.println("Dados inseridos com sucesso!");
             } else if ("farmer_update.csv".equalsIgnoreCase(filename)) {
                 for (String row : lines) {
                     try {
@@ -69,6 +72,7 @@ public class FileService {
                         log.warn("Erro ao processar tipo da linha: {}\nMotivo: {}", row, e.getMessage());
                     }
                 }
+                System.out.println("Produtores atualizados com sucesso!");
             } else if ("assets.csv".equalsIgnoreCase(filename)) {
                 for (String row : lines) {
                     try {
@@ -77,6 +81,7 @@ public class FileService {
                         log.warn("Erro ao processar asset da linha: {}\nMotivo: {}", row, e.getMessage());
                     }
                 }
+                System.out.println("Bens inseridos com sucesso!");
             } else {
                 log.warn("Arquivo não reconhecido: {}", filename);
             }
@@ -128,7 +133,7 @@ public class FileService {
         String[] columns = row.split(";", -1);
 
         String ownerRegistration = getCol(columns, 0);
-        String idSAP = getCol(columns, 1);
+        String idSapRaw = getCol(columns, 1);
         String rawAssetType = getCol(columns, 2);
         String description = getCol(columns, 3);
         String rawAssetCategory = getCol(columns, 4);
@@ -136,41 +141,61 @@ public class FileService {
         String address = getCol(columns, 6);
         String lessorRegistration = getCol(columns, 7);
 
-        Optional<AssetCategory> optionalAssetCategory = assetCategoryRepository.findById(Long.valueOf(rawAssetCategory));
-        AssetCategory assetCategory = optionalAssetCategory.orElse(null);
+        Long idSap, catId, typeId;
+        try {
+            idSap = Long.valueOf(idSapRaw);
+            catId = Long.valueOf(rawAssetCategory);
+            typeId = Long.valueOf(rawAssetType);
+        } catch (NumberFormatException e) {
+            log.warn("IDs inválidos (idSap / categoria / tipo) na linha: {}", row);
+            return;
+        }
 
-        Optional<AssetType> optionalAssetType = assetTypeRepository.findById(Long.valueOf(rawAssetType));
-        AssetType assetType = optionalAssetType.orElse(null);
+        Optional<AssetCategory> catOpt = assetCategoryRepository.findById(catId);
+        Optional<AssetType> typeOpt = assetTypeRepository.findById(typeId);
+        Optional<Farmer> ownOpt = farmerRepository.findById(ownerRegistration);
+        Optional<Farmer> lesOpt = farmerRepository.findById(lessorRegistration);
 
-        Optional<Farmer> optionalOwner = farmerRepository.findById(ownerRegistration);
-        Optional<Farmer> optionalLessor = farmerRepository.findById(lessorRegistration);
+        if (catOpt.isEmpty()) {
+            log.warn("Categoria não encontrada (id={}): {}", catId, row);
+            return;
+        }
+        if (typeOpt.isEmpty()) {
+            log.warn("Tipo de bem não encontrado (id={}): {}", typeId, row);
+            return;
+        }
+        if (ownOpt.isEmpty()) {
+            log.warn("Produtor proprietário não encontrado (reg={}): {}", ownerRegistration, row);
+            return;
+        }
 
-        if (optionalOwner.isEmpty()) return;
+        AssetCategory category = catOpt.get();
+        AssetType aType = typeOpt.get();
+        Farmer owner = ownOpt.get();
+        Farmer lessor = lesOpt.orElse(null);
 
-        Farmer owner = optionalOwner.get();
-        Farmer lessor = optionalLessor.orElse(null);
+        if (category.getId() == 2 && lessor == null) {
+            lessor = farmerRepository.findById("-1").orElseThrow(() ->
+                    new IllegalStateException("Produtor sentinela '-1' não encontrado."));
+        }
 
-        assetRepository.findByIdSap(Long.valueOf(idSAP)).ifPresentOrElse(asset -> {
+        Asset asset = assetRepository.findByOwner_RegistrationNumberAndIdSap(owner.getRegistrationNumber(), idSap).orElseGet(Asset::new);
+        asset.setIdSap(idSap);
+        asset.setDescription(description);
+        asset.setAddress(address);
+        asset.setAmount(amount);
+        asset.setAssetCategory(category);
+        asset.setAssetType(aType);
+
+        if (category.getId() == 2) {
+            asset.setOwner(lessor);
+            asset.setLeasedTo(owner);
+        } else {
             asset.setOwner(owner);
-            asset.setDescription(description);
-            asset.setAddress(address);
-            asset.setAmount(amount);
-            asset.setAssetCategory(assetCategory);
-            asset.setAssetType(assetType);
             asset.setLeasedTo(lessor);
-            assetRepository.save(asset);
-        }, () -> {
-            Asset newAsset = new Asset();
-            newAsset.setIdSap(Long.valueOf(idSAP));
-            newAsset.setOwner(owner);
-            newAsset.setDescription(description);
-            newAsset.setAddress(address);
-            newAsset.setAmount(amount);
-            newAsset.setAssetCategory(assetCategory);
-            newAsset.setAssetType(assetType);
-            newAsset.setLeasedTo(lessor);
-            assetRepository.save(newAsset);
-        });
+        }
+
+        assetRepository.save(asset);
     }
 
     private void processFarmerRow(String row) {

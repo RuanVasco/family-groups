@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface AssetRepository extends JpaRepository<Asset, Long> {
-    Optional<Asset> findByIdSap(Long idSap);
+    Optional<Asset> findByOwner_RegistrationNumberAndIdSap(String registrationNumber, Long idSap);
 }

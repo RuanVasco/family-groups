@@ -55,23 +55,23 @@ public class FamilyGroup {
                 : 0f;
     }
 
-    @PrePersist
-    @PreUpdate
-    private void validateTotalAreas() {
-        float totalAvailable = getTotalAvailableArea();
-
-        double totalUsed = canolaArea + wheatArea + cornSilageArea + grainCornArea + beanArea + soybeanArea;
-
-        if (totalUsed > totalAvailable) {
-            throw new IllegalStateException(
-                    String.format("A soma das áreas cultivadas (%.2f ha) excede a área total disponível (%.2f ha).",
-                            totalUsed, totalAvailable)
-            );
-        }
-
-        if (canolaArea < 0 || wheatArea < 0 || cornSilageArea < 0 ||
-                grainCornArea < 0 || beanArea < 0 || soybeanArea < 0) {
-            throw new IllegalStateException("Áreas cultivadas não podem ser negativas.");
-        }
-    }
+//    @PrePersist
+//    @PreUpdate
+//    private void validateTotalAreas() {
+//        float totalAvailable = getTotalAvailableArea();
+//
+//        double totalUsed = canolaArea + wheatArea + cornSilageArea + grainCornArea + beanArea + soybeanArea;
+//
+//        if (totalUsed > totalAvailable) {
+//            throw new IllegalStateException(
+//                    String.format("A soma das áreas cultivadas (%.2f ha) excede a área total disponível (%.2f ha).",
+//                            totalUsed, totalAvailable)
+//            );
+//        }
+//
+//        if (canolaArea < 0 || wheatArea < 0 || cornSilageArea < 0 ||
+//                grainCornArea < 0 || beanArea < 0 || soybeanArea < 0) {
+//            throw new IllegalStateException("Áreas cultivadas não podem ser negativas.");
+//        }
+//    }
 }

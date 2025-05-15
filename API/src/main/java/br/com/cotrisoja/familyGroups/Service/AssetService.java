@@ -6,8 +6,10 @@ import br.com.cotrisoja.familyGroups.Repository.AssetRepository;
 import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -18,8 +20,8 @@ public class AssetService {
 	private final AssetTypeRepository assetTypeRepository;
 	private final FarmerRepository farmerRepository;
 
-	public Optional<Asset> findById(Long assetId) {
-		return assetRepository.findById(assetId);
+	public Optional<Asset> findById(String ownerRegistrationNumber, Long sapId) {
+		return assetRepository.findByOwner_RegistrationNumberAndIdSap(ownerRegistrationNumber, sapId);
 	}
 
 	public void delete(Asset asset) {
@@ -62,5 +64,21 @@ public class AssetService {
 		}
 
 		assetRepository.save(asset);
+	}
+
+	public Optional<Map.Entry<String, Long>> parseAssetId(String assetId) {
+		if (assetId == null || !assetId.contains("-")) {
+			return Optional.empty();
+		}
+
+		String[] parts = assetId.split("-", 2);
+		String registrationNumber = parts[0];
+
+		try {
+			Long sapId = Long.parseLong(parts[1]);
+			return Optional.of(Map.entry(registrationNumber, sapId));
+		} catch (NumberFormatException e) {
+			return Optional.empty();
+		}
 	}
 }
