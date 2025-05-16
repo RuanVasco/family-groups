@@ -45,7 +45,6 @@ const FarmerModal = ({
                     <Form.Group className="mb-3">
                         <Form.Label>Matrícula</Form.Label>
                         <Form.Control
-                            required
                             type="text"
                             value={Number(currentFarmer?.registrationNumber) || ""}
                             onChange={(e) => onChange("registrationNumber", e.target.value)}
@@ -59,6 +58,7 @@ const FarmerModal = ({
                             type="text"
                             value={currentFarmer?.name || ""}
                             onChange={(e) => onChange("name", e.target.value)}
+                            disabled={modalMode === "edit"}
                         />
                     </Form.Group>
                     <Form.Group className="mb-3">
@@ -137,10 +137,11 @@ const FarmerModal = ({
                             />
                         </Form.Group>
                     )}
-                    <Form.Group className="mb-3">
+                    <Form.Group className="mt-3">
                         <Form.Label>Carteira</Form.Label>
                         <AsyncSelect
                             cacheOptions
+                            isDisabled={modalMode === "edit"}
                             loadOptions={async (inputValue) => {
                                 try {
                                     const res = await axiosInstance.get(`/branch`, { params: { search: inputValue, size: 10 } });
