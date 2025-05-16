@@ -54,8 +54,19 @@ public class AssetService {
 	}
 
 	public void update(Asset asset, AssetCategory assetCategory, AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
+
+		boolean ownerChanged = !asset.getOwner().equals(owner);
+
+		if (ownerChanged) {
+			assetRepository.delete(asset);
+
+			asset = new Asset();
+			asset.setOwner(owner);
+			Long nextIdSap = getNextIdSapForOwner(owner);
+			asset.setIdSap(nextIdSap);
+		}
+
 		asset.setDescription(description);
-		asset.setOwner(owner);
 		asset.setAmount(amount);
 		asset.setAddress(address);
 		asset.setAssetCategory(assetCategory);
@@ -72,7 +83,6 @@ public class AssetService {
 
 		assetRepository.save(asset);
 	}
-
 
 	public Optional<Map.Entry<String, Long>> parseAssetId(String assetId) {
 		if (assetId == null || !assetId.contains("-")) {

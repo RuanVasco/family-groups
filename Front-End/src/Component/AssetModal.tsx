@@ -55,7 +55,7 @@ const AssetModal = ({
                 params: { value: input, size: 10 },
             });
             return res.data.content
-                .filter((f: FarmerType) => f.registrationNumber != updatedFarmer?.registrationNumber)
+                .filter((f: FarmerType) => f.registrationNumber !== updatedFarmer?.registrationNumber)
                 .map((f: FarmerType) => ({
                     value: f,
                     label: `${f.registrationNumber} - ${f.name}`,
@@ -99,12 +99,18 @@ const AssetModal = ({
     const handleSubmit = async () => {
         if (!newAsset || !updatedFarmer) return;
 
+        const isOwned = newAsset.assetCategory.id === 1;
+
         const data = {
             description: newAsset.description,
             address: newAsset.address,
             amount: newAsset.amount,
-            ownerRegistrationNumber: newAsset.owner?.registrationNumber,
-            leasedToRegistrationNumber: newAsset.assetCategory.id === 2 ? updatedFarmer.registrationNumber : undefined,
+            ownerRegistrationNumber: isOwned
+                ? updatedFarmer.registrationNumber
+                : newAsset.owner?.registrationNumber,
+            leasedToRegistrationNumber: isOwned
+                ? newAsset.leasedTo?.registrationNumber
+                : updatedFarmer.registrationNumber,
             assetCategoryId: newAsset.assetCategory.id,
             assetTypeId: 1
         };
@@ -215,18 +221,16 @@ const AssetModal = ({
                             </Form.Label>
                             <Select
                                 options={assetOptions}
-                                value={
-                                    newAsset?.assetCategory?.id
-                                        ? assetOptions.find((o) => o.value === newAsset.assetCategory.id)
-                                        : null
-                                }
+                                value={assetOptions.find((o) => o.value === newAsset?.assetCategory?.id) ?? null}
                                 onChange={(opt) => {
                                     setNewAsset((prev) => prev ? {
                                         ...prev,
                                         assetCategory: {
                                             id: opt?.value ?? 0,
                                             description: opt?.label ?? ""
-                                        }
+                                        },
+                                        owner: null,
+                                        leasedTo: null,
                                     } : null);
                                 }}
                                 menuPortalTarget={document.body}
@@ -246,22 +250,16 @@ const AssetModal = ({
                                     defaultOptions
                                     value={
                                         newAsset?.assetCategory?.id === 2 && newAsset.owner
-                                            ? {
-                                                value: newAsset.owner,
-                                                label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}`,
-                                            }
+                                            ? { value: newAsset.owner, label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}` }
                                             : newAsset?.leasedTo
-                                                ? {
-                                                    value: newAsset.leasedTo,
-                                                    label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}`,
-                                                }
+                                                ? { value: newAsset.leasedTo, label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}` }
                                                 : null
                                     }
                                     onChange={(opt) => {
                                         setNewAsset((prev) => prev ? {
                                             ...prev,
-                                            owner: newAsset.assetCategory.id === 2 ? opt?.value : prev.owner,
-                                            leasedTo: newAsset.assetCategory.id !== 2 ? opt?.value : prev.leasedTo,
+                                            owner: newAsset.assetCategory.id === 2 ? opt?.value ?? null : prev.owner,
+                                            leasedTo: newAsset.assetCategory.id !== 2 ? opt?.value ?? null : prev.leasedTo,
                                         } : null);
                                     }}
                                     menuPortalTarget={document.body}

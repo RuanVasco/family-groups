@@ -7,8 +7,8 @@ export interface AssetType {
   description: string;
   address: string;
   amount: number;
-  owner?: FarmerType;
-  leasedTo?: FarmerType;
+  owner?: FarmerType | null;
+  leasedTo?: FarmerType | null;
   assetCategory: AssetCategoryType;
   assetType: AssetTypeType;
 }
