@@ -36,14 +36,13 @@ interface PaginatedResponse<T> {
 
 const FamilyGroup = () => {
     const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<FamilyGroupType | null>(null);
-    const [modalMode, setModalMode] = useState<"create" | "select" | "add-farmer" | "add-cultivation" | "edit" | null>(null);
+    const [modalMode, setModalMode] = useState<"create" | "select" | "add-farmer" | "edit" | null>(null);
     const itemsPerPage = 10;
     const [currentFarmer, setCurrentFarmer] = useState<Partial<FarmerType> | null>(null);
     const [show, setShow] = useState(false);
     const [searchValue, setSearchValue] = useState<string>("");
     const [selectedPrincipalId, setSelectedPrincipalId] = useState<string>("");
     const [selectedMembers, setSelectedMembers] = useState<FarmerType[]>([]);
-    const [editCultivation, setEditCultivation] = useState<CultivationType>({});
     const [availableSearchValue, setAvailableSearchValue] = useState<string>("");
 
     const {
@@ -93,20 +92,8 @@ const FamilyGroup = () => {
 
     const handleClose = () => setShow(false);
 
-    const handleModalShow = async (mode: "create" | "select" | "add-farmer" | "add-cultivation" | "edit") => {
+    const handleModalShow = async (mode: "create" | "select" | "add-farmer" | "edit") => {
         setModalMode(mode);
-
-        if (mode === "add-cultivation" && selectedFamilyGroup) {
-            setEditCultivation({
-                canolaArea: selectedFamilyGroup.canolaArea,
-                wheatArea: selectedFamilyGroup.wheatArea,
-                cornSilageArea: selectedFamilyGroup.cornSilageArea,
-                grainCornArea: selectedFamilyGroup.grainCornArea,
-                beanArea: selectedFamilyGroup.beanArea,
-                soybeanArea: selectedFamilyGroup.soybeanArea,
-            });
-        }
-
         if (mode === "select") fetchPage(currentPage);
 
         if (mode === "add-farmer" || mode === "create") {
@@ -121,26 +108,6 @@ const FamilyGroup = () => {
             fetchAvailableFarmersPage(1, { search: availableSearchValue });
         }
     }, [availableSearchValue]);
-
-    const handleEditCultivation = async () => {
-        try {
-            if (!selectedFamilyGroup) return;
-
-            const res = await axiosInstance.put(
-                `/family-group/cultivation/${selectedFamilyGroup.id}`,
-                editCultivation
-            );
-
-            if (res.status === 200 || res.status === 201) {
-                toast.success("Culturas atualizadas com sucesso");
-                setSelectedFamilyGroup(prev => prev ? { ...prev, ...editCultivation } : prev);
-            }
-        } catch (error) {
-            toast.error("Erro ao atualizar culturas");
-        } finally {
-            setShow(false);
-        }
-    };
 
     const handlePrincipalChange = async (farmerId: String) => {
         try {
@@ -303,7 +270,6 @@ const FamilyGroup = () => {
                             onMakePrincipal={(farmer) => handlePrincipalChange(farmer.registrationNumber)}
                             onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber)}
                             onEditFarmer={handleEditFarmer}
-                            onEditCultivation={() => handleModalShow("add-cultivation")}
                         />
                     </div>
                 </>
@@ -332,9 +298,7 @@ const FamilyGroup = () => {
                             ? "Criar um grupo familiar"
                             : modalMode === "add-farmer"
                                 ? "Adicionar produtor ao grupo familiar"
-                                : modalMode === "add-cultivation" ?
-                                    "Adicionar área de cultivo"
-                                    : "Selecione um grupo familiar"}
+                                : "Selecione um grupo familiar"}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
@@ -436,93 +400,6 @@ const FamilyGroup = () => {
                                 )}
                             </>
                         </Pagination>
-                    ) : modalMode === "add-cultivation" ? (
-                        <Form>
-                            <Form.Group className="mb-2">
-                                <Form.Label>
-                                    Canola
-                                </Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={cultivations?.canolaArea || 0}
-                                    onChange={(e) => {
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            canolaArea: parseFloat(e.target.value)
-                                        }))
-                                    }}
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-2">
-                                <Form.Label>Trigo</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.wheatArea ?? 0}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            wheatArea: parseFloat(e.target.value) || 0,
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-2">
-                                <Form.Label>Milho silagem</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.cornSilageArea ?? 0}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            cornSilageArea: parseFloat(e.target.value) || 0,
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-2">
-                                <Form.Label>Milho grão</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.grainCornArea ?? 0}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            grainCornArea: parseFloat(e.target.value) || 0,
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-2">
-                                <Form.Label>Feijão</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.beanArea ?? 0}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            beanArea: parseFloat(e.target.value) || 0,
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-2">
-                                <Form.Label>Soja</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.soybeanArea ?? 0}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            soybeanArea: parseFloat(e.target.value) || 0,
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-                        </Form>
                     ) : (
                         <Form>
                             {availableFarmers && (
@@ -574,10 +451,6 @@ const FamilyGroup = () => {
                     {modalMode === "create" ? (
                         <Button variant="primary" onClick={handleCreateGroup}>
                             Criar
-                        </Button>
-                    ) : modalMode === "add-cultivation" ? (
-                        <Button variant="primary" onClick={handleEditCultivation}>
-                            Atualizar
                         </Button>
                     ) : (
                         <></>

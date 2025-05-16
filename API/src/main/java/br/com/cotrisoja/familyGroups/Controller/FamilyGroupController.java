@@ -83,14 +83,26 @@ public class FamilyGroupController {
             @PathVariable Long familyGroupId,
             @RequestBody CultivationResponseDTO cultivationResponseDTO
     ) {
-        FamilyGroup familyGroup = null;
         Optional<FamilyGroup> familyGroupOptional = familyGroupService.findById(familyGroupId);
 
         if (familyGroupOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body("Grupo familiar não encontrado");
-        };
+            return ResponseEntity.badRequest().body("Grupo familiar não encontrado.");
+        }
 
-        familyGroup = familyGroupOptional.get();
+        FamilyGroup familyGroup = familyGroupOptional.get();
+        Double totalFamilyGroupArea = familyGroupService.getFamilyGroupTotalArea(familyGroup);
+
+        if (totalFamilyGroupArea == null) totalFamilyGroupArea = 0.0;
+
+        if (totalFamilyGroupArea < cultivationResponseDTO.sum()) {
+            return ResponseEntity.badRequest().body(
+                    String.format(
+                            "A área total de cultivos (%.2f ha) excede a área disponível do grupo familiar (%.2f ha).",
+                            cultivationResponseDTO.sum(),
+                            totalFamilyGroupArea
+                    )
+            );
+        }
 
         familyGroupService.updateCultivations(familyGroup, cultivationResponseDTO);
         return ResponseEntity.ok().build();

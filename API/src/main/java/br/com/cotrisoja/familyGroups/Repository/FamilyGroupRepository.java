@@ -48,6 +48,31 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
     """)
     List<Farmer> findLessorsByFamilyGroup(@Param("familyGroup") FamilyGroup familyGroup);
 
+    @Query("""
+        SELECT SUM(a.amount)
+        FROM Asset a
+        JOIN Farmer f ON a.owner = f OR a.leasedTo = f
+        JOIN FamilyGroup fg ON f MEMBER OF fg.members
+        WHERE fg = :familyGroup
+    """)
+    Double getFamilyGroupTotalArea(@Param("familyGroup") FamilyGroup familyGroup);
 
+    @Query("""
+        SELECT SUM(a.amount)
+        FROM Asset a
+        JOIN Farmer f ON a.owner = f
+        JOIN FamilyGroup fg ON f MEMBER OF fg.members
+        WHERE fg = :familyGroup AND a.leasedTo IS NULL
+    """)
+    Double getOwnedArea(@Param("familyGroup") FamilyGroup familyGroup);
+
+    @Query("""
+        SELECT SUM(a.amount)
+        FROM Asset a
+        JOIN Farmer f ON a.leasedTo = f
+        JOIN FamilyGroup fg ON f MEMBER OF fg.members
+        WHERE fg = :familyGroup
+    """)
+    Double getLeasedArea(@Param("familyGroup") FamilyGroup familyGroup);
 
 }

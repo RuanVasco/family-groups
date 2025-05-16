@@ -325,7 +325,7 @@ const AssetModal = ({
                                 <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
                                 <td>{asset.description}</td>
                                 <td>{asset.address}</td>
-                                <td>{asset.amount}</td>
+                                <td>{asset.amount} ha</td>
                                 <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
                                 <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
                                 <td>

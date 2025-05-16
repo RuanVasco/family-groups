@@ -164,4 +164,9 @@ public class FamilyGroupService {
     public List<Farmer> findLessorsByFamilyGroup(FamilyGroup familyGroup) {
         return familyGroupRepository.findLessorsByFamilyGroup(familyGroup);
     }
+
+    public Double getFamilyGroupTotalArea(FamilyGroup familyGroup) {
+        return Optional.ofNullable(familyGroupRepository.getOwnedArea(familyGroup)).orElse(0.0) +
+                Optional.ofNullable(familyGroupRepository.getLeasedArea(familyGroup)).orElse(0.0);
+    }
 }

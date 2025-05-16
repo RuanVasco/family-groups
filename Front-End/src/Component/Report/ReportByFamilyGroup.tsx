@@ -6,22 +6,12 @@ import FarmerModal from "../FarmerModal";
 import { toast } from "react-toastify";
 import axiosInstance from "../../axiosInstance";
 import FamilyGroupTable from "../FamilyGroupTable";
-import { FamilyGroupType } from "../../Type/FamilyGroupType";
-import { Button, Form, Modal } from "react-bootstrap";
 
 interface ReportByFamilyGroupProps {
     technician: UserType;
     setTotalItems: (total: number) => void;
 }
 
-interface CultivationType {
-    canolaArea?: number;
-    wheatArea?: number;
-    cornSilageArea?: number;
-    grainCornArea?: number;
-    beanArea?: number;
-    soybeanArea?: number;
-}
 
 interface FamilyGroupReport {
     familyGroupId: number;
@@ -39,9 +29,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
     const { data: familyGroups, loading } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
     const [show, setShow] = useState(false);
-    const [cultivationModalShow, setCultivationModalShow] = useState(false);
-    const [editCultivation, setEditCultivation] = useState<CultivationType>({});
-    const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<FamilyGroupType | null>(null);
     const [useFamilyGroups, setUseFamilyGroups] = useState<FamilyGroupReport[]>([]);
 
     useEffect(() => {
@@ -50,41 +37,9 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
         }
     }, [familyGroups]);
 
-    const handleCultivationModalClose = () => {
-        setCultivationModalShow(false)
-    };
-
     const handleEditFarmer = (farmer: FarmerType) => {
         setCurrentFarmer(farmer);
         setShow(true);
-    };
-
-    const handleEditCultivation = async () => {
-        try {
-            if (!selectedFamilyGroup) return;
-
-            const res = await axiosInstance.put(
-                `/family-group/cultivation/${selectedFamilyGroup.id}`,
-                editCultivation
-            );
-
-            if (res.status === 200 || res.status === 201) {
-                // refetch();
-
-                setUseFamilyGroups(prevGroups =>
-                    prevGroups.map(fg =>
-                        fg.familyGroupId === selectedFamilyGroup.id
-                            ? { ...fg, ...editCultivation }
-                            : fg
-                    )
-                );
-
-                setCultivationModalShow(false)
-                toast.success("Culturas atualizadas com sucesso");
-            }
-        } catch (error) {
-            toast.error("Erro ao atualizar culturas");
-        }
     };
 
     const handleSubmitFarmer = async () => {
@@ -220,32 +175,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                                     }
                                     onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber, String(f.familyGroupId))}
                                     onEditFarmer={handleEditFarmer}
-                                    onEditCultivation={() => {
-                                        setSelectedFamilyGroup(
-                                            {
-                                                id: f.familyGroupId,
-                                                principal: f.principal,
-                                                members: f.members,
-                                                canolaArea: f.canolaArea,
-                                                wheatArea: f.wheatArea,
-                                                cornSilageArea: f.cornSilageArea,
-                                                grainCornArea: f.grainCornArea,
-                                                beanArea: f.beanArea,
-                                                soybeanArea: f.soybeanArea,
-                                            }
-                                        );
-
-                                        setEditCultivation({
-                                            canolaArea: f.canolaArea,
-                                            wheatArea: f.wheatArea,
-                                            cornSilageArea: f.cornSilageArea,
-                                            grainCornArea: f.grainCornArea,
-                                            beanArea: f.beanArea,
-                                            soybeanArea: f.soybeanArea,
-                                        });
-
-                                        setCultivationModalShow(true);
-                                    }}
                                 />
                             </div>
                         ))
@@ -266,105 +195,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                     setCurrentFarmer(prev => prev ? { ...prev, [field]: value } : prev)
                 }
             />
-
-            <Modal show={cultivationModalShow} onHide={handleCultivationModalClose} size="xl">
-                <Modal.Header closeButton>
-                    <Modal.Title className="fw-bold">
-                        Alterar área de cultivo
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form>
-                        <Form.Group className="mb-2">
-                            <Form.Label>
-                                Canola
-                            </Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={editCultivation.canolaArea !== undefined ? editCultivation.canolaArea : ""}
-                                onChange={(e) => {
-                                    const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
-                                    setEditCultivation(prev => ({ ...prev, canolaArea: value }));
-                                }}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-2">
-                            <Form.Label>Trigo</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={editCultivation.wheatArea !== undefined ? editCultivation.wheatArea : ""}
-                                onChange={e =>
-                                    setEditCultivation(prev => ({
-                                        ...prev,
-                                        wheatArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                    }))
-                                }
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-2">
-                            <Form.Label>Milho silagem</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={editCultivation.cornSilageArea !== undefined ? editCultivation.cornSilageArea : ""}
-                                onChange={e =>
-                                    setEditCultivation(prev => ({
-                                        ...prev,
-                                        cornSilageArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                    }))
-                                }
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-2">
-                            <Form.Label>Milho grão</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={editCultivation.grainCornArea !== undefined ? editCultivation.grainCornArea : ""}
-                                onChange={e =>
-                                    setEditCultivation(prev => ({
-                                        ...prev,
-                                        grainCornArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                    }))
-                                }
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-2">
-                            <Form.Label>Feijão</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={editCultivation.beanArea !== undefined ? editCultivation.beanArea : ""}
-                                onChange={e =>
-                                    setEditCultivation(prev => ({
-                                        ...prev,
-                                        beanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                    }))
-                                }
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-2">
-                            <Form.Label>Soja</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={editCultivation.soybeanArea !== undefined ? editCultivation.soybeanArea : ""}
-                                onChange={e =>
-                                    setEditCultivation(prev => ({
-                                        ...prev,
-                                        soybeanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                    }))
-                                }
-                            />
-                        </Form.Group>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="primary" onClick={handleEditCultivation}>
-                        Atualizar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </div>
     )
 }

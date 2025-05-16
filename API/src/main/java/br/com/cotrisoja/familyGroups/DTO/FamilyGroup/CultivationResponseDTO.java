@@ -20,4 +20,8 @@ public record CultivationResponseDTO(
                 familyGroup.getSoybeanArea()
         );
     }
+
+    public double sum() {
+        return canolaArea + wheatArea + cornSilageArea + grainCornArea + beanArea + soybeanArea;
+    }
 }

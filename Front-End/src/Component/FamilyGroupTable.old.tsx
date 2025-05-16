@@ -139,7 +139,8 @@ const FamilyGroupTable = ({
                         "Situação",
                         "Carteira",
                         "Técnico",
-                        "SAP Própria",
+                        "SAP Própria Livre",
+                        "SAP Própria Comprometida",
                         "SAP Arrendada",
                         "Própria",
                         "Arrendada",
@@ -164,7 +165,22 @@ const FamilyGroupTable = ({
                                 {f.technician?.name || "Sem técnico"}
                             </td>
                             <td>
-                                {`${(f.ownedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0).toFixed(2)} ha`}
+                                {`${(
+                                    f.ownedAssets?.filter(asset => asset.leasedTo == null)
+                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                ).toFixed(2)} ha`}
+                            </td>
+                            <td>
+                                {`${(
+                                    (f.ownedAssets?.filter(asset => asset.leasedTo != null)
+                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0) +
+                                    (currentFamilyGroup?.canolaArea || 0) +
+                                    (currentFamilyGroup?.wheatArea || 0) +
+                                    (currentFamilyGroup?.cornSilageArea || 0) +
+                                    (currentFamilyGroup?.grainCornArea || 0) +
+                                    (currentFamilyGroup?.beanArea || 0) +
+                                    (currentFamilyGroup?.soybeanArea || 0)
+                                ).toFixed(2)} ha`}
                             </td>
                             <td>
                                 {`${(f.leasedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0).toFixed(2)} ha`}
