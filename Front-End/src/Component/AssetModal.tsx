@@ -3,7 +3,7 @@ import { FarmerType } from "../Type/FarmerType";
 import axiosInstance from "../axiosInstance";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { FaFloppyDisk, FaMinus, FaPencil, FaPlus, FaXmark } from "react-icons/fa6";
+import { FaFloppyDisk, FaMinus, FaPencil, FaPlus } from "react-icons/fa6";
 import AssetType from "../Type/AssetType";
 import CustomTable from "./Common/CustomTable";
 import Select from "react-select";
@@ -53,10 +53,12 @@ const AssetModal = ({
             const res = await axiosInstance.get("/farmer", {
                 params: { value: input, size: 10 },
             });
-            return res.data.content.map((f: FarmerType) => ({
-                value: f,
-                label: `${f.registrationNumber} - ${f.name}`,
-            }));
+            return res.data.content
+                .filter((f: FarmerType) => f.registrationNumber != updatedFarmer?.registrationNumber)
+                .map((f: FarmerType) => ({
+                    value: f,
+                    label: `${f.registrationNumber} - ${f.name}`,
+                }));
         } catch {
             return [];
         }
@@ -83,7 +85,6 @@ const AssetModal = ({
             ...(updatedFarmer?.ownedAssets ?? []),
             ...(updatedFarmer?.leasedAssets ?? []),
         ]);
-
     }, [updatedFarmer?.ownedAssets, updatedFarmer?.leasedAssets]);
 
     useEffect(() => {
@@ -92,8 +93,12 @@ const AssetModal = ({
         const fetchFreshFarmer = async () => {
             try {
                 const res = await axiosInstance.get(`/farmer/${farmer.registrationNumber}`);
-                setUpdatedFarmer(res.data);
-                onFarmerUpdated(res.data);
+
+                if (res.status === 200) {
+                    setUpdatedFarmer(res.data);
+                    onFarmerUpdated(res.data);
+                }
+
             } catch {
                 toast.error("Erro ao buscar dados do produtor");
             }
@@ -102,12 +107,32 @@ const AssetModal = ({
         fetchFreshFarmer();
     }, [show, farmer?.registrationNumber]);
 
-    const handleAddNewAsset = () => {
-        return;
+    const handleAddNewAsset = async () => {
+        if (!newAsset || !updatedFarmer) return
+        try {
+            const res = await axiosInstance.post(`/asset`, {
+                description: newAsset.description,
+                address: newAsset.address,
+                amount: newAsset.amount,
+                ownerRegistrationNumber: newAsset.owner?.registrationNumber,
+                leasedToRegistrationNumber: newAsset.assetCategory.id === 2 ? updatedFarmer.registrationNumber : undefined,
+                assetCategoryId: newAsset.assetCategory.id,
+                assetTypeId: 1
+            });
+
+            if (res.status === 200) {
+                toast.success("Bem adicionado");
+                reFetchUpdatedFarmer();
+                setShowForm(false);
+            }
+        } catch {
+            toast.error("Erro ao adicionar o bem");
+        }
     };
 
-    const handleUpdateAsset = async (id: number) => {
-        return;
+    const handleUpdateAsset = async (asset: AssetType) => {
+        setNewAsset(asset);
+        setShowForm(true);
     };
 
     const handleRemoveAsset = async (id: string) => {
@@ -122,8 +147,14 @@ const AssetModal = ({
         }
     };
 
+    const handleCloseModal = () => {
+        setShowForm(false);
+        setNewAsset(null);
+        onClose();
+    }
+
     return (
-        <Modal show={show} onHide={onClose} size="xl">
+        <Modal show={show} onHide={handleCloseModal} size="xl">
             <Modal.Header closeButton>
                 <Modal.Title>Editar bens do produtor {updatedFarmer?.registrationNumber} - {updatedFarmer?.name}</Modal.Title>
             </Modal.Header>
@@ -135,30 +166,8 @@ const AssetModal = ({
                     </button>
                 </div>
                 {showForm && (
-                    <Form>
-                        <Form.Group>
-                            <Form.Label>
-                                Descrição
-                            </Form.Label>
-                            <Form.Control
-                                value={newAsset?.description || ""}
-                                onChange={(e) =>
-                                    setNewAsset((prev) => prev ? { ...prev, description: e.target.value } : null)
-                                }
-                            />
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label>
-                                Endereço
-                            </Form.Label>
-                            <Form.Control
-                                value={newAsset?.address || ""}
-                                onChange={(e) =>
-                                    setNewAsset((prev) => prev ? { ...prev, address: e.target.value } : null)
-                                }
-                            />
-                        </Form.Group>
-                        <Form.Group>
+                    <div>
+                        <Form.Group className="mt-2">
                             <Form.Label>
                                 Área
                             </Form.Label>
@@ -170,7 +179,7 @@ const AssetModal = ({
                                 }
                             />
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mt-2">
                             <Form.Label>
                                 Tipo
                             </Form.Label>
@@ -197,11 +206,12 @@ const AssetModal = ({
                             />
                         </Form.Group>
                         {newAsset && (
-                            <Form.Group>
+                            <Form.Group className="mt-2">
                                 <Form.Label>
                                     {newAsset.assetCategory.id === 2 ? "Proprietário" : "Arrendatário"}
                                 </Form.Label>
                                 <AsyncSelect
+                                    isClearable
                                     loadOptions={loadFarmers}
                                     defaultOptions
                                     value={
@@ -229,60 +239,85 @@ const AssetModal = ({
                                         menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                                     }}
                                 />
-                                <div className="d-flex align-items-center justify-content-end my-3 gap-2">
-                                    <button
-                                        className="button_info button_sm"
-                                    >
-                                        <FaFloppyDisk /> Salvar
-                                    </button>
-                                    <button
-                                        className="button_remove button_sm"
-                                    >
-                                        <FaXmark /> Cancelar
-                                    </button>
-                                </div>
                             </Form.Group>
                         )}
-                    </Form>
+                        <Form.Group className="mt-2">
+                            <Form.Label>
+                                Descrição
+                            </Form.Label>
+                            <Form.Control
+                                value={newAsset?.description || ""}
+                                onChange={(e) =>
+                                    setNewAsset((prev) => prev ? { ...prev, description: e.target.value } : null)
+                                }
+                            />
+                        </Form.Group>
+                        <Form.Group className="mt-2">
+                            <Form.Label>
+                                Endereço
+                            </Form.Label>
+                            <Form.Control
+                                value={newAsset?.address || ""}
+                                onChange={(e) =>
+                                    setNewAsset((prev) => prev ? { ...prev, address: e.target.value } : null)
+                                }
+                            />
+                        </Form.Group>
+                        <div className="d-flex align-items-center justify-content-end my-3 gap-2">
+                            <button
+                                className="button_info button_sm"
+                                onClick={handleAddNewAsset}
+                            >
+                                <FaFloppyDisk /> Salvar
+                            </button>
+                        </div>
+                    </div>
                 )}
                 <CustomTable
                     headers={[
+                        "Tipo",
+
                         "Descrição",
                         "Endereço",
                         "Quantidade",
-                        "Tipo",
                         "Proprietário",
                         "Arrendatário",
                         "Ações",
                     ]}
                 >
                     {mergedAssets.map((asset) => (
-                        <tr key={asset.id}>
-                            <td>{asset.description}</td>
-                            <td>{asset.address}</td>
-                            <td>{asset.amount}</td>
-                            <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
-                            <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
-                            <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
-                            <td>
-                                <div className="d-flex gap-2">
-                                    <button className="button_edit button_sm" onClick={() => { }}>
-                                        <FaPencil />
-                                    </button>
-                                    <button
-                                        className="button_remove button_sm"
-                                        onClick={() => handleRemoveAsset(`${asset.id!} - ${asset.owner?.registrationNumber}`)}
-                                    >
-                                        <FaMinus />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                        (asset.assetCategory.id === 1 || asset.assetCategory.id === 2) && (
+                            <tr key={asset.id}>
+                                <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
+                                <td>{asset.description}</td>
+                                <td>{asset.address}</td>
+                                <td>{asset.amount}</td>
+                                <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
+                                <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
+                                <td>
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            className="button_edit button_sm"
+                                            onClick={() => handleUpdateAsset(asset)}
+                                        >
+                                            <FaPencil />
+                                        </button>
+                                        <button
+                                            className="button_remove button_sm"
+                                            onClick={() => handleRemoveAsset(`${asset.id!} - ${asset.owner?.registrationNumber}`)}
+                                        >
+                                            <FaMinus />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        )
+
                     ))}
                 </CustomTable>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onClose}>
+                <Button variant="secondary" onClick={handleCloseModal}>
                     Fechar
                 </Button>
             </Modal.Footer>

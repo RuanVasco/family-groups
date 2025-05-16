@@ -30,15 +30,15 @@ const FamilyGroupTable = ({
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
     const [lessors, setLessors] = useState<FarmerType[]>([]);
 
-    useEffect(() => {
-        const fetchLessors = async () => {
-            const res = await axiosInstance(`/family-group/lessors/${familyGroup.id}`);
+    const fetchLessors = async () => {
+        const res = await axiosInstance(`/family-group/lessors/${familyGroup.id}`);
 
-            if (res.status === 200) {
-                setLessors(res.data)
-            }
+        if (res.status === 200) {
+            setLessors(res.data)
         }
+    }
 
+    useEffect(() => {
         fetchLessors();
     }, [])
 
@@ -147,31 +147,33 @@ const FamilyGroupTable = ({
                         </tr>
                     ))}
                 </CustomTable>
-                <div className="mt-2">
-                    <h5 className="fw-bold">
-                        Arrendadores
-                    </h5>
-                </div>
-                <CustomTable
-                    headers={[
-                        "Matrícula",
-                        "Nome",
-                        "Carteira",
-                        "Técnico",
-                        "Própria",
-                    ]}
-                >
-                    {lessors.map((lessor) => (
-                        <tr key={Number(lessor.registrationNumber)}>
-                            <td>{lessor.registrationNumber}</td>
-                            <td>{lessor.name}</td>
-                            <td>{lessor.branch?.name ?? "Sem carteira vinculada."}</td>
-                            <td>{lessor.technician?.name}</td>
-                            <td>43 h</td>
-                        </tr>
-                    ))}
+                {lessors.length > 0 && (
+                    <><div className="mt-2">
+                        <h5 className="fw-bold">
+                            Arrendadores
+                        </h5>
+                    </div>
+                        <CustomTable
+                            headers={[
+                                "Matrícula",
+                                "Nome",
+                                "Carteira",
+                                "Técnico",
+                                "Própria",
+                            ]}
+                        >
+                            {lessors.map((lessor) => (
+                                <tr key={Number(lessor.registrationNumber)}>
+                                    <td>{lessor.registrationNumber}</td>
+                                    <td>{lessor.name}</td>
+                                    <td>{lessor.branch?.name ?? "Sem carteira vinculada."}</td>
+                                    <td>{lessor.technician?.name}</td>
+                                    <td>43 h</td>
+                                </tr>
+                            ))}
 
-                </CustomTable>
+                        </CustomTable></>
+                )}
                 <div className="mt-2">
                     <h5 className="fw-bold">
                         Cultivos
@@ -223,7 +225,10 @@ const FamilyGroupTable = ({
             </div>
             <AssetModal
                 show={show}
-                onClose={() => setShow(false)}
+                onClose={() => {
+                    fetchLessors();
+                    setShow(false);
+                }}
                 farmer={currentFarmer}
                 onChange={() => { }}
                 onFarmerUpdated={handleFarmerUpdated}

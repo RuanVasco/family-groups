@@ -1,12 +1,13 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.Entity.Asset;
+import br.com.cotrisoja.familyGroups.Entity.AssetCategory;
+import br.com.cotrisoja.familyGroups.Entity.AssetType;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Repository.AssetRepository;
 import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -28,20 +29,24 @@ public class AssetService {
 		assetRepository.delete(asset);
 	}
 
-	public void create(String description, Farmer owner, Farmer leasedTo) {
-		Asset asset = new Asset();
+	public void create(AssetCategory assetCategory, AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
+		Long nextIdSap = getNextIdSapForOwner(owner);
 
+		Asset asset = new Asset();
+		asset.setIdSap(nextIdSap);
 		asset.setDescription(description);
 		asset.setOwner(owner);
+		asset.setAmount(amount);
+		asset.setAddress(address);
+		asset.setAssetCategory(assetCategory);
+		asset.setAssetType(assetType);
 
 		if (leasedTo != null) {
-			assetTypeRepository.findById(2L).ifPresent(asset::setAssetType);
 			asset.setLeasedTo(leasedTo);
 
 			owner.setFamilyGroup(null);
 			farmerRepository.save(owner);
 		} else {
-			assetTypeRepository.findById(1L).ifPresent(asset::setAssetType);
 			asset.setLeasedTo(null);
 		}
 
@@ -71,14 +76,25 @@ public class AssetService {
 			return Optional.empty();
 		}
 
-		String[] parts = assetId.split("-", 2);
-		String registrationNumber = parts[0];
+		int lastDashIndex = assetId.lastIndexOf('-');
+		if (lastDashIndex == -1 || lastDashIndex == assetId.length() - 1) {
+			return Optional.empty();
+		}
+
+		String registrationNumber = assetId.substring(0, lastDashIndex);
+		String sapIdPart = assetId.substring(lastDashIndex + 1);
 
 		try {
-			Long sapId = Long.parseLong(parts[1]);
+			Long sapId = Long.parseLong(sapIdPart);
 			return Optional.of(Map.entry(registrationNumber, sapId));
 		} catch (NumberFormatException e) {
 			return Optional.empty();
 		}
+	}
+
+	public Long getNextIdSapForOwner(Farmer owner) {
+		return assetRepository.findMaxIdSapByOwner(owner.getRegistrationNumber())
+				.map(id -> id + 1)
+				.orElse(1L);
 	}
 }

@@ -6,7 +6,9 @@ import br.com.cotrisoja.familyGroups.Entity.Asset;
 public record AssetDTO(
 		String id,
 		String description,
-		String assetCategory,
+		String address,
+		double amount,
+		AssetCategoryDTO assetCategory,
 		String assetType,
 		FarmerResponseMinimalDTO leasedTo,
 		FarmerResponseMinimalDTO owner
@@ -20,7 +22,9 @@ public record AssetDTO(
 		return new AssetDTO(
 				compositeId,
 				asset.getDescription(),
-				asset.getAssetCategory() != null ? asset.getAssetCategory().getDescription() : "Categoria não informada",
+				asset.getAddress(),
+				asset.getAmount(),
+				AssetCategoryDTO.fromEntity(asset.getAssetCategory()),
 				asset.getAssetType() != null ? asset.getAssetType().getDescription() : "Tipo não informado",
 				FarmerResponseMinimalDTO.fromEntity(asset.getLeasedTo()),
 				FarmerResponseMinimalDTO.fromEntity(asset.getOwner())

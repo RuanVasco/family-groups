@@ -2,11 +2,14 @@ package br.com.cotrisoja.familyGroups.Controller;
 
 import br.com.cotrisoja.familyGroups.DTO.Asset.AssetRequestDTO;
 import br.com.cotrisoja.familyGroups.Entity.Asset;
+import br.com.cotrisoja.familyGroups.Entity.AssetCategory;
+import br.com.cotrisoja.familyGroups.Entity.AssetType;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
+import br.com.cotrisoja.familyGroups.Repository.AssetCategoryRepository;
+import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Service.AssetService;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,15 +23,22 @@ public class AssetController {
 
 	private final AssetService assetService;
 	private final FarmerService farmerService;
+	private final AssetCategoryRepository assetCategoryRepository;
+	private final AssetTypeRepository assetTypeRepository;
 
 	@PostMapping
 	public ResponseEntity<?> createAsset(
 			@RequestBody AssetRequestDTO asset
 	) {
 		String description = asset.description();
-		if (description == null || description.trim().isEmpty()) {
-			return ResponseEntity.badRequest().body("Descrição não recebida.");
-		}
+
+		AssetCategory assetCategory = assetCategoryRepository.findById(asset.assetCategoryId())
+				.orElseGet(() -> assetCategoryRepository.findById(1L)
+						.orElseThrow(() -> new IllegalStateException("Categoria padrão não encontrada.")));
+
+		AssetType assetType = assetTypeRepository.findById(asset.assetTypeId())
+				.orElseGet(() -> assetTypeRepository.findById(1L)
+						.orElseThrow(() -> new IllegalStateException("Tipo padrão não encontrado.")));
 
 		Farmer owner = null;
 		Optional<Farmer> optionalOwner = farmerService.findById(asset.ownerRegistrationNumber());
@@ -38,12 +48,11 @@ public class AssetController {
 		owner = optionalOwner.get();
 
 		Farmer leaser = null;
-		Optional<Farmer> optionalLeaser = farmerService.findById(asset.leasedToRegistrationNumber());
-		if (optionalLeaser.isPresent()) {
-			leaser = optionalLeaser.get();
+		if (asset.leasedToRegistrationNumber() != null && !asset.leasedToRegistrationNumber().isEmpty()) {
+			leaser = farmerService.findById(asset.leasedToRegistrationNumber()).orElse(null);
 		}
 
-		assetService.create(description, owner, leaser);
+		assetService.create(assetCategory, assetType, asset.amount(), asset.address(), description, owner, leaser);
 
 		return ResponseEntity.ok().build();
 	}
