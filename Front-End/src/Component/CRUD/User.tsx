@@ -141,31 +141,33 @@ const User = () => {
             >
                 <div className="my-3 floating_panel">
                     {isLoading ? (
-                        <div className="text-center py-5">Carregando…</div>
+                        <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
+                            <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
+                        </div>
                     ) : users.length === 0 ? (
                         <p className="p-3">Nenhum usuário encontrado.</p>
                     ) : (
                         <CustomTable
-                        headers={["Ações", "ID", "Usuário", "Nome", "Perfis", "Carteira"]}                           
+                            headers={["Ações", "ID", "Usuário", "Nome", "Perfis", "Carteira"]}
                         >
-                       
-                                {users.map((u) => (
-                                    <tr key={u.id}>
-                                        <td>
-                                            <button
-                                                className="button_edit"
-                                                onClick={() => openModal("edit", u)}
-                                            >
-                                                <FaPen /> Editar
-                                            </button>
-                                        </td>
-                                        <td>{u.id}</td>
-                                        <td>{u.username}</td>
-                                        <td>{u.name}</td>
-                                        <td>{u.roles.join(", ")}</td>
-                                        <td>{u.branch?.name ?? "Sem carteira"}</td>
-                                    </tr>
-                                ))}
+
+                            {users.map((u) => (
+                                <tr key={u.id}>
+                                    <td>
+                                        <button
+                                            className="button_edit"
+                                            onClick={() => openModal("edit", u)}
+                                        >
+                                            <FaPen /> Editar
+                                        </button>
+                                    </td>
+                                    <td>{u.id}</td>
+                                    <td>{u.username}</td>
+                                    <td>{u.name}</td>
+                                    <td>{u.roles.join(", ")}</td>
+                                    <td>{u.branch?.name ?? "Sem carteira"}</td>
+                                </tr>
+                            ))}
                         </CustomTable>
                     )}
                 </div>

@@ -404,10 +404,8 @@ const FamilyGroup = () => {
                                 />
 
                                 {isLoadingAvailableFarmers ? (
-                                    <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
-                                        <div className="spinner-border text-primary" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
+                                    <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
+                                        <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
                                     </div>
                                 ) : (
                                     <CustomTable

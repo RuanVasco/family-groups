@@ -41,6 +41,7 @@ const HomePage = () => {
     const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
     const [totalItems, setTotalItems] = useState<number | null>(null);
     const [collapsed, setCollapsed] = useState(false);
+    const [fileLoading, setFileLoading] = useState<boolean>(false);
 
     const {
         data: branchs,
@@ -81,6 +82,7 @@ const HomePage = () => {
         formData.append('file', csvFile);
 
         try {
+            setFileLoading(true)
             const res = await axiosInstance.post('/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -97,6 +99,7 @@ const HomePage = () => {
         } catch (error) {
             toast.error("Erro ao enviar arquivo.")
         } finally {
+            setFileLoading(false);
             setShow(false);
         }
     };
@@ -447,16 +450,23 @@ const HomePage = () => {
                     </Modal.Header>
                     <Modal.Body>
                         <Form>
-                            <Form.Group>
-                                <Form.Label>
-                                    Selecionar um arquivo
-                                </Form.Label>
-                                <Form.Control
-                                    type="file"
-                                    accept=".csv"
-                                    onChange={handleFileChange}
-                                />
-                            </Form.Group>
+                            {fileLoading ? (
+                                <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
+                                    <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
+                                </div>
+                            ) : (
+                                <Form.Group>
+                                    <Form.Label>
+                                        Selecionar um arquivo
+                                    </Form.Label>
+                                    <Form.Control
+                                        type="file"
+                                        accept=".csv"
+                                        onChange={handleFileChange}
+                                    />
+                                </Form.Group>
+                            )}
+
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>

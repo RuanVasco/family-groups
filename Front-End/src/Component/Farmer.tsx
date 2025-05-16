@@ -135,10 +135,8 @@ const Farmer = () => {
             >
                 <div className="my-3 floating_panel">
                     {isLoading ? (
-                        <div className="d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
-                            <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
+                        <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
+                            <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
                         </div>
                     ) : farmers.length === 0 ? (
                         <h4 className="py-3 text-center fw-bold">Nenhum produtor encontrado.</h4>
