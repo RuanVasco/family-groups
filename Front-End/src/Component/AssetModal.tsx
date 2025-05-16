@@ -320,30 +320,32 @@ const AssetModal = ({
                     ]}
                 >
                     {mergedAssets.map((asset) => (
-                        <tr key={asset.id}>
-                            <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
-                            <td>{asset.description}</td>
-                            <td>{asset.address}</td>
-                            <td>{asset.amount}</td>
-                            <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
-                            <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
-                            <td>
-                                <div className="d-flex gap-2">
-                                    <button
-                                        className="button_edit button_sm"
-                                        onClick={() => handleUpdateAsset(asset)}
-                                    >
-                                        <FaPencil />
-                                    </button>
-                                    <button
-                                        className="button_remove button_sm"
-                                        onClick={() => handleRemoveAsset(`${asset.id!} - ${asset.owner?.registrationNumber}`)}
-                                    >
-                                        <FaMinus />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                        (asset.assetType.id === 1 || asset.assetType.id === 2) && (
+                            <tr key={asset.id}>
+                                <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
+                                <td>{asset.description}</td>
+                                <td>{asset.address}</td>
+                                <td>{asset.amount}</td>
+                                <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
+                                <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
+                                <td>
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            className="button_edit button_sm"
+                                            onClick={() => handleUpdateAsset(asset)}
+                                        >
+                                            <FaPencil />
+                                        </button>
+                                        <button
+                                            className="button_remove button_sm"
+                                            onClick={() => handleRemoveAsset(`${asset.id!} - ${asset.owner?.registrationNumber}`)}
+                                        >
+                                            <FaMinus />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        )
                     ))}
                 </CustomTable>
             </Modal.Body>
