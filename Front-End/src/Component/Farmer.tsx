@@ -1,6 +1,6 @@
 // Farmer.tsx
 import { useEffect, useState } from "react";
-import { FaPen, FaPlus } from "react-icons/fa6";
+import { FaPen, FaPlus, FaTractor } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { FarmerType } from "../Type/FarmerType";
 import axiosInstance from "../axiosInstance";
@@ -9,17 +9,23 @@ import Pagination from "./Common/Pagination";
 import FarmerModal from "./FarmerModal";
 import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
 import CustomTable from "./Common/CustomTable";
+import Select from "react-select";
+import AssetModal from "./AssetModal";
 
 const Farmer = () => {
-    /** ───────────────────────   estados de filtro  ─────────────────────── */
     const [searchValue, setSearchValue] = useState("");
-    const [pageSize, setPageSize] = useState(10);        // tamanho do select
+    const [pageSize, setPageSize] = useState(10);
     const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+    const [filters, setFilters] = useState<Record<string, string>>({});
     const [show, setShow] = useState(false);
+    const [showAssetModal, setShowAssetModal] = useState(false);
+    const [selectedType, setSelectedType] = useState<{ label: string; value: string } | null>({
+        label: "Todos",
+        value: ""
+    });
     const [currentFarmer, setCurrentFarmer] =
-        useState<Partial<FarmerType> | null>(null);
+        useState<FarmerType | null>(null);
 
-    /** ──────────────────── hook de paginação reutilizável ────────────────── */
     const {
         data: farmers,
         currentPage,
@@ -30,14 +36,11 @@ const Farmer = () => {
         setPageSize: hookSetPageSize,
     } = usePaginatedFetchData<FarmerType>("/farmer", pageSize);
 
-    /** ────────── 1ª carga (page 1, sem filtro) ────────── */
     useEffect(() => {
         fetchPage(1);
     }, []);
 
-    /** ────────── quando o usuário digita a pesquisa ────────── */
     useEffect(() => {
-        // Debounce simples (300 ms) para não bater na API a cada tecla
         const id = setTimeout(() => {
             const filters =
                 searchValue.length >= 3 ? { value: searchValue.trim() } : {};
@@ -47,19 +50,23 @@ const Farmer = () => {
         return () => clearTimeout(id);
     }, [searchValue]);
 
-    /** ────────── callbacks auxiliares ────────── */
     const openModal = (mode: "create" | "edit", farmer?: FarmerType) => {
         setModalMode(mode);
-        setCurrentFarmer(mode === "edit" ? { ...farmer } : null);
+        if (mode === "edit" && farmer) {
+            setCurrentFarmer(farmer);
+        }
         setShow(true);
     };
 
     const handleModalClose = () => setShow(false);
 
-    const handleChange = (field: keyof FarmerType, value: any) =>
-        setCurrentFarmer((prev) => ({ ...prev, [field]: value }));
+    const handleChange = (field: keyof FarmerType, value: any) => {
+        setCurrentFarmer((prev) => {
+            if (!prev) return prev;
+            return { ...prev, [field]: value };
+        });
+    };
 
-    /** ────────── cria / edita produtor ────────── */
     const handleSubmit = async () => {
         try {
             if (!currentFarmer?.name || !currentFarmer?.registrationNumber) {
@@ -101,10 +108,28 @@ const Farmer = () => {
         }
     };
 
-    /** ───────────────────────  UI ─────────────────────── */
+    const handleType = (opt: any) => {
+        setSelectedType(opt);
+
+        const newFilters = { ...filters };
+        if (opt?.value) {
+            newFilters.typeId = opt.value;
+        } else {
+            delete newFilters.typeId;
+        }
+
+        setFilters(newFilters);
+
+        fetchPage(1, { ...newFilters, value: searchValue.length >= 3 ? searchValue.trim() : undefined });
+    };
+
+    const openAssetModal = (farmer: FarmerType) => {
+        setCurrentFarmer(farmer);
+        setShowAssetModal(true);
+    }
+
     return (
         <div className="pt-3 px-4 pb-5">
-            {/* Barra de ações */}
             <div className="my-3 floating_panel d-flex align-items-center justify-content-between">
                 <button className="button_agree" onClick={() => openModal("create")}>
                     <FaPlus /> Criar Produtor
@@ -120,7 +145,21 @@ const Farmer = () => {
                 <h4 className="fw-bold m-0">Total: {totalItems}</h4>
             </div>
 
-            {/* Tabela com paginação */}
+            <div className="d-flex align-items-center justify-content-between mt-4 mb-3">
+                <Select
+                    className="w-25"
+                    options={[
+                        { label: "Todos", value: "" },
+                        { label: "1 - Pessoa Física Associado", value: "1" },
+                        { label: "2 - Pessoa Física Terceiro", value: "2" },
+                        { label: "3 - Pessoa Jurídica Associado", value: "3" },
+                        { label: "4 - Pessoa Jurídica Terceiro", value: "4" },
+                    ]}
+                    onChange={handleType}
+                    value={selectedType}
+                />
+            </div>
+
             <Pagination
                 itemsPerPage={pageSize}
                 onItemsPerPageChange={(val) => {
@@ -144,60 +183,62 @@ const Farmer = () => {
                         <div style={{ overflowX: "auto" }}>
                             <CustomTable
                                 headers={[
-                                    "Ações", "Matrícula", "Nome", "Situação", "Técnico", "Carteira", "Grupo familiar", "Terra própria", "Terra arrendada", "Terra total"
+                                    "Ações", "Matrícula", "Nome", "Tipo", "Situação", "Técnico", "Carteira", "Grupo familiar",
+                                    "SAP Própria", "SAP Arrendada", "Própria", "Arrendada", "Total"
                                 ]}
                             >
-                                {farmers.map((f) => (
-                                    <tr key={Number(f.registrationNumber)}>
-                                        <td>
-                                            <button
-                                                className="button_edit"
-                                                onClick={() => openModal("edit", f)}
-                                            >
-                                                <FaPen /> Editar
-                                            </button>
-                                        </td>
-                                        <td>{f.registrationNumber}</td>
-                                        <td>{f.name}</td>
-                                        <td>{StatusLabels[f.status]}</td>
-                                        <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
-                                        <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
-                                        <td>
-                                            {f.familyGroup
-                                                ? `${f.familyGroup.principal.registrationNumber} - ${f.familyGroup.principal.name}`
-                                                : "Sem grupo familiar"}
-                                        </td>
-                                        <td>{f.ownedArea ?? 0} ha</td>
-                                        <td>{f.leasedArea ?? 0} ha</td>
-                                        <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
-                                    </tr>
-                                ))}
-                            </CustomTable>
-                        </div>
-                        // <table className="custom_table">
-                        //     <thead>
-                        //         <tr>
-                        //             <th>Ações</th>
-                        //             <th>Matrícula</th>
-                        //             <th>Nome</th>
-                        //             <th>Situação</th>
-                        //             <th>Técnico</th>
-                        //             <th>Carteira</th>
-                        //             <th>Grupo familiar</th>
-                        //             <th>Terra própria</th>
-                        //             <th>Terra arrendada</th>
-                        //             <th>Terra total</th>
-                        //         </tr>
-                        //     </thead>
-                        //     <tbody>
+                                {farmers.map((f) => {
+                                    const sapOwned = (f.ownedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0);
+                                    const sapLeased = (f.leasedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0);
 
-                        //     </tbody>
-                        // </table>
+                                    return (
+                                        <tr key={Number(f.registrationNumber)}>
+                                            <td className="d-flex gap-2">
+                                                <button
+                                                    className="button_edit"
+                                                    onClick={() => openModal("edit", f)}
+                                                    title="Editar Produtor"
+                                                >
+                                                    <FaPen />
+                                                </button>
+                                                <button
+                                                    className="button_info btn_sm"
+                                                    onClick={() => openAssetModal(f)}
+                                                    title="Editar Bens"
+                                                >
+                                                    <FaTractor />
+                                                </button>
+                                            </td>
+                                            <td>{f.registrationNumber}</td>
+                                            <td>{f.name}</td>
+                                            <td>{f.type?.id}</td>
+                                            <td>{StatusLabels[f.status]}</td>
+                                            <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
+                                            <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                            <td>
+                                                {f.familyGroup
+                                                    ? `${f.familyGroup.principal.registrationNumber} - ${f.familyGroup.principal.name}`
+                                                    : "Sem grupo familiar"}
+                                            </td>
+                                            <td>{`${sapOwned.toFixed(2)} ha`}</td>
+                                            <td>{`${sapLeased.toFixed(2)} ha`}</td>
+                                            <td className={sapOwned.toFixed(2) !== (f.ownedArea ?? 0).toFixed(2) ? "text-danger" : ""}>
+                                                {`${(f.ownedArea ?? 0).toFixed(2)} ha`}
+                                            </td>
+                                            <td className={sapLeased.toFixed(2) !== (f.leasedArea ?? 0).toFixed(2) ? "text-danger" : ""}>
+                                                {`${(f.leasedArea ?? 0).toFixed(2)} ha`}
+                                            </td>
+                                            <td>{((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2)} ha</td>
+                                        </tr>
+                                    );
+                                })}
+                            </CustomTable>
+
+                        </div>
                     )}
                 </div>
             </Pagination>
 
-            {/* Modal de criar/editar */}
             <FarmerModal
                 show={show}
                 onClose={handleModalClose}
@@ -205,6 +246,16 @@ const Farmer = () => {
                 currentFarmer={currentFarmer}
                 modalMode={modalMode}
                 onChange={handleChange}
+            />
+
+            <AssetModal
+                show={showAssetModal}
+                onClose={() => {
+                    setShowAssetModal(false);
+                }}
+                farmer={currentFarmer}
+                onChange={() => { }}
+                onFarmerUpdated={() => { }}
             />
         </div>
     );

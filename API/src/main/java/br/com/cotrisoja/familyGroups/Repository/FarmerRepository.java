@@ -62,6 +62,15 @@ public interface FarmerRepository extends JpaRepository<Farmer, String> {
         """)
     Page<Farmer> findByValue(@Param("value") String value, Pageable pageable);
 
+    @Query("""
+    SELECT f FROM Farmer f
+    WHERE (LOWER(f.name) LIKE LOWER(CONCAT('%', :value, '%'))
+       OR LOWER(CAST(f.registrationNumber AS string)) LIKE LOWER(CONCAT('%', :value, '%'))
+       OR LOWER(f.familyGroup.principal.name) LIKE LOWER(CONCAT('%', :value, '%')))
+      AND f.type.id = :typeId
+""")
+    Page<Farmer> findByValueAndType(@Param("value") String value, @Param("typeId") Long typeId, Pageable pageable);
+
     @Query("SELECT f FROM Farmer f WHERE f.technician = :technician")
     Page<Farmer> findByTechnician(@Param("technician") User technician, Pageable pageable);
 
@@ -164,4 +173,10 @@ public interface FarmerRepository extends JpaRepository<Farmer, String> {
             @Param("type") Type type,
             @Param("search") String search,
             Pageable pageable);
+
+    @Query("""
+        SELECT f FROM Farmer f
+        WHERE f.type.id = :typeId
+    """)
+    Page<Farmer> findByType(@Param("typeId") Long typeId, Pageable pageable);
 }

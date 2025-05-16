@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Configuration
@@ -88,6 +89,7 @@ public class DataInitializer {
 
             if (farmerRepository.findById("-1").isEmpty()) {
                 Farmer notInformedLessor = new Farmer();
+                notInformedLessor.setType(pfa);
                 notInformedLessor.setRegistrationNumber("-1");
                 notInformedLessor.setName("Não Informado");
                 notInformedLessor.setStatus(StatusEnum.ACTIVE);

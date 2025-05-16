@@ -203,4 +203,12 @@ public class FarmerService {
                 ? farmerRepository.findByEffectiveBranchAndType(branch, type, pageable)
                 : farmerRepository.findByEffectiveBranchAndTypeWithSearch(branch, type, s, pageable);
     }
+
+    public Page<Farmer> findByValueAndType(String value, Long typeId, Pageable pageable) {
+        return farmerRepository.findByValueAndType(value, typeId, pageable);
+    }
+
+    public Page<Farmer> findByType(Long typeId, Pageable pageable) {
+        return farmerRepository.findByType(typeId, pageable);
+    }
 }

@@ -41,12 +41,17 @@ public class FarmerController {
     @GetMapping
     public ResponseEntity<Page<FarmerResponseCompleteDTO>> findAll(
             @RequestParam(required = false) String value,
+            @RequestParam(required = false) Long typeId,
             Pageable pageable
     ) {
         Page<Farmer> farmers;
 
-        if (value != null && !value.isBlank()) {
+        if (value != null && !value.isBlank() && typeId != null) {
+            farmers = farmerService.findByValueAndType(value, typeId, pageable);
+        } else if (value != null && !value.isBlank()) {
             farmers = farmerService.findByValue(value, pageable);
+        } else if (typeId != null) {
+            farmers = farmerService.findByType(typeId, pageable);
         } else {
             farmers = farmerService.findAll(pageable);
         }

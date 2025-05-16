@@ -128,7 +128,9 @@ const FamilyGroupTable = ({
                 <div className="mb-3">
                     <h5 className="fw-bold d-flex">
                         Grupo Familiar #{currentFamilyGroup?.id} - Principal: {currentFamilyGroup?.principal.name}
-                        <span className="ms-auto me-3">Área total do grupo familiar: {totalArea} ha</span>
+                        <span className="ms-auto me-3">
+                            Área total do grupo familiar: {(totalArea ?? 0).toFixed(2)} ha
+                        </span>
                     </h5>
                 </div>
                 <CustomTable

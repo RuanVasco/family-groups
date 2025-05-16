@@ -51,10 +51,8 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         value: ""
     });
 
-    /* objeto de filtros unificado */
     const [filters, setFilters] = useState<Record<string, string>>({});
 
-    /* endpoint base */
     const endpoint = branch
         ? `/farmer/by-branch/${branch.id}`
         : "/farmer/by-technician";
@@ -66,7 +64,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         return !branch && technician ? { userId: technician.id } : undefined;
     }, [branch, technician?.id]);
 
-    /* hook paginado */
     const {
         data: farmers,
         currentPage,
@@ -77,7 +74,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         setPageSize: updatePageSize
     } = usePaginatedFetchData<FarmerType>(endpoint, pageSize, { ...baseParams, ...filters });
 
-    /* mapeia header → campo da API */
     const fieldMap: Record<string, string> = {
         Matrícula: "registrationNumber",
         Tipo: "type",
@@ -90,7 +86,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         Total: "totalArea",
     };
 
-    /* efeito inicial (mudou endpoint) */
     useEffect(() => {
         setFilters({});
         setSelectedType({ label: "Todos", value: "" });
@@ -188,7 +183,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         }
     };
 
-    /* UI */
     return (
         <div className="pt-3 px-4 pb-5">
             <div className="floating_panel my-4 px-4">
