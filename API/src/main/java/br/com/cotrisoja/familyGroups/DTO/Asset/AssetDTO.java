@@ -8,7 +8,7 @@ public record AssetDTO(
 		String description,
 		String address,
 		double amount,
-		String assetType,
+		AssetTypeDTO assetType,
 		FarmerResponseMinimalDTO leasedTo,
 		FarmerResponseMinimalDTO owner
 ) {
@@ -23,7 +23,7 @@ public record AssetDTO(
 				asset.getDescription(),
 				asset.getAddress(),
 				asset.getAmount(),
-				asset.getAssetType() != null ? asset.getAssetType().getDescription() : "Tipo não informado",
+				asset.getAssetType() != null ? AssetTypeDTO.fromEntity(asset.getAssetType()) : null,
 				FarmerResponseMinimalDTO.fromEntity(asset.getLeasedTo()),
 				FarmerResponseMinimalDTO.fromEntity(asset.getOwner())
 		);

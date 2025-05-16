@@ -33,7 +33,7 @@ public class UploadController {
 
         try {
             fileService.uploadFile(file);
-            return ResponseEntity.accepted().body("Arquivo sendo processado em background.");
+            return ResponseEntity.accepted().body("Arquivo processado.");
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao ler o arquivo.");
         }

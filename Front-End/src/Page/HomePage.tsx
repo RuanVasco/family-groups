@@ -469,14 +469,16 @@ const HomePage = () => {
 
                         </Form>
                     </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShow(false)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="primary" onClick={handleUpload}>
-                            Enviar
-                        </Button>
-                    </Modal.Footer>
+                    {!fileLoading && (
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShow(false)}>
+                                Cancelar
+                            </Button>
+                            <Button variant="primary" onClick={handleUpload}>
+                                Enviar
+                            </Button>
+                        </Modal.Footer>
+                    )}
                 </Modal>
             </main>
         </div >
