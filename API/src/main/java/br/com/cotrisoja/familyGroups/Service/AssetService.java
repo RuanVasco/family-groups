@@ -44,7 +44,7 @@ public class AssetService {
 		if (leasedTo != null) {
 			asset.setLeasedTo(leasedTo);
 
-			owner.setFamilyGroup(null);
+			// owner.setFamilyGroup(null);
 			farmerRepository.save(owner);
 		} else {
 			asset.setLeasedTo(null);
@@ -53,23 +53,26 @@ public class AssetService {
 		assetRepository.save(asset);
 	}
 
-	public void update(Asset asset, String description, Farmer owner, Farmer leasedTo) {
+	public void update(Asset asset, AssetCategory assetCategory, AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
 		asset.setDescription(description);
 		asset.setOwner(owner);
+		asset.setAmount(amount);
+		asset.setAddress(address);
+		asset.setAssetCategory(assetCategory);
+		asset.setAssetType(assetType);
 
 		if (leasedTo != null) {
-			assetTypeRepository.findById(2L).ifPresent(asset::setAssetType);
-
 			asset.setLeasedTo(leasedTo);
-			owner.setFamilyGroup(null);
+
+			// owner.setFamilyGroup(null);
 			farmerRepository.save(owner);
 		} else {
-			assetTypeRepository.findById(1L).ifPresent(asset::setAssetType);
 			asset.setLeasedTo(null);
 		}
 
 		assetRepository.save(asset);
 	}
+
 
 	public Optional<Map.Entry<String, Long>> parseAssetId(String assetId) {
 		if (assetId == null || !assetId.contains("-")) {

@@ -26,6 +26,7 @@ const AssetModal = ({
     const [updatedFarmer, setUpdatedFarmer] = useState<FarmerType | null>(null);
     const [mergedAssets, setMergedAssets] = useState<AssetType[]>([]);
     const [showForm, setShowForm] = useState<boolean>(false);
+    const [formMode, setFormMode] = useState<"create" | "update" | null>(null);
     const [newAsset, setNewAsset] = useState<AssetType | null>(null);
 
     const assetOptions = [
@@ -66,18 +67,6 @@ const AssetModal = ({
 
     const handleShowFormToggle = () => {
         setShowForm(!showForm);
-        if (!showForm) {
-            setNewAsset({
-                id: undefined,
-                description: "",
-                address: "",
-                amount: 0,
-                owner: updatedFarmer ?? undefined,
-                leasedTo: undefined,
-                assetCategory: { id: 1, description: "Próprio" },
-                assetType: { id: 0, description: "" },
-            });
-        }
     }
 
     useEffect(() => {
@@ -107,32 +96,73 @@ const AssetModal = ({
         fetchFreshFarmer();
     }, [show, farmer?.registrationNumber]);
 
-    const handleAddNewAsset = async () => {
-        if (!newAsset || !updatedFarmer) return
-        try {
-            const res = await axiosInstance.post(`/asset`, {
-                description: newAsset.description,
-                address: newAsset.address,
-                amount: newAsset.amount,
-                ownerRegistrationNumber: newAsset.owner?.registrationNumber,
-                leasedToRegistrationNumber: newAsset.assetCategory.id === 2 ? updatedFarmer.registrationNumber : undefined,
-                assetCategoryId: newAsset.assetCategory.id,
-                assetTypeId: 1
-            });
+    const handleSubmit = async () => {
+        if (!newAsset || !updatedFarmer) return;
 
-            if (res.status === 200) {
-                toast.success("Bem adicionado");
+        const data = {
+            description: newAsset.description,
+            address: newAsset.address,
+            amount: newAsset.amount,
+            ownerRegistrationNumber: newAsset.owner?.registrationNumber,
+            leasedToRegistrationNumber: newAsset.assetCategory.id === 2 ? updatedFarmer.registrationNumber : undefined,
+            assetCategoryId: newAsset.assetCategory.id,
+            assetTypeId: 1
+        };
+
+        let res;
+        let msg_success = "";
+        let msg_error = "";
+
+        try {
+            switch (formMode) {
+                case "create":
+                    res = await axiosInstance.post("/asset", data);
+                    msg_success = "Bem adicionado";
+                    msg_error = "Erro ao adicionar o bem";
+                    break;
+                case "update":
+                    res = await axiosInstance.put(`/asset/${newAsset.id}`, data);
+                    msg_success = "Bem atualizado";
+                    msg_error = "Erro ao atualizar o bem";
+                    break;
+                default:
+                    return;
+            }
+
+            if (res.status === 200 || res.status === 201) {
+                toast.success(msg_success);
                 reFetchUpdatedFarmer();
                 setShowForm(false);
+            } else {
+                toast.error(msg_error);
             }
-        } catch {
-            toast.error("Erro ao adicionar o bem");
+        } catch (error: any) {
+            const apiMessage = error.response?.data || msg_error;
+            toast.error(apiMessage);
         }
     };
 
+    const handleAddNewAsset = async () => {
+        setFormMode("create");
+        if (!showForm) {
+            setNewAsset({
+                id: undefined,
+                description: "",
+                address: "",
+                amount: 0,
+                owner: updatedFarmer ?? undefined,
+                leasedTo: undefined,
+                assetCategory: { id: 1, description: "Próprio" },
+                assetType: { id: 0, description: "" },
+            });
+        }
+        handleShowFormToggle();
+    };
+
     const handleUpdateAsset = async (asset: AssetType) => {
+        setFormMode("update");
         setNewAsset(asset);
-        setShowForm(true);
+        handleShowFormToggle();
     };
 
     const handleRemoveAsset = async (id: string) => {
@@ -161,7 +191,7 @@ const AssetModal = ({
             <Modal.Body>
                 <div className="d-flex justify-content-between mb-2">
                     <h5 className="fw-bold">Bens</h5>
-                    <button className={`button_${showForm ? "edit" : "agree"}`} onClick={handleShowFormToggle}>
+                    <button className={`button_${showForm ? "edit" : "agree"}`} onClick={handleAddNewAsset}>
                         {showForm ? <><FaMinus /> Fechar formulário</> : <><FaPlus /> Criar bem</>}
                     </button>
                 </div>
@@ -169,7 +199,7 @@ const AssetModal = ({
                     <div>
                         <Form.Group className="mt-2">
                             <Form.Label>
-                                Área
+                                Área (ha)
                             </Form.Label>
                             <Form.Control
                                 value={newAsset?.amount || ""}
@@ -266,7 +296,7 @@ const AssetModal = ({
                         <div className="d-flex align-items-center justify-content-end my-3 gap-2">
                             <button
                                 className="button_info button_sm"
-                                onClick={handleAddNewAsset}
+                                onClick={handleSubmit}
                             >
                                 <FaFloppyDisk /> Salvar
                             </button>

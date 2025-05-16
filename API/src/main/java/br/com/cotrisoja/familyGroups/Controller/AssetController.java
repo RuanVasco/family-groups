@@ -81,7 +81,7 @@ public class AssetController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PutMapping("{assetId}")
+	@PutMapping("/{assetId}")
 	public ResponseEntity<?> updateAsset(
 			@PathVariable String assetId,
 			@RequestBody AssetRequestDTO asset
@@ -101,25 +101,32 @@ public class AssetController {
 			return ResponseEntity.badRequest().body("Bem não encontrado.");
 		}
 
-		String description = asset.description();
-		if (description == null || description.trim().isEmpty()) {
-			return ResponseEntity.badRequest().body("Descrição não recebida.");
-		}
+		AssetCategory assetCategory = assetCategoryRepository.findById(asset.assetCategoryId())
+				.orElseGet(() -> assetCategoryRepository.findById(1L)
+						.orElseThrow(() -> new IllegalStateException("Categoria padrão não encontrada.")));
 
-		Farmer owner = null;
-		Optional<Farmer> optionalOwner = farmerService.findById(asset.ownerRegistrationNumber());
-		if (optionalOwner.isEmpty()) {
-			return ResponseEntity.badRequest().body("Produtor proprietário não foi encontrado.");
-		}
-		owner = optionalOwner.get();
+		AssetType assetType = assetTypeRepository.findById(asset.assetTypeId())
+				.orElseGet(() -> assetTypeRepository.findById(1L)
+						.orElseThrow(() -> new IllegalStateException("Tipo padrão não encontrado.")));
+
+		Farmer owner = farmerService.findById(asset.ownerRegistrationNumber())
+				.orElseThrow(() -> new IllegalStateException("Produtor proprietário não foi encontrado."));
 
 		Farmer leaser = null;
-		Optional<Farmer> optionalLeaser = farmerService.findById(asset.leasedToRegistrationNumber());
-		if (optionalLeaser.isPresent()) {
-			leaser = optionalLeaser.get();
+		if (asset.leasedToRegistrationNumber() != null && !asset.leasedToRegistrationNumber().isEmpty()) {
+			leaser = farmerService.findById(asset.leasedToRegistrationNumber()).orElse(null);
 		}
 
-		assetService.update(assetOptional.get(), description, owner, leaser);
+		assetService.update(
+				assetOptional.get(),
+				assetCategory,
+				assetType,
+				asset.amount(),
+				asset.address(),
+				asset.description(),
+				owner,
+				leaser
+		);
 
 		return ResponseEntity.ok().build();
 	}

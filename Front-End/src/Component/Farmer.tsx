@@ -166,7 +166,7 @@ const Farmer = () => {
                                         <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
                                         <td>
                                             {f.familyGroup
-                                                ? f.familyGroup.principal.name
+                                                ? `${f.familyGroup.principal.registrationNumber} - ${f.familyGroup.principal.name}`
                                                 : "Sem grupo familiar"}
                                         </td>
                                         <td>{f.ownedArea ?? 0} ha</td>

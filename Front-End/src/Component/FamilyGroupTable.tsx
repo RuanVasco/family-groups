@@ -40,7 +40,7 @@ const FamilyGroupTable = ({
 
     useEffect(() => {
         fetchLessors();
-    }, [])
+    }, [familyGroup])
 
     const farmers = familyGroup.members || [];
     const totalArea = farmers.reduce(
@@ -103,8 +103,8 @@ const FamilyGroupTable = ({
                             >
                                 {f.technician?.name || "Sem técnico"}
                             </td>
-                            <td>56 ha</td>
-                            <td>32 ha</td>
+                            <td>{f.ownedAssets?.reduce((sum, asset) => sum + asset.amount, 0) ?? "-"}</td>
+                            <td>{f.leasedAssets?.reduce((sum, asset) => sum + asset.amount, 0) ?? "-"}</td>
                             <td>{(f.ownedArea ?? 0).toFixed(2)} ha</td>
                             <td>{(f.leasedArea ?? 0).toFixed(2)} ha</td>
                             <td>{((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2)} ha</td>
@@ -157,18 +157,36 @@ const FamilyGroupTable = ({
                             headers={[
                                 "Matrícula",
                                 "Nome",
+                                "Própria Arrendada",
                                 "Carteira",
-                                "Técnico",
-                                "Própria",
+                                "Técnico"
                             ]}
                         >
                             {lessors.map((lessor) => (
                                 <tr key={Number(lessor.registrationNumber)}>
                                     <td>{lessor.registrationNumber}</td>
                                     <td>{lessor.name}</td>
+                                    <td>
+                                        {lessor.ownedAssets?.some(asset => asset.leasedTo != null) ? (
+                                            Object.entries(
+                                                lessor.ownedAssets
+                                                    .filter(asset => asset.leasedTo != null)
+                                                    .reduce((result, asset) => {
+                                                        const leaser = asset.leasedTo!;
+                                                        const key = `${leaser.registrationNumber} - ${leaser.name}`;
+
+                                                        result[key] = (result[key] || 0) + asset.amount;
+                                                        return result;
+                                                    }, {} as Record<string, number>)
+                                            ).map(([leaserInfo, area]) => (
+                                                <div key={leaserInfo}>
+                                                    {leaserInfo} → {area.toFixed(2)} ha
+                                                </div>
+                                            ))
+                                        ) : "Sem arrendamentos"}
+                                    </td>
                                     <td>{lessor.branch?.name ?? "Sem carteira vinculada."}</td>
                                     <td>{lessor.technician?.name}</td>
-                                    <td>43 h</td>
                                 </tr>
                             ))}
 
