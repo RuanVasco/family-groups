@@ -26,7 +26,6 @@ public class FileService {
 
     private final BranchRepository branchRepository;
     private final AssetRepository assetRepository;
-    private final AssetCategoryRepository assetCategoryRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final UserRepository userRepository;
     private final FarmerRepository farmerRepository;
@@ -34,7 +33,6 @@ public class FileService {
     private final TypeRepository typeRepository;
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
-    @Async("fileUploadExecutor")
     public void uploadFile(MultipartFile file) throws IOException {
         String filename = file.getOriginalFilename();
         if (filename == null) {
@@ -151,15 +149,10 @@ public class FileService {
             return;
         }
 
-        Optional<AssetCategory> catOpt = assetCategoryRepository.findById(catId);
         Optional<AssetType> typeOpt = assetTypeRepository.findById(typeId);
         Optional<Farmer> ownOpt = farmerRepository.findById(ownerRegistration);
         Optional<Farmer> lesOpt = farmerRepository.findById(lessorRegistration);
 
-        if (catOpt.isEmpty()) {
-            log.warn("Categoria não encontrada (id={}): {}", catId, row);
-            return;
-        }
         if (typeOpt.isEmpty()) {
             log.warn("Tipo de bem não encontrado (id={}): {}", typeId, row);
             return;
@@ -169,12 +162,11 @@ public class FileService {
             return;
         }
 
-        AssetCategory category = catOpt.get();
         AssetType aType = typeOpt.get();
         Farmer owner = ownOpt.get();
         Farmer lessor = lesOpt.orElse(null);
 
-        if (category.getId() == 2 && lessor == null) {
+        if (catId == 2 && lessor == null) {
             lessor = farmerRepository.findById("-1").orElseThrow(() ->
                     new IllegalStateException("Produtor sentinela '-1' não encontrado."));
         }
@@ -184,10 +176,9 @@ public class FileService {
         asset.setDescription(description);
         asset.setAddress(address);
         asset.setAmount(amount);
-        asset.setAssetCategory(category);
         asset.setAssetType(aType);
 
-        if (category.getId() == 2) {
+        if (catId == 2) {
             asset.setOwner(lessor);
             asset.setLeasedTo(owner);
         } else {

@@ -1,7 +1,6 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.Entity.Asset;
-import br.com.cotrisoja.familyGroups.Entity.AssetCategory;
 import br.com.cotrisoja.familyGroups.Entity.AssetType;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Repository.AssetRepository;
@@ -18,7 +17,6 @@ import java.util.Optional;
 public class AssetService {
 
 	private final AssetRepository assetRepository;
-	private final AssetTypeRepository assetTypeRepository;
 	private final FarmerRepository farmerRepository;
 
 	public Optional<Asset> findById(String ownerRegistrationNumber, Long sapId) {
@@ -29,7 +27,7 @@ public class AssetService {
 		assetRepository.delete(asset);
 	}
 
-	public void create(AssetCategory assetCategory, AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
+	public void create(AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
 		Long nextIdSap = getNextIdSapForOwner(owner);
 
 		Asset asset = new Asset();
@@ -38,7 +36,6 @@ public class AssetService {
 		asset.setOwner(owner);
 		asset.setAmount(amount);
 		asset.setAddress(address);
-		asset.setAssetCategory(assetCategory);
 		asset.setAssetType(assetType);
 
 		if (leasedTo != null) {
@@ -53,7 +50,7 @@ public class AssetService {
 		assetRepository.save(asset);
 	}
 
-	public void update(Asset asset, AssetCategory assetCategory, AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
+	public void update(Asset asset, AssetType assetType, double amount, String address, String description, Farmer owner, Farmer leasedTo) {
 
 		boolean ownerChanged = !asset.getOwner().equals(owner);
 
@@ -69,7 +66,6 @@ public class AssetService {
 		asset.setDescription(description);
 		asset.setAmount(amount);
 		asset.setAddress(address);
-		asset.setAssetCategory(assetCategory);
 		asset.setAssetType(assetType);
 
 		if (leasedTo != null) {

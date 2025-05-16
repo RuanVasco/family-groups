@@ -2,10 +2,8 @@ package br.com.cotrisoja.familyGroups.Controller;
 
 import br.com.cotrisoja.familyGroups.DTO.Asset.AssetRequestDTO;
 import br.com.cotrisoja.familyGroups.Entity.Asset;
-import br.com.cotrisoja.familyGroups.Entity.AssetCategory;
 import br.com.cotrisoja.familyGroups.Entity.AssetType;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Repository.AssetCategoryRepository;
 import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Service.AssetService;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
@@ -23,7 +21,6 @@ public class AssetController {
 
 	private final AssetService assetService;
 	private final FarmerService farmerService;
-	private final AssetCategoryRepository assetCategoryRepository;
 	private final AssetTypeRepository assetTypeRepository;
 
 	@PostMapping
@@ -31,10 +28,6 @@ public class AssetController {
 			@RequestBody AssetRequestDTO asset
 	) {
 		String description = asset.description();
-
-		AssetCategory assetCategory = assetCategoryRepository.findById(asset.assetCategoryId())
-				.orElseGet(() -> assetCategoryRepository.findById(1L)
-						.orElseThrow(() -> new IllegalStateException("Categoria padrão não encontrada.")));
 
 		AssetType assetType = assetTypeRepository.findById(asset.assetTypeId())
 				.orElseGet(() -> assetTypeRepository.findById(1L)
@@ -52,7 +45,7 @@ public class AssetController {
 			leaser = farmerService.findById(asset.leasedToRegistrationNumber()).orElse(null);
 		}
 
-		assetService.create(assetCategory, assetType, asset.amount(), asset.address(), description, owner, leaser);
+		assetService.create(assetType, asset.amount(), asset.address(), description, owner, leaser);
 
 		return ResponseEntity.ok().build();
 	}
@@ -101,10 +94,6 @@ public class AssetController {
 			return ResponseEntity.badRequest().body("Bem não encontrado.");
 		}
 
-		AssetCategory assetCategory = assetCategoryRepository.findById(asset.assetCategoryId())
-				.orElseGet(() -> assetCategoryRepository.findById(1L)
-						.orElseThrow(() -> new IllegalStateException("Categoria padrão não encontrada.")));
-
 		AssetType assetType = assetTypeRepository.findById(asset.assetTypeId())
 				.orElseGet(() -> assetTypeRepository.findById(1L)
 						.orElseThrow(() -> new IllegalStateException("Tipo padrão não encontrado.")));
@@ -119,7 +108,6 @@ public class AssetController {
 
 		assetService.update(
 				assetOptional.get(),
-				assetCategory,
 				assetType,
 				asset.amount(),
 				asset.address(),

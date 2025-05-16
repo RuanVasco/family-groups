@@ -1,4 +1,3 @@
-import AssetCategoryType from "./AssetCategoryType";
 import AssetTypeType from "./AssetTypeType";
 import { FarmerType } from "./FarmerType";
 
@@ -9,7 +8,6 @@ export interface AssetType {
   amount: number;
   owner?: FarmerType | null;
   leasedTo?: FarmerType | null;
-  assetCategory: AssetCategoryType;
   assetType: AssetTypeType;
 }
 

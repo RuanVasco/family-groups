@@ -28,8 +28,10 @@ const AssetModal = ({
     const [showForm, setShowForm] = useState<boolean>(false);
     const [formMode, setFormMode] = useState<"create" | "update" | null>(null);
     const [newAsset, setNewAsset] = useState<AssetType | null>(null);
+    const [isOwned, setIsOwner] = useState<boolean | null>(null);
 
     const assetOptions = [
+        { value: null, label: "Selecione" },
         { value: 1, label: "Próprio" },
         { value: 2, label: "Arrendado" },
     ];
@@ -99,8 +101,6 @@ const AssetModal = ({
     const handleSubmit = async () => {
         if (!newAsset || !updatedFarmer) return;
 
-        const isOwned = newAsset.assetCategory.id === 1;
-
         const data = {
             description: newAsset.description,
             address: newAsset.address,
@@ -111,7 +111,6 @@ const AssetModal = ({
             leasedToRegistrationNumber: isOwned
                 ? newAsset.leasedTo?.registrationNumber
                 : updatedFarmer.registrationNumber,
-            assetCategoryId: newAsset.assetCategory.id,
             assetTypeId: 1
         };
 
@@ -151,14 +150,14 @@ const AssetModal = ({
     const handleAddNewAsset = async () => {
         setFormMode("create");
         if (!showForm) {
+            setIsOwner(null);
             setNewAsset({
                 id: undefined,
                 description: "",
                 address: "",
                 amount: 0,
-                owner: updatedFarmer ?? undefined,
+                owner: undefined,
                 leasedTo: undefined,
-                assetCategory: { id: 1, description: "Próprio" },
                 assetType: { id: 0, description: "" },
             });
         }
@@ -166,6 +165,7 @@ const AssetModal = ({
     };
 
     const handleUpdateAsset = async (asset: AssetType) => {
+        (asset.owner?.registrationNumber === updatedFarmer?.registrationNumber) ? setIsOwner(true) : false;
         setFormMode("update");
         setNewAsset(asset);
         handleShowFormToggle();
@@ -221,8 +221,9 @@ const AssetModal = ({
                             </Form.Label>
                             <Select
                                 options={assetOptions}
-                                value={assetOptions.find((o) => o.value === newAsset?.assetCategory?.id) ?? null}
+                                value={isOwned == null ? null : assetOptions[isOwned ? 1 : 2]}
                                 onChange={(opt) => {
+                                    setIsOwner(opt?.value === 1);
                                     setNewAsset((prev) => prev ? {
                                         ...prev,
                                         assetCategory: {
@@ -242,24 +243,29 @@ const AssetModal = ({
                         {newAsset && (
                             <Form.Group className="mt-2">
                                 <Form.Label>
-                                    {newAsset.assetCategory.id === 2 ? "Proprietário" : "Arrendatário"}
+                                    {isOwned ? "Arrendatário" : "Proprietário"}
                                 </Form.Label>
                                 <AsyncSelect
                                     isClearable
                                     loadOptions={loadFarmers}
                                     defaultOptions
                                     value={
-                                        newAsset?.assetCategory?.id === 2 && newAsset.owner
-                                            ? { value: newAsset.owner, label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}` }
-                                            : newAsset?.leasedTo
-                                                ? { value: newAsset.leasedTo, label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}` }
-                                                : null
+                                        isOwned === null
+                                            ? null
+                                            : isOwned
+                                                ? newAsset.leasedTo
+                                                    ? { value: newAsset.leasedTo, label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}` }
+                                                    : null
+                                                : newAsset.owner
+                                                    ? { value: newAsset.owner, label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}` }
+                                                    : null
                                     }
+
                                     onChange={(opt) => {
                                         setNewAsset((prev) => prev ? {
                                             ...prev,
-                                            owner: newAsset.assetCategory.id === 2 ? opt?.value ?? null : prev.owner,
-                                            leasedTo: newAsset.assetCategory.id !== 2 ? opt?.value ?? null : prev.leasedTo,
+                                            leasedTo: isOwned ? opt?.value ?? null : prev.leasedTo,
+                                            owner: !isOwned ? opt?.value ?? null : prev.owner,
                                         } : null);
                                     }}
                                     menuPortalTarget={document.body}
@@ -314,33 +320,30 @@ const AssetModal = ({
                     ]}
                 >
                     {mergedAssets.map((asset) => (
-                        (asset.assetCategory.id === 1 || asset.assetCategory.id === 2) && (
-                            <tr key={asset.id}>
-                                <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
-                                <td>{asset.description}</td>
-                                <td>{asset.address}</td>
-                                <td>{asset.amount}</td>
-                                <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
-                                <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
-                                <td>
-                                    <div className="d-flex gap-2">
-                                        <button
-                                            className="button_edit button_sm"
-                                            onClick={() => handleUpdateAsset(asset)}
-                                        >
-                                            <FaPencil />
-                                        </button>
-                                        <button
-                                            className="button_remove button_sm"
-                                            onClick={() => handleRemoveAsset(`${asset.id!} - ${asset.owner?.registrationNumber}`)}
-                                        >
-                                            <FaMinus />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )
-
+                        <tr key={asset.id}>
+                            <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
+                            <td>{asset.description}</td>
+                            <td>{asset.address}</td>
+                            <td>{asset.amount}</td>
+                            <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
+                            <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
+                            <td>
+                                <div className="d-flex gap-2">
+                                    <button
+                                        className="button_edit button_sm"
+                                        onClick={() => handleUpdateAsset(asset)}
+                                    >
+                                        <FaPencil />
+                                    </button>
+                                    <button
+                                        className="button_remove button_sm"
+                                        onClick={() => handleRemoveAsset(`${asset.id!} - ${asset.owner?.registrationNumber}`)}
+                                    >
+                                        <FaMinus />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     ))}
                 </CustomTable>
             </Modal.Body>

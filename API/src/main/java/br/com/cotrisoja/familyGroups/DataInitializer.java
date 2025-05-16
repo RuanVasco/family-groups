@@ -20,7 +20,6 @@ public class DataInitializer {
     private final UserRepository userRepository;
     private final TypeRepository typeRepository;
     private final AssetTypeRepository assetTypeRepository;
-    private final AssetCategoryRepository assetCategoryRepository;
     private final FarmerRepository farmerRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -85,12 +84,6 @@ public class DataInitializer {
                 assetTypeRepository.save(new AssetType(19L, "Aviário"));
                 assetTypeRepository.save(new AssetType(20L, "Moto"));
                 assetTypeRepository.save(new AssetType(99L, "Não possui bens"));
-            }
-
-            if (assetCategoryRepository.count() == 0) {
-                assetCategoryRepository.save(new AssetCategory(1L, "Próprio"));
-                assetCategoryRepository.save(new AssetCategory(2L, "Arrendado"));
-                assetCategoryRepository.save(new AssetCategory(3L, "Comodato"));
             }
 
             if (farmerRepository.findById("-1").isEmpty()) {

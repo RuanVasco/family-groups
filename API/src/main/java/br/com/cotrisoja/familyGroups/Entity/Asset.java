@@ -26,10 +26,6 @@ public class Asset {
 	private Double amount = 0.0;
 
 	@ManyToOne
-	@JoinColumn(name = "asset_category_id")
-	private AssetCategory assetCategory;
-
-	@ManyToOne
 	@JoinColumn(name = "asset_type_id")
 	private AssetType assetType;
 
@@ -37,11 +33,4 @@ public class Asset {
 	@JoinColumn(name = "farmer_leased_id")
 	private Farmer leasedTo;
 
-	@PrePersist
-	@PreUpdate
-	private void validateAsset() {
-		if (assetCategory.getId() == 2 && leasedTo == null) {
-			throw new IllegalStateException("Bem arrendado deve ter um 'leasedTo' representado.");
-		}
-	}
 }
