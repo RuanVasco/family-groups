@@ -40,10 +40,6 @@ const Farmer = () => {
         fetchPage(1);
     }, []);
 
-    // useEffect(() => {
-    //     console.log(farmers)
-    // }, [farmers])
-
     useEffect(() => {
         const id = setTimeout(() => {
             const filters =
@@ -197,8 +193,6 @@ const Farmer = () => {
                                             ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
                                             .reduce((sum, asset) => sum + asset.amount, 0) || 0
                                     ).toFixed(2);
-
-                                    console.log(f)
 
                                     const sapLeased = (
                                         f.leasedAssets
