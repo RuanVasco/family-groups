@@ -12,7 +12,6 @@ import CustomTable from "../Common/CustomTable";
 import { useFetchItem } from "../../Hook/useFetchItem";
 import { FarmerType } from "../../Type/FarmerType";
 import { FaPlus } from "react-icons/fa6";
-import FarmerModal from "../FarmerModal";
 
 interface CultivationType {
     canolaArea?: number;
@@ -38,7 +37,6 @@ const FamilyGroup = () => {
     const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<FamilyGroupType | null>(null);
     const [modalMode, setModalMode] = useState<"create" | "select" | "add-farmer" | "edit" | null>(null);
     const itemsPerPage = 10;
-    const [currentFarmer, setCurrentFarmer] = useState<Partial<FarmerType> | null>(null);
     const [show, setShow] = useState(false);
     const [searchValue, setSearchValue] = useState<string>("");
     const [selectedPrincipalId, setSelectedPrincipalId] = useState<string>("");
@@ -187,43 +185,6 @@ const FamilyGroup = () => {
         }
     };
 
-    const handleEditFarmer = (farmer: FarmerType) => {
-        setCurrentFarmer(farmer);
-        setModalMode("edit");
-        setShow(true);
-    };
-
-    const handleSubmitFarmer = async () => {
-        try {
-            if (!currentFarmer?.registrationNumber || !currentFarmer.name) {
-                toast.warn("Preencha todos os campos obrigatórios.");
-                return;
-            }
-
-            const data = {
-                registrationNumber: currentFarmer.registrationNumber,
-                name: currentFarmer.name,
-                status: currentFarmer.status,
-                familyGroupId: currentFarmer.familyGroup?.id,
-                technicianId: currentFarmer.technician?.id,
-                ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea,
-                branch: currentFarmer.branch?.id
-            }
-
-            const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, data);
-
-            if (res.status === 200 || res.status === 201) {
-                toast.success("Produtor atualizado com sucesso!");
-                refetchFarmers();
-                setShow(false);
-                setModalMode(null);
-            }
-        } catch (error) {
-            toast.error("Erro ao atualizar o produtor.");
-        }
-    };
-
     useEffect(() => {
         if (selectedFamilyGroup && cultivations) {
             setSelectedFamilyGroup(prev => prev ? { ...prev, ...cultivations } : prev);
@@ -265,31 +226,25 @@ const FamilyGroup = () => {
                     </div>
                     <div className="floating_panel" style={{ overflowX: 'auto' }}>
                         <FamilyGroupTable
-                            familyGroup={selectedFamilyGroup}
+                            familyGroup={{
+                                id: selectedFamilyGroup.id,
+                                principal: selectedFamilyGroup.principal,
+                                members: selectedFamilyGroup.members,
+                                canolaArea: selectedFamilyGroup.canolaArea,
+                                wheatArea: selectedFamilyGroup.wheatArea,
+                                cornSilageArea: selectedFamilyGroup.cornSilageArea,
+                                grainCornArea: selectedFamilyGroup.grainCornArea,
+                                beanArea: selectedFamilyGroup.beanArea,
+                                soybeanArea: selectedFamilyGroup.soybeanArea,
+                            }}
                             showActions={true}
                             onMakePrincipal={(farmer) => handlePrincipalChange(farmer.registrationNumber)}
                             onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber)}
-                            onEditFarmer={handleEditFarmer}
                         />
                     </div>
                 </>
             )
             }
-
-            <FarmerModal
-                show={modalMode === "edit"}
-                onClose={() => {
-                    setModalMode(null)
-                    setShow(false)
-                    setCurrentFarmer(null);
-                }}
-                onSubmit={handleSubmitFarmer}
-                currentFarmer={currentFarmer}
-                modalMode="edit"
-                onChange={(field, value) =>
-                    setCurrentFarmer(prev => prev ? { ...prev, [field]: value } : prev)
-                }
-            />
 
             <Modal show={show && modalMode !== "edit"} onHide={handleClose} size="xl">
                 <Modal.Header closeButton>

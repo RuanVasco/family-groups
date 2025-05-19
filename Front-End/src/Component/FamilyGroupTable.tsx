@@ -56,11 +56,11 @@ const FamilyGroupTable = ({
     }
 
     useEffect(() => {
-        if (!currentFamilyGroup || currentFamilyGroup.id !== familyGroup.id) {
+        if (familyGroup.members) {
             setCurrentFamilyGroup(familyGroup);
             fetchLessors();
         }
-    }, [familyGroup.id]);
+    }, [familyGroup]);
 
     const farmers = currentFamilyGroup?.members || [];
     const totalArea = farmers.reduce(
