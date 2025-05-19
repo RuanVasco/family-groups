@@ -5,6 +5,8 @@ import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 import br.com.cotrisoja.familyGroups.Repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +28,7 @@ public class FileService {
 
     private final BranchRepository branchRepository;
     private final AssetRepository assetRepository;
+    private final AssetService assetService;
     private final AssetTypeRepository assetTypeRepository;
     private final UserRepository userRepository;
     private final FarmerRepository farmerRepository;
@@ -33,6 +36,7 @@ public class FileService {
     private final TypeRepository typeRepository;
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
+    @Transactional
     public void uploadFile(MultipartFile file) throws IOException {
         String filename = file.getOriginalFilename();
         if (filename == null) {
@@ -46,43 +50,58 @@ public class FileService {
             List<String> lines = reader.lines().toList();
 
             if ("data.csv".equalsIgnoreCase(filename)) {
+                log.info("Iniciando processamento do arquivo de produtores: {}", filename);
+
+                log.info("Inserindo dados de produtores...");
                 for (String row : lines) {
                     try {
                         processFarmerRow(row);
                     } catch (Exception e) {
-                        log.warn("Erro ao processar linha: {}\nMotivo: {}", row, e.getMessage());
+                        log.warn("Erro ao processar linha: [{}] | Motivo: {}", row, e.getMessage(), e);
                     }
                 }
 
+                log.info("Associando produtores aos grupos familiares...");
                 for (String row : lines) {
                     try {
                         associateFarmerToGroup(row);
                     } catch (Exception e) {
-                        log.warn("Erro ao associar linha: {}\nMotivo: {}", row, e.getMessage());
+                        log.warn("Erro ao associar linha: [{}] | Motivo: {}", row, e.getMessage(), e);
                     }
                 }
-                System.out.println("Dados inseridos com sucesso!");
+
+                log.info("Processamento do arquivo {} concluído com sucesso!", filename);
+
             } else if ("farmer_update.csv".equalsIgnoreCase(filename)) {
+                log.info("Iniciando atualização de tipos de produtores: {}", filename);
+
                 for (String row : lines) {
                     try {
                         processTypeUpdate(row);
                     } catch (Exception e) {
-                        log.warn("Erro ao processar tipo da linha: {}\nMotivo: {}", row, e.getMessage());
+                        log.warn("Erro ao processar tipo da linha: [{}] | Motivo: {}", row, e.getMessage(), e);
                     }
                 }
-                System.out.println("Produtores atualizados com sucesso!");
+
+                log.info("Atualização de tipos de produtores concluída com sucesso!");
+
             } else if ("assets.csv".equalsIgnoreCase(filename)) {
+                log.info("Iniciando processamento de bens patrimoniais: {}", filename);
+
                 for (String row : lines) {
                     try {
                         processAsset(row);
                     } catch (Exception e) {
-                        log.warn("Erro ao processar asset da linha: {}\nMotivo: {}", row, e.getMessage());
+                        log.warn("Erro ao processar asset da linha: [{}] | Motivo: {}", row, e.getMessage(), e);
                     }
                 }
-                System.out.println("Bens inseridos com sucesso!");
+
+                log.info("Processamento de bens concluído com sucesso!");
+
             } else {
                 log.warn("Arquivo não reconhecido: {}", filename);
             }
+
         } catch (IOException e) {
             log.error("Erro ao ler o arquivo CSV: {}", e.getMessage());
             throw e;
@@ -130,63 +149,82 @@ public class FileService {
     private void processAsset(String row) {
         String[] columns = row.split(";", -1);
 
-        String ownerRegistration = getCol(columns, 0);
-        String idSapRaw = getCol(columns, 1);
-        String rawAssetType = getCol(columns, 2);
-        String description = getCol(columns, 3);
-        String rawAssetCategory = getCol(columns, 4);
-        double amount = parseDouble(columns, 5, "Amount", row);
-        String address = getCol(columns, 6);
-        String lessorRegistration = getCol(columns, 7);
+        String primaryReg      = getCol(columns, 0);
+        String idSapRaw        = getCol(columns, 1);
+        String rawAssetType    = getCol(columns, 2);
+        String description     = getCol(columns, 3);
+        String rawAssetCat     = getCol(columns, 4);
+        double amount          = parseDouble(columns, 5, "amount", row);
+        String address         = getCol(columns, 6);
+        String altReg          = getCol(columns, 7);
 
         Long idSap, catId, typeId;
         try {
-            idSap = Long.valueOf(idSapRaw);
-            catId = Long.valueOf(rawAssetCategory);
-            typeId = Long.valueOf(rawAssetType);
+            idSap   = Long.valueOf(idSapRaw);
+            catId   = Long.valueOf(rawAssetCat);
+            typeId  = Long.valueOf(rawAssetType);
         } catch (NumberFormatException e) {
-            log.warn("IDs inválidos (idSap / categoria / tipo) na linha: {}", row);
+            log.warn("IDs inválidos (idSap/categoria/tipo) na linha: {}", row);
             return;
         }
 
-        Optional<AssetType> typeOpt = assetTypeRepository.findById(typeId);
-        Optional<Farmer> ownOpt = farmerRepository.findById(ownerRegistration);
-        Optional<Farmer> lesOpt = farmerRepository.findById(lessorRegistration);
+        AssetType aType = assetTypeRepository.findById(typeId)
+                .orElseThrow(() -> new IllegalStateException("Tipo de bem não encontrado (id=" + typeId + ")"));
 
-        if (typeOpt.isEmpty()) {
-            log.warn("Tipo de bem não encontrado (id={}): {}", typeId, row);
+        Farmer primary = farmerRepository.findById(primaryReg)
+                .orElseThrow(() -> new IllegalStateException("Produtor não encontrado (reg=" + primaryReg + ")"));
+
+        Optional<Farmer> altOpt = altReg.isBlank()
+                ? Optional.empty()
+                : farmerRepository.findById(altReg);
+
+        Farmer sentinel = farmerRepository.findById("-1").orElse(null);
+
+        Farmer owner;
+        Farmer leasedTo;
+
+        if (catId == 2) {
+            owner    = altOpt.orElse(sentinel);
+            leasedTo = primary;
+
+            if (owner != null) idSap = assetService.getNextIdSapForOwner(owner);
+        } else {
+            owner    = primary;
+            leasedTo = altOpt.orElse(sentinel);
+        }
+
+        if (owner == null) {
+            log.warn("Não foi possível determinar o proprietário na linha: {}", row);
             return;
         }
-        if (ownOpt.isEmpty()) {
-            log.warn("Produtor proprietário não encontrado (reg={}): {}", ownerRegistration, row);
-            return;
-        }
 
-        AssetType aType = typeOpt.get();
-        Farmer owner = ownOpt.get();
-        Farmer lessor = lesOpt.orElse(null);
+        Asset asset = assetRepository
+                .findByOwner_RegistrationNumberAndIdSap(owner.getRegistrationNumber(), idSap)
+                .orElseGet(Asset::new);
 
-        if (catId == 2 && lessor == null) {
-            lessor = farmerRepository.findById("-1").orElseThrow(() ->
-                    new IllegalStateException("Produtor sentinela '-1' não encontrado."));
-        }
-
-        Asset asset = assetRepository.findByOwner_RegistrationNumberAndIdSap(owner.getRegistrationNumber(), idSap).orElseGet(Asset::new);
         asset.setIdSap(idSap);
         asset.setDescription(description);
         asset.setAddress(address);
         asset.setAmount(amount);
         asset.setAssetType(aType);
+        asset.setOwner(owner);
+        asset.setLeasedTo(leasedTo);
 
-        if (catId == 2) {
-            asset.setOwner(lessor);
-            asset.setLeasedTo(owner);
-        } else {
-            asset.setOwner(owner);
-            asset.setLeasedTo(lessor);
+        try {
+            assetRepository.save(asset);
+            log.info("Asset salvo: idSap={}, owner={}, leasedTo={}",
+                    asset.getIdSap(),
+                    asset.getOwner().getRegistrationNumber(),
+                    asset.getLeasedTo() != null ? asset.getLeasedTo().getRegistrationNumber() : "null");
+        } catch (DataIntegrityViolationException e) {
+            log.error("Violação de integridade ao salvar Asset (owner={}, idSap={}): {}",
+                    asset.getOwner().getRegistrationNumber(), asset.getIdSap(),
+                    e.getMostSpecificCause().getMessage(), e);
+        } catch (ConstraintViolationException e) {
+            log.error("Validação bean falhou ao salvar Asset (owner={}, idSap={}): {}", asset.getOwner(), asset.getIdSap(), e.getMessage(), e);
+        } catch (RuntimeException e) {
+            log.error("Erro inesperado ao salvar Asset", e);
         }
-
-        assetRepository.save(asset);
     }
 
     private void processFarmerRow(String row) {

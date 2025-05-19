@@ -143,91 +143,96 @@ const FamilyGroupTable = ({
                         "Técnico",
                         "SAP Própria",
                         "SAP Arrendada",
+                        "SAP Total",
                         "Própria",
                         "Arrendada",
                         "Total",
                         ...showActions ? ["Ações"] : []
                     ]}
                 >
-                    {farmers.map((f) => (
-                        <tr key={Number(f.registrationNumber)}>
-                            <td>{f.registrationNumber}</td>
-                            <td>{f.type?.id ?? "-"}</td>
-                            <td>{f.name}</td>
-                            <td>{StatusLabels[f.status]}</td>
-                            <td
-                                className={f.branch?.id != currentFamilyGroup?.principal.branch?.id ? "text-danger" : ""}
-                            >
-                                {f.branch?.name ?? "Sem carteira vinculada"}
-                            </td>
-                            <td
-                                className={f.technician?.id != currentFamilyGroup?.principal.technician?.id ? "text-danger" : ""}
-                            >
-                                {f.technician?.name || "Sem técnico"}
-                            </td>
-                            <td>
-                                {`${(f.ownedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0).toFixed(2)} ha`}
-                            </td>
-                            <td>
-                                {`${(f.leasedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0).toFixed(2)} ha`}
-                            </td>
-                            <td
-                                className={
-                                    (f.ownedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0).toFixed(2) !== (f.ownedArea ?? 0).toFixed(2)
-                                        ? 'text-danger'
-                                        : ''
-                                }
-                            >
-                                {`${(f.ownedArea ?? 0).toFixed(2)} ha`}
-                            </td>
-                            <td
-                                className={
-                                    (f.leasedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0).toFixed(2) !== (f.leasedArea ?? 0).toFixed(2)
-                                        ? 'text-danger'
-                                        : ''
-                                }
-                            >
-                                {`${(f.leasedArea ?? 0).toFixed(2)} ha`}
-                            </td>
-                            <td>{((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2)} ha</td>
-                            {showActions && (
-                                <td className="d-flex gap-2">
-                                    <button
-                                        className="button_info btn_sm"
-                                        onClick={() => openAssetModal(f)}
-                                        title="Editar Bens"
-                                    >
-                                        <FaTractor />
-                                    </button>
-                                    <button
-                                        className="button_edit btn_sm"
-                                        onClick={() => onEditFarmer && onEditFarmer(f)}
-                                        title="Editar Produtor"
-                                    >
-                                        <FaPen />
-                                    </button>
-                                    {f.registrationNumber !== currentFamilyGroup?.principal.registrationNumber && (
-                                        <>
-                                            <button
-                                                className="button_neutral btn_sm"
-                                                onClick={() => onMakePrincipal && onMakePrincipal(f)}
-                                                title="Tornar Principal"
-                                            >
-                                                <FaChessKing />
-                                            </button>
-                                            <button
-                                                className="button_remove btn_sm"
-                                                onClick={() => onRemoveFarmer && onRemoveFarmer(f)}
-                                                title="Remover Produtor do Grupo Familiar"
-                                            >
-                                                <FaMinus />
-                                            </button>
-                                        </>
-                                    )}
+                    {farmers.map((f) => {
+                        const ownedAssetsSum = (
+                            f.ownedAssets
+                                ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                        ).toFixed(2);
+
+                        const leasedAssetsSum = (
+                            f.leasedAssets
+                                ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                        ).toFixed(2);
+
+                        const totalAssetsArea = (
+                            [...(f.ownedAssets || []), ...(f.leasedAssets || [])]
+                                .filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                        ).toFixed(2);
+
+                        const ownedArea = (f.ownedArea ?? 0).toFixed(2);
+                        const leasedArea = (f.leasedArea ?? 0).toFixed(2);
+                        const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
+
+                        return (
+                            <tr key={Number(f.registrationNumber)}>
+                                <td>{f.registrationNumber}</td>
+                                <td>{f.type?.id ?? "-"}</td>
+                                <td>{f.name}</td>
+                                <td>{StatusLabels[f.status]}</td>
+                                <td className={f.branch?.id !== currentFamilyGroup?.principal.branch?.id ? "text-danger" : ""}>
+                                    {f.branch?.name ?? "Sem carteira vinculada"}
                                 </td>
-                            )}
-                        </tr>
-                    ))}
+                                <td className={f.technician?.id !== currentFamilyGroup?.principal.technician?.id ? "text-danger" : ""}>
+                                    {f.technician?.name || "Sem técnico"}
+                                </td>
+                                <td>{`${ownedAssetsSum} ha`}</td>
+                                <td>{`${leasedAssetsSum} ha`}</td>
+                                <td>{`${totalAssetsArea} ha`}</td>
+                                <td>{`${ownedArea} ha`}</td>
+                                <td>{`${leasedArea} ha`}</td>
+                                <td className={totalAssetsArea !== totalArea ? 'text-danger' : ''}>
+                                    {`${totalArea} ha`}
+                                </td>
+                                {showActions && (
+                                    <td className="d-flex gap-2">
+                                        <button
+                                            className="button_info btn_sm"
+                                            onClick={() => openAssetModal(f)}
+                                            title="Editar Bens"
+                                        >
+                                            <FaTractor />
+                                        </button>
+                                        <button
+                                            className="button_edit btn_sm"
+                                            onClick={() => onEditFarmer && onEditFarmer(f)}
+                                            title="Editar Produtor"
+                                        >
+                                            <FaPen />
+                                        </button>
+                                        {f.registrationNumber !== currentFamilyGroup?.principal.registrationNumber && (
+                                            <>
+                                                <button
+                                                    className="button_neutral btn_sm"
+                                                    onClick={() => onMakePrincipal && onMakePrincipal(f)}
+                                                    title="Tornar Principal"
+                                                >
+                                                    <FaChessKing />
+                                                </button>
+                                                <button
+                                                    className="button_remove btn_sm"
+                                                    onClick={() => onRemoveFarmer && onRemoveFarmer(f)}
+                                                    title="Remover Produtor do Grupo Familiar"
+                                                >
+                                                    <FaMinus />
+                                                </button>
+                                            </>
+                                        )}
+                                    </td>
+                                )}
+                            </tr>
+                        );
+                    })}
+
                 </CustomTable>
                 {lessors.length > 0 && (
                     <><div className="mt-2">

@@ -11,11 +11,9 @@ interface PaginationResult<T> {
   isLoading: boolean;
   pageSize: number;
 
-  /* API */
   fetchPage: (page: number, filters?: Record<string, any>) => void;
   setPageSize: (size: number) => void;
 
-  /* NOVO  ➜ ordenação */
   sortField?: string;
   sortDir?: "asc" | "desc";
   setSortField: (field?: string) => void;

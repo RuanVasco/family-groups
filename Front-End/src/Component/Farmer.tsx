@@ -40,6 +40,10 @@ const Farmer = () => {
         fetchPage(1);
     }, []);
 
+    // useEffect(() => {
+    //     console.log(farmers)
+    // }, [farmers])
+
     useEffect(() => {
         const id = setTimeout(() => {
             const filters =
@@ -184,12 +188,29 @@ const Farmer = () => {
                             <CustomTable
                                 headers={[
                                     "Ações", "Matrícula", "Nome", "Tipo", "Situação", "Técnico", "Carteira", "Grupo familiar",
-                                    "SAP Própria", "SAP Arrendada", "Própria", "Arrendada", "Total"
+                                    "SAP Própria", "SAP Arrendada", "SAP Total", "Própria", "Arrendada", "Total"
                                 ]}
                             >
                                 {farmers.map((f) => {
-                                    const sapOwned = (f.ownedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0);
-                                    const sapLeased = (f.leasedAssets?.reduce((sum, asset) => sum + asset.amount, 0) || 0);
+                                    const sapOwned = (
+                                        f.ownedAssets
+                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                    ).toFixed(2);
+
+                                    console.log(f)
+
+                                    const sapLeased = (
+                                        f.leasedAssets
+                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                    ).toFixed(2);
+
+                                    const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
+
+                                    const ownedArea = (f.ownedArea ?? 0).toFixed(2);
+                                    const leasedArea = (f.leasedArea ?? 0).toFixed(2);
+                                    const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
 
                                     return (
                                         <tr key={Number(f.registrationNumber)}>
@@ -220,15 +241,18 @@ const Farmer = () => {
                                                     ? `${f.familyGroup.principal.registrationNumber} - ${f.familyGroup.principal.name}`
                                                     : "Sem grupo familiar"}
                                             </td>
-                                            <td>{`${sapOwned.toFixed(2)} ha`}</td>
-                                            <td>{`${sapLeased.toFixed(2)} ha`}</td>
-                                            <td className={sapOwned.toFixed(2) !== (f.ownedArea ?? 0).toFixed(2) ? "text-danger" : ""}>
-                                                {`${(f.ownedArea ?? 0).toFixed(2)} ha`}
+                                            <td>{`${sapOwned} ha`}</td>
+                                            <td>{`${sapLeased} ha`}</td>
+                                            <td>{`${sapTotal} ha`}</td>
+                                            <td>
+                                                {`${ownedArea} ha`}
                                             </td>
-                                            <td className={sapLeased.toFixed(2) !== (f.leasedArea ?? 0).toFixed(2) ? "text-danger" : ""}>
-                                                {`${(f.leasedArea ?? 0).toFixed(2)} ha`}
+                                            <td>
+                                                {`${leasedArea} ha`}
                                             </td>
-                                            <td>{((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2)} ha</td>
+                                            <td className={sapTotal !== totalArea ? "text-danger" : ""}>
+                                                {`${totalArea} ha`}
+                                            </td>
                                         </tr>
                                     );
                                 })}

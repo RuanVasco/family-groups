@@ -1,24 +1,76 @@
 <configuration>
 
+    <!-- ========== CONSOLE (INFO+), sem stack-trace ========== -->
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
+            <!-- sem %ex  →  não imprime stack-trace -->
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="UPLOAD_ERRORS" class="ch.qos.logback.core.FileAppender">
-        <file>logs/upload-errors.log</file>
-        <append>true</append>
+    <!-- ========== FILE ⋯ INFO ========== -->
+    <appender name="UPLOAD_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/upload-info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- um arquivo por dia -->
+            <fileNamePattern>logs/upload-info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- grava SOMENTE nível INFO -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <logger name="br.com.cotrisoja.familyGroups.Service.FileService" level="WARN" additivity="false">
-        <appender-ref ref="UPLOAD_ERRORS" />
-        <appender-ref ref="Console" />
+    <!-- ========== FILE ⋯ WARN ========== -->
+    <appender name="UPLOAD_WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/upload-warn.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/upload-warn.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <!-- mantém stack-trace para análise -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level - %msg%n%ex</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ========== FILE ⋯ ERROR ========== -->
+    <appender name="UPLOAD_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/upload-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/upload-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <!-- aceita ERROR e FATAL -->
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level - %msg%n%ex</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ========== LOGGER do FileService ========== -->
+    <!-- Deixa em INFO para gerar os três níveis.
+         additivity (padrão = true) faz as msgs irem ao Console via <root>. -->
+    <logger name="br.com.cotrisoja.familyGroups.Service.FileService" level="INFO">
+        <appender-ref ref="UPLOAD_INFO"  />
+        <appender-ref ref="UPLOAD_WARN"  />
+        <appender-ref ref="UPLOAD_ERROR" />
     </logger>
 
+    <!-- ========== ROOT LOGGER ========== -->
     <root level="INFO">
         <appender-ref ref="Console" />
     </root>
