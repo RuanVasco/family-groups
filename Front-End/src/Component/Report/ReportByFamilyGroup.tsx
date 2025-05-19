@@ -2,7 +2,6 @@ import { useFetchItem } from "../../Hook/useFetchItem";
 import { FarmerType } from "../../Type/FarmerType";
 import { UserType } from "../../Type/UserType";
 import { useEffect, useState } from "react";
-import FarmerModal from "../FarmerModal";
 import { toast } from "react-toastify";
 import axiosInstance from "../../axiosInstance";
 import FamilyGroupTable from "../FamilyGroupTable";
@@ -27,8 +26,6 @@ interface FamilyGroupReport {
 
 const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupProps) => {
     const { data: familyGroups, loading } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
-    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
-    const [show, setShow] = useState(false);
     const [useFamilyGroups, setUseFamilyGroups] = useState<FamilyGroupReport[]>([]);
 
     useEffect(() => {
@@ -36,61 +33,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
             setUseFamilyGroups(familyGroups);
         }
     }, [familyGroups]);
-
-    const handleEditFarmer = (farmer: FarmerType) => {
-        setCurrentFarmer(farmer);
-        setShow(true);
-    };
-
-    const handleSubmitFarmer = async () => {
-        try {
-            if (!currentFarmer?.registrationNumber || !currentFarmer.name) {
-                toast.warn("Preencha todos os campos obrigatórios.");
-                return;
-            }
-
-            const data = {
-                registrationNumber: currentFarmer.registrationNumber,
-                name: currentFarmer.name,
-                status: currentFarmer.status,
-                familyGroupId: currentFarmer.familyGroup?.id,
-                technicianId: currentFarmer.technician?.id,
-                ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea,
-                branch: currentFarmer.branch?.id
-            }
-
-            const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, data);
-
-            if (res.status === 200 || res.status === 201) {
-
-                if (useFamilyGroups) {
-                    const group = useFamilyGroups.find(fg =>
-                        fg.members.some(member => member.registrationNumber === currentFarmer.registrationNumber)
-                    );
-
-                    if (group) {
-                        const member = group.members.find(m => m.registrationNumber === currentFarmer.registrationNumber);
-                        if (member) {
-                            member.registrationNumber = currentFarmer.registrationNumber;
-                            member.name = currentFarmer.name;
-                            member.status = currentFarmer.status;
-                            member.familyGroup = currentFarmer.familyGroup;
-                            member.technician = currentFarmer.technician;
-                            member.ownedArea = currentFarmer.ownedArea;
-                            member.leasedArea = currentFarmer.leasedArea;
-                            member.branch = currentFarmer.branch;
-                        }
-                    }
-                }
-
-                toast.success("Produtor atualizado com sucesso!");
-                setShow(false);
-            }
-        } catch (error) {
-            toast.error("Erro ao atualizar o produtor.");
-        }
-    };
 
     const handlePrincipalChange = async (farmer: FarmerType, familyGroup: FamilyGroupReport) => {
         try {
@@ -174,27 +116,12 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                                         (farmer) => handlePrincipalChange(farmer, f)
                                     }
                                     onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber, String(f.familyGroupId))}
-                                    onEditFarmer={handleEditFarmer}
                                 />
                             </div>
                         ))
                     }
                 </div>
             )}
-
-            <FarmerModal
-                show={show}
-                onClose={() => {
-                    setShow(false)
-                    setCurrentFarmer(null);
-                }}
-                onSubmit={handleSubmitFarmer}
-                currentFarmer={currentFarmer}
-                modalMode="edit"
-                onChange={(field, value) =>
-                    setCurrentFarmer(prev => prev ? { ...prev, [field]: value } : prev)
-                }
-            />
         </div>
     )
 }

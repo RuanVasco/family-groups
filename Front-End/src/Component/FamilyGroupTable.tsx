@@ -3,11 +3,12 @@ import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { FarmerType } from "../Type/FarmerType";
 import { StatusLabels } from "../Enum/StatusEnum";
 import CustomTable from "./Common/CustomTable";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import AssetModal from "./AssetModal";
 import axiosInstance from "../axiosInstance";
 import { Button, Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
+import FarmerModal from "./FarmerModal";
 
 interface FamilyGroupTableProps {
     familyGroup: FamilyGroupType;
@@ -30,12 +31,12 @@ interface CultivationType {
 const FamilyGroupTable = ({
     familyGroup,
     showActions = false,
-    onEditFarmer,
     onMakePrincipal,
     onRemoveFarmer,
     onAddFarmer,
 }: FamilyGroupTableProps) => {
     const [show, setShow] = useState<boolean>(false);
+    const [modalFarmerShow, setModalFarmerShow] = useState<boolean>(false);
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
     const [lessors, setLessors] = useState<FarmerType[]>([]);
 
@@ -55,15 +56,67 @@ const FamilyGroupTable = ({
     }
 
     useEffect(() => {
-        fetchLessors();
-        setCurrentFamilyGroup(familyGroup);
-    }, [familyGroup])
+        if (!currentFamilyGroup || currentFamilyGroup.id !== familyGroup.id) {
+            setCurrentFamilyGroup(familyGroup);
+            fetchLessors();
+        }
+    }, [familyGroup.id]);
 
     const farmers = currentFamilyGroup?.members || [];
     const totalArea = farmers.reduce(
         (acc, farmer) => acc + (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0),
         0
     );
+
+    const handleEditFarmer = (farmer: FarmerType) => {
+        setModalFarmerShow(true);
+        setCurrentFarmer(farmer);
+    }
+
+    const handleSubmitFarmer = async () => {
+        try {
+            if (!currentFarmer?.registrationNumber || !currentFarmer.name) {
+                toast.warn("Preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            const data = {
+                registrationNumber: currentFarmer.registrationNumber,
+                name: currentFarmer.name,
+                status: currentFarmer.status,
+                familyGroupId: currentFarmer.familyGroup?.id,
+                technicianId: currentFarmer.technician?.id,
+                ownedArea: currentFarmer.ownedArea,
+                leasedArea: currentFarmer.leasedArea,
+                branch: currentFarmer.branch?.id
+            }
+
+            const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, data);
+
+            if (res.status === 200 || res.status === 201) {
+                if (currentFamilyGroup) {
+                    if (currentFamilyGroup.members) {
+                        const member = currentFamilyGroup.members.find(m => m.registrationNumber === currentFarmer.registrationNumber);
+                        if (member) {
+                            member.registrationNumber = currentFarmer.registrationNumber;
+                            member.name = currentFarmer.name;
+                            member.status = currentFarmer.status;
+                            member.familyGroup = currentFarmer.familyGroup;
+                            member.technician = currentFarmer.technician;
+                            member.ownedArea = currentFarmer.ownedArea;
+                            member.leasedArea = currentFarmer.leasedArea;
+                            member.branch = currentFarmer.branch;
+                        }
+                    }
+                }
+
+                toast.success("Produtor atualizado com sucesso!");
+                setModalFarmerShow(false);
+            }
+        } catch (error) {
+            toast.error("Erro ao atualizar o produtor.");
+        }
+    };
 
     const openAssetModal = (farmer: FarmerType) => {
         setCurrentFarmer(farmer);
@@ -204,7 +257,7 @@ const FamilyGroupTable = ({
                                         </button>
                                         <button
                                             className="button_edit btn_sm"
-                                            onClick={() => onEditFarmer && onEditFarmer(f)}
+                                            onClick={() => handleEditFarmer(f)}
                                             title="Editar Produtor"
                                         >
                                             <FaPen />
@@ -244,7 +297,7 @@ const FamilyGroupTable = ({
                             headers={[
                                 "Matrícula",
                                 "Nome",
-                                "Própria Arrendada",
+                                "Arrendatários",
                                 "Carteira",
                                 "Técnico"
                             ]}
@@ -349,6 +402,20 @@ const FamilyGroupTable = ({
                 farmer={currentFarmer}
                 onChange={() => { }}
                 onFarmerUpdated={handleFarmerUpdated}
+            />
+
+            <FarmerModal
+                show={modalFarmerShow}
+                onClose={() => {
+                    setModalFarmerShow(false)
+                    setCurrentFarmer(null);
+                }}
+                onSubmit={handleSubmitFarmer}
+                currentFarmer={currentFarmer}
+                modalMode="edit"
+                onChange={(field, value) =>
+                    setCurrentFarmer(prev => prev ? { ...prev, [field]: value } : prev)
+                }
             />
 
             <Modal show={showCultivationModal} onHide={handleCloseCultivationModal} size="xl">
@@ -464,4 +531,4 @@ const FamilyGroupTable = ({
     );
 };
 
-export default FamilyGroupTable;
+export default memo(FamilyGroupTable);

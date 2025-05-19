@@ -81,22 +81,23 @@ const AssetModal = ({
     useEffect(() => {
         if (!show || !farmer) return;
 
-        const fetchFreshFarmer = async () => {
-            try {
-                const res = await axiosInstance.get(`/farmer/${farmer.registrationNumber}`);
-
-                if (res.status === 200) {
-                    setUpdatedFarmer(res.data);
-                    onFarmerUpdated(res.data);
+        if (!updatedFarmer || updatedFarmer.registrationNumber !== farmer.registrationNumber) {
+            const fetchFreshFarmer = async () => {
+                try {
+                    const res = await axiosInstance.get(`/farmer/${farmer.registrationNumber}`);
+                    if (res.status === 200) {
+                        setUpdatedFarmer(res.data);
+                        onFarmerUpdated(res.data);
+                    }
+                } catch {
+                    toast.error("Erro ao buscar dados do produtor");
                 }
+            };
 
-            } catch {
-                toast.error("Erro ao buscar dados do produtor");
-            }
-        };
-
-        fetchFreshFarmer();
+            fetchFreshFarmer();
+        }
     }, [show, farmer?.registrationNumber]);
+
 
     const handleSubmit = async () => {
         if (!newAsset || !updatedFarmer) return;

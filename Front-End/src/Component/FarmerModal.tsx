@@ -109,7 +109,6 @@ const FarmerModal = ({
                                     return [];
                                 }
                             }}
-                            defaultOptions
                             value={
                                 currentFarmer?.familyGroup
                                     ? { value: currentFarmer.familyGroup, label: currentFarmer.familyGroup.principal.name }
@@ -153,7 +152,6 @@ const FarmerModal = ({
                                     return [];
                                 }
                             }}
-                            defaultOptions
                             value={
                                 currentFarmer?.branch
                                     ? { value: currentFarmer.branch, label: currentFarmer.branch.name }
