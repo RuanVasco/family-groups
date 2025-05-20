@@ -104,7 +104,7 @@ const AssetModal = ({
     const handleSubmit = async () => {
         if (!newAsset || !updatedFarmer) return;
 
-        if (!isOwned) {
+        if (isOwned === undefined || isOwned === null) {
             toast.error("Por favor preencher os campos obrigatórios.");
             return;
         }
