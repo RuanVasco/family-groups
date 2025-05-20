@@ -202,6 +202,20 @@ const FamilyGroupTable = ({
                         "Total",
                         ...showActions ? ["Ações"] : []
                     ]}
+                    columnStyles={[
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        { background: "#ffeaea" },
+                        { background: "#ffeaea" },
+                        { background: "#ffeaea" },
+                        { background: "#f0f8ff" },
+                        { background: "#f0f8ff" },
+                        { background: "#f0f8ff" },
+                    ]}
                 >
                     {farmers.map((f) => {
                         const ownedAssetsSum = (
