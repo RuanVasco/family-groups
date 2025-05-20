@@ -155,7 +155,6 @@ const FarmerModal = ({
                         <Form.Label>Carteira</Form.Label>
                         <AsyncSelect
                             cacheOptions
-                            // isDisabled={modalMode === "edit"}
                             loadOptions={async (inputValue) => {
                                 try {
                                     const res = await axiosInstance.get(`/branch`, { params: { search: inputValue, size: 10 } });

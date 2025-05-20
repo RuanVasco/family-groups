@@ -29,36 +29,30 @@ function useDebouncedValue<T>(value: T, delay = 300) {
 
 interface Props {
     branch?: BranchType;
-    technician?: UserType;          // null → “sem técnico”
+    technician?: UserType;
     setTotalItems?: (total: number) => void;
 }
 
 const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
-    /* paginação */
     const [pageSize, setPageSize] = useState(10);
 
-    /* ordenação (UI) */
     const [sortFieldUi, setSortFieldUi] = useState<string>();
     const [sortDirUi, setSortDirUi] = useState<"asc" | "desc">("asc");
 
-    /* busca */
     const [searchFarmer, setSearchFarmer] = useState("");
     const debouncedSearch = useDebouncedValue(searchFarmer.trim(), 200);
 
-    /* filtro tipo */
     const [selectedType, setSelectedType] = useState<{ label: string; value: string } | null>({
         label: "Todos",
         value: ""
     });
 
     const [filters, setFilters] = useState<Record<string, string>>({});
+    const [currentFarmers, setCurrentFarmers] = useState<FarmerType[]>([]);
 
     const endpoint = branch
         ? `/farmer/by-branch/${branch.id}`
         : "/farmer/by-technician";
-
-    // const baseParams =
-    //     !branch && technician ? { userId: technician.id } : undefined;
 
     const baseParams = useMemo(() => {
         return !branch && technician ? { userId: technician.id } : undefined;
@@ -93,7 +87,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         fetchPage(1, baseParams);
     }, [endpoint]);
 
-
+    useEffect(() => {
+        if (farmers) setCurrentFarmers(farmers);
+    }, [farmers])
 
     useEffect(() => {
         setFilters(prev => {
@@ -108,7 +104,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 }
             } else {
                 if ("search" in next) {
-                    delete next.search;         // limpa filtro quando < 3 caracteres
+                    delete next.search;
                     changed = true;
                 }
             }
@@ -117,9 +113,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         });
     }, [debouncedSearch]);
 
-    /* -----------------------------------------------------------
-     * efeito: sempre que filters OU baseParams mudarem → nova busca
-     * ----------------------------------------------------------- */
+
     useEffect(() => {
         fetchPage(1, { ...baseParams, ...filters });
     }, [baseParams, filters]);
@@ -153,7 +147,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         fetchPage(1, { ...baseParams, ...newFilters });
     };
 
-    /* MODAL editar */
     const [show, setShow] = useState(false);
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
 
@@ -161,13 +154,14 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         if (!currentFarmer?.registrationNumber || !currentFarmer.name) {
             toast.warn("Preencha todos os campos obrigatórios."); return;
         }
+
         try {
             const body = {
                 registrationNumber: currentFarmer.registrationNumber,
                 name: currentFarmer.name,
                 status: currentFarmer.status,
                 familyGroupId: currentFarmer.familyGroup?.id,
-                technicianId: currentFarmer.technician?.id,
+                technicianId: currentFarmer.technician?.id ?? null,
                 ownedArea: currentFarmer.ownedArea ?? 0,
                 leasedArea: currentFarmer.leasedArea ?? 0,
                 branch: currentFarmer.branch?.id
@@ -175,7 +169,15 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
             const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, body);
             if (res.status === 200 || res.status === 201) {
                 toast.success("Produtor atualizado com sucesso!");
-                fetchPage(currentPage, { ...baseParams, ...filters });
+
+                setCurrentFarmers(prev =>
+                    prev.map(f =>
+                        f.registrationNumber === currentFarmer.registrationNumber
+                            ? currentFarmer
+                            : f
+                    )
+                );
+
                 setShow(false);
             }
         } catch {
@@ -216,7 +218,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                     totalPages={totalPages}
                     onPageChange={page => fetchPage(page, { ...baseParams, ...filters })}
                 >
-                    {!farmers.length ? (
+                    {!currentFarmers.length ? (
                         <h5 className="fw-bold mx-auto my-3">Nenhum dado encontrado.</h5>
                     ) : isLoading ? (
                         <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
@@ -232,7 +234,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                             sortDir={sortDirUi}
                             onSort={handleSort}
                         >
-                            {farmers.map(f => (
+                            {currentFarmers.map(f => (
                                 <tr key={Number(f.registrationNumber)}>
                                     <td>{f.registrationNumber}</td>
                                     <td>{f.type?.id ?? "-"}</td>
@@ -262,7 +264,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 onSubmit={handleSubmitFarmer}
                 currentFarmer={currentFarmer}
                 modalMode="edit"
-                onChange={(field, value) => setCurrentFarmer(p => p ? { ...p, [field]: value } : p)}
+                onChange={(field, value) => {
+                    setCurrentFarmer(p => p ? { ...p, [field]: value } : p)
+                }}
             />
         </div>
     );

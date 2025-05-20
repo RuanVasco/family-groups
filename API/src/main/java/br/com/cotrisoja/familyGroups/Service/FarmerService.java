@@ -98,6 +98,8 @@ public class FarmerService {
             user = userRepository.findById(farmerRequestDTO.technicianId())
                     .orElseThrow(() -> new RuntimeException("Técnico não encontrado"));
             farmer.setTechnician(user);
+        } else {
+            farmer.setTechnician(null);
         }
 
         if (farmerRequestDTO.familyGroupId() != null) {
