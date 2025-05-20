@@ -168,8 +168,8 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 status: currentFarmer.status,
                 familyGroupId: currentFarmer.familyGroup?.id,
                 technicianId: currentFarmer.technician?.id,
-                ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea,
+                ownedArea: currentFarmer.ownedArea ?? 0,
+                leasedArea: currentFarmer.leasedArea ?? 0,
                 branch: currentFarmer.branch?.id
             };
             const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, body);
@@ -256,7 +256,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 </Pagination>
             </div>
 
-            {/* modal editar */}
             <FarmerModal
                 show={show}
                 onClose={() => { setShow(false); setCurrentFarmer(null); }}

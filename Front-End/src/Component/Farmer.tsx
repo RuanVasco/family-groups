@@ -4,7 +4,7 @@ import { FaPen, FaPlus, FaTractor } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { FarmerType } from "../Type/FarmerType";
 import axiosInstance from "../axiosInstance";
-import { StatusLabels } from "../Enum/StatusEnum";
+import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
 import Pagination from "./Common/Pagination";
 import FarmerModal from "./FarmerModal";
 import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
@@ -54,6 +54,12 @@ const Farmer = () => {
         setModalMode(mode);
         if (mode === "edit" && farmer) {
             setCurrentFarmer(farmer);
+        } else if (mode === "create") {
+            setCurrentFarmer({
+                registrationNumber: "",
+                name: "",
+                status: StatusEnum.ACTIVE,
+            });
         }
         setShow(true);
     };
@@ -193,6 +199,8 @@ const Farmer = () => {
                                             ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
                                             .reduce((sum, asset) => sum + asset.amount, 0) || 0
                                     ).toFixed(2);
+
+                                    console.log(f)
 
                                     const sapLeased = (
                                         f.leasedAssets

@@ -86,8 +86,8 @@ const FamilyGroupTable = ({
                 status: currentFarmer.status,
                 familyGroupId: currentFarmer.familyGroup?.id,
                 technicianId: currentFarmer.technician?.id,
-                ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea,
+                ownedArea: currentFarmer.ownedArea ?? 0,
+                leasedArea: currentFarmer.leasedArea ?? 0,
                 branch: currentFarmer.branch?.id
             }
 

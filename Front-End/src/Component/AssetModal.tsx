@@ -104,6 +104,11 @@ const AssetModal = ({
     const handleSubmit = async () => {
         if (!newAsset || !updatedFarmer) return;
 
+        if (!isOwned) {
+            toast.error("Por favor preencher os campos obrigatórios.");
+            return;
+        }
+
         const data = {
             description: newAsset.description,
             address: newAsset.address,
@@ -145,6 +150,7 @@ const AssetModal = ({
                 toast.error(msg_error);
             }
         } catch (error: any) {
+            console.log(error.response)
             const apiMessage = error.response?.data || msg_error;
             toast.error(apiMessage);
         }
@@ -244,10 +250,11 @@ const AssetModal = ({
                                 </Form.Group>
                                 <Form.Group className="mt-2">
                                     <Form.Label>
-                                        Tipo
+                                        Tipo *
                                     </Form.Label>
                                     <Select
                                         options={assetOptions}
+                                        required
                                         value={isOwned == null ? null : assetOptions[isOwned ? 1 : 2]}
                                         onChange={(opt) => {
                                             setIsOwner(opt?.value === 1);

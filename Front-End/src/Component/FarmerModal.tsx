@@ -33,6 +33,13 @@ const FarmerModal = ({
         fetch("/user/all", "Failed to load users.");
     }, []);
 
+    const toPositiveNumberOrUndefined = (raw: string) => {
+        if (raw === '') return undefined;
+        const n = Number(raw);
+        return Number.isFinite(n) && n >= 0 ? n
+            : undefined;
+    };
+
     return (
         <Modal show={show} onHide={onClose} size="xl">
             <Modal.Header closeButton>
@@ -81,8 +88,12 @@ const FarmerModal = ({
                         <Form.Control
                             required
                             type="number"
-                            value={currentFarmer?.ownedArea || 0}
-                            onChange={(e) => onChange("ownedArea", parseFloat(e.target.value))}
+                            min={0}
+                            step="any"
+                            value={currentFarmer?.ownedArea ?? ''}
+                            onChange={e =>
+                                onChange('ownedArea', toPositiveNumberOrUndefined(e.target.value))
+                            }
                         />
                     </Form.Group>
                     <Form.Group className="mb-3">
@@ -90,8 +101,12 @@ const FarmerModal = ({
                         <Form.Control
                             required
                             type="number"
-                            value={currentFarmer?.leasedArea || 0}
-                            onChange={(e) => onChange("leasedArea", parseFloat(e.target.value))}
+                            min={0}
+                            step="any"
+                            value={currentFarmer?.leasedArea ?? ''}
+                            onChange={e =>
+                                onChange('leasedArea', toPositiveNumberOrUndefined(e.target.value))
+                            }
                         />
                     </Form.Group>
                     <Form.Group className="mb-3">
@@ -140,7 +155,7 @@ const FarmerModal = ({
                         <Form.Label>Carteira</Form.Label>
                         <AsyncSelect
                             cacheOptions
-                            isDisabled={modalMode === "edit"}
+                            // isDisabled={modalMode === "edit"}
                             loadOptions={async (inputValue) => {
                                 try {
                                     const res = await axiosInstance.get(`/branch`, { params: { search: inputValue, size: 10 } });
