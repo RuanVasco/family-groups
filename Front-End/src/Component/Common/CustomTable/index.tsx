@@ -6,6 +6,7 @@ interface CustomTableProps {
     headers: string[];
     columnWidths?: (string | number | undefined)[];
     columnStyles?: (React.CSSProperties | undefined)[];
+    headerStyles?: (React.CSSProperties | undefined)[];
     sortField?: string;
     sortDir?: "asc" | "desc";
     onSort?: (field: string) => void;
@@ -16,6 +17,7 @@ const CustomTable = ({
     headers,
     columnWidths = [],
     columnStyles = [],
+    headerStyles = [],
     sortField,
     sortDir = "asc",
     onSort,
@@ -25,7 +27,6 @@ const CustomTable = ({
     const decoratedBody = React.Children.map(
         children,
         (row): React.ReactNode => {
-            // ↓ diz ao TS que row é React.ReactElement<HTMLAttributes<HTMLTableRowElement>>
             if (!React.isValidElement<React.HTMLAttributes<HTMLTableRowElement>>(row))
                 return row;
 
@@ -67,7 +68,7 @@ const CustomTable = ({
                             return (
                                 <th
                                     key={header}
-                                    style={{ width: columnWidths[i] ?? "auto", cursor: onSort ? "pointer" : "default", ...columnStyles[i], }}
+                                    style={{ width: columnWidths[i] ?? "auto", cursor: onSort ? "pointer" : "default", ...headerStyles[i], }}
                                     onClick={() => onSort?.(header)}
                                     className={isActive ? "sorted" : ""}
                                 >

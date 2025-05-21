@@ -202,6 +202,20 @@ const FamilyGroupTable = ({
                         "Total",
                         ...showActions ? ["Ações"] : []
                     ]}
+                    headerStyles={[
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        { background: "#d0d9d4" },
+                        { background: "#d0d9d4" },
+                        { background: "#d0d9d4" },
+                        { background: "#c9c9c9" },
+                        { background: "#c9c9c9" },
+                        { background: "#c9c9c9" },
+                    ]}
                     columnStyles={[
                         undefined,
                         undefined,
@@ -209,12 +223,12 @@ const FamilyGroupTable = ({
                         undefined,
                         undefined,
                         undefined,
-                        { background: "#ffeaea" },
-                        { background: "#ffeaea" },
-                        { background: "#ffeaea" },
-                        { background: "#f0f8ff" },
-                        { background: "#f0f8ff" },
-                        { background: "#f0f8ff" },
+                        { background: "#dae3de" },
+                        { background: "#dae3de" },
+                        { background: "#dae3de" },
+                        { background: "#dbdbdb" },
+                        { background: "#dbdbdb" },
+                        { background: "#dbdbdb" },
                     ]}
                 >
                     {farmers.map((f) => {

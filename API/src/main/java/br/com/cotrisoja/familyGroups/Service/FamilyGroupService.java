@@ -97,8 +97,13 @@ public class FamilyGroupService {
         }
 
         farmers.remove(member);
-        member.setFamilyGroup(null);
         familyGroup.setMembers(farmers);
+
+        FamilyGroup newFamilyGroup = new FamilyGroup();
+        newFamilyGroup.setPrincipal(member);
+        familyGroupRepository.save(newFamilyGroup);
+        member.setFamilyGroup(newFamilyGroup);
+        farmerRepository.save(member);
 
         familyGroupRepository.save(familyGroup);
     }
