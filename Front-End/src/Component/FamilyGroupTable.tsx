@@ -569,11 +569,13 @@ const FamilyGroupTable = ({
                                 </Form.Label>
                                 <Form.Control
                                     type="number"
-                                    value={editCultivation.canolaArea ?? 0}
+                                    value={editCultivation.canolaArea === undefined
+                                        ? ""
+                                        : editCultivation.canolaArea}
                                     onChange={(e) =>
                                         setEditCultivation(prev => ({
                                             ...prev,
-                                            canolaArea: parseFloat(e.target.value) || 0,
+                                            canolaArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                         }))
                                     }
                                 />
@@ -582,11 +584,13 @@ const FamilyGroupTable = ({
                                 <Form.Label>Trigo</Form.Label>
                                 <Form.Control
                                     type="number"
-                                    value={editCultivation.wheatArea ?? 0}
+                                    value={editCultivation.wheatArea === undefined
+                                        ? ""
+                                        : editCultivation.wheatArea}
                                     onChange={(e) =>
                                         setEditCultivation(prev => ({
                                             ...prev,
-                                            wheatArea: parseFloat(e.target.value) || 0,
+                                            wheatArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                         }))
                                     }
                                 />
@@ -596,11 +600,13 @@ const FamilyGroupTable = ({
                                 <Form.Label>Milho silagem</Form.Label>
                                 <Form.Control
                                     type="number"
-                                    value={editCultivation.cornSilageArea ?? 0}
+                                    value={editCultivation.cornSilageArea === undefined
+                                        ? ""
+                                        : editCultivation.cornSilageArea}
                                     onChange={(e) =>
                                         setEditCultivation(prev => ({
                                             ...prev,
-                                            cornSilageArea: parseFloat(e.target.value) || 0,
+                                            cornSilageArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                         }))
                                     }
                                 />
@@ -610,11 +616,13 @@ const FamilyGroupTable = ({
                                 <Form.Label>Milho grão</Form.Label>
                                 <Form.Control
                                     type="number"
-                                    value={editCultivation.grainCornArea ?? 0}
+                                    value={editCultivation.grainCornArea === undefined
+                                        ? ""
+                                        : editCultivation.grainCornArea}
                                     onChange={(e) =>
                                         setEditCultivation(prev => ({
                                             ...prev,
-                                            grainCornArea: parseFloat(e.target.value) || 0,
+                                            grainCornArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                         }))
                                     }
                                 />
@@ -624,11 +632,13 @@ const FamilyGroupTable = ({
                                 <Form.Label>Feijão</Form.Label>
                                 <Form.Control
                                     type="number"
-                                    value={editCultivation.beanArea ?? 0}
+                                    value={editCultivation.beanArea === undefined
+                                        ? ""
+                                        : editCultivation.beanArea}
                                     onChange={(e) =>
                                         setEditCultivation(prev => ({
                                             ...prev,
-                                            beanArea: parseFloat(e.target.value) || 0,
+                                            beanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                         }))
                                     }
                                 />
@@ -638,11 +648,13 @@ const FamilyGroupTable = ({
                                 <Form.Label>Soja</Form.Label>
                                 <Form.Control
                                     type="number"
-                                    value={editCultivation.soybeanArea ?? 0}
+                                    value={editCultivation.soybeanArea === undefined
+                                        ? ""
+                                        : editCultivation.soybeanArea}
                                     onChange={(e) =>
                                         setEditCultivation(prev => ({
                                             ...prev,
-                                            soybeanArea: parseFloat(e.target.value) || 0,
+                                            soybeanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
                                         }))
                                     }
                                 />

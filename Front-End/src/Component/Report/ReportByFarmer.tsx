@@ -237,7 +237,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                 "SAP Própria",
                                 "SAP Arrendada",
                                 "SAP Total",
-                                "Editar",
+                                "Editar SAP",
                                 "Própria",
                                 "Arrendada",
                                 "Total",
