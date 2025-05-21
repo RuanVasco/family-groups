@@ -75,4 +75,11 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
     """)
     Double getLeasedArea(@Param("familyGroup") FamilyGroup familyGroup);
 
+    @Query("""
+        SELECT fg
+          FROM FamilyGroup fg
+          JOIN fg.members m
+         WHERE m = :farmer
+    """)
+    Optional<FamilyGroup> findByMember(@Param("farmer") Farmer farmer);
 }

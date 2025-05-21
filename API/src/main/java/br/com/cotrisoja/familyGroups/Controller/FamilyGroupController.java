@@ -9,6 +9,7 @@ import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FamilyGroupService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class FamilyGroupController {
 
     private final FamilyGroupService familyGroupService;
     private final UserRepository userRepository;
+    private final FarmerRepository farmerRepository;
 
     @GetMapping
     public ResponseEntity<?> getAll(
@@ -144,7 +146,7 @@ public class FamilyGroupController {
         Optional<FamilyGroup> familyGroupOptional = familyGroupService.findById(familyGroupId);
 
         if (familyGroupOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body("Grupo familiar não encontrado");
+            return ResponseEntity.badRequest().body("Grupo familiar não encontrado.");
         };
 
         familyGroup = familyGroupOptional.get();
@@ -155,5 +157,24 @@ public class FamilyGroupController {
                 .toList();
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/member/{farmerId}")
+    public ResponseEntity<?> findByMember(
+            @PathVariable String farmerId
+    ) {
+        Optional<Farmer> optionalFarmer = farmerRepository.findById(farmerId);
+
+        if (optionalFarmer.isEmpty()) {
+            return ResponseEntity.badRequest().body("Produtor não encontrado.");
+        }
+
+        Optional<FamilyGroup> familyGroupOptional = familyGroupService.findByMember(optionalFarmer.get());
+
+        if (familyGroupOptional.isEmpty()) {
+            return ResponseEntity.ok().build();
+        }
+
+        return ResponseEntity.ok().body(FamilyGroupMembersResponseDTO.fromEntity(familyGroupOptional.get()));
     }
 }

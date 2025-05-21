@@ -46,13 +46,23 @@ const FamilyGroupTable = ({
     const [editCultivation, setEditCultivation] = useState<CultivationType>({});
     const [showCultivationModal, setShowCultivationModal] = useState<boolean>(false);
 
+    const [loadingLessors, setLoadingLessors] = useState<boolean>(false);
+    const [loadingRemoveFarmer, setLoadingRemoveFarmer] = useState<boolean>(false);
+
+    const [removingFarmer, setRemovingFarmer] = useState<FarmerType | null>(null);
+
     const fetchLessors = async () => {
         if (!currentFamilyGroup) return;
+
+        setLoadingLessors(true);
+
         const res = await axiosInstance(`/family-group/lessors/${currentFamilyGroup.id}`);
 
         if (res.status === 200) {
             setLessors(res.data)
         }
+
+        setLoadingLessors(false);
     }
 
     useEffect(() => {
@@ -60,7 +70,7 @@ const FamilyGroupTable = ({
             setCurrentFamilyGroup(familyGroup);
             fetchLessors();
         }
-    }, [familyGroup]);
+    }, [familyGroup.id, familyGroup.members]);
 
     const farmers = currentFamilyGroup?.members || [];
     const totalArea = farmers.reduce(
@@ -299,13 +309,29 @@ const FamilyGroupTable = ({
                                                 >
                                                     <FaChessKing />
                                                 </button>
-                                                <button
-                                                    className="button_remove btn_sm"
-                                                    onClick={() => onRemoveFarmer && onRemoveFarmer(f)}
-                                                    title="Remover Produtor do Grupo Familiar"
-                                                >
-                                                    <FaMinus />
-                                                </button>
+                                                {(loadingRemoveFarmer && removingFarmer?.registrationNumber === f.registrationNumber) ? (
+                                                    <div className="spinner-border" role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        className="button_remove btn_sm"
+                                                        onClick={async () => {
+                                                            if (!onRemoveFarmer) return;
+                                                            setLoadingRemoveFarmer(true);
+                                                            setRemovingFarmer(f);
+                                                            try {
+                                                                await onRemoveFarmer(f);
+                                                            } finally {
+                                                                setLoadingRemoveFarmer(false);
+                                                                setRemovingFarmer(null);
+                                                            }
+                                                        }}
+                                                        title="Remover Produtor do Grupo Familiar"
+                                                    >
+                                                        <FaMinus />
+                                                    </button>
+                                                )}
                                             </>
                                         )}
                                     </td>
@@ -316,52 +342,64 @@ const FamilyGroupTable = ({
 
                 </CustomTable>
                 {lessors.length > 0 && (
-                    <><div className="mt-2">
-                        <h5 className="fw-bold">
-                            Arrendadores
-                        </h5>
-                    </div>
-                        <CustomTable
-                            headers={[
-                                "Matrícula",
-                                "Nome",
-                                "Arrendatários",
-                                "Carteira",
-                                "Técnico"
-                            ]}
-                        >
-                            {lessors.map((lessor) => (
-                                <tr key={Number(lessor.registrationNumber)}>
-                                    <td>{lessor.registrationNumber}</td>
-                                    <td>{lessor.name}</td>
-                                    <td>
-                                        {lessor.ownedAssets?.some(asset => asset.leasedTo != null) ? (
-                                            Object.entries(
-                                                lessor.ownedAssets
-                                                    .filter(asset =>
-                                                        asset.leasedTo != null &&
-                                                        currentFamilyGroup?.members?.some(member => member.registrationNumber === asset.leasedTo?.registrationNumber)
-                                                    )
-                                                    .reduce((result, asset) => {
-                                                        const leaser = asset.leasedTo!;
-                                                        const key = `${leaser.registrationNumber} - ${leaser.name}`;
+                    <>
+                        {loadingLessors ? (
+                            <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
+                                <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="mt-2">
+                                    <h5 className="fw-bold">
+                                        Arrendadores
+                                    </h5>
+                                </div>
 
-                                                        result[key] = (result[key] || 0) + asset.amount;
-                                                        return result;
-                                                    }, {} as Record<string, number>)
-                                            ).map(([leaserInfo, area]) => (
-                                                <div key={leaserInfo}>
-                                                    {leaserInfo} → {area.toFixed(2)} ha
-                                                </div>
-                                            ))
-                                        ) : "Sem arrendamentos"}
-                                    </td>
-                                    <td>{lessor.branch?.name ?? "Sem carteira vinculada."}</td>
-                                    <td>{lessor.technician?.name}</td>
-                                </tr>
-                            ))}
+                                <CustomTable
+                                    headers={
+                                        [
+                                            "Matrícula",
+                                            "Nome",
+                                            "Arrendatários",
+                                            "Carteira",
+                                            "Técnico"
+                                        ]
+                                    }
+                                >
+                                    {lessors.map((lessor) => (
+                                        <tr key={Number(lessor.registrationNumber)}>
+                                            <td>{lessor.registrationNumber}</td>
+                                            <td>{lessor.name}</td>
+                                            <td>
+                                                {lessor.ownedAssets?.some(asset => asset.leasedTo != null) ? (
+                                                    Object.entries(
+                                                        lessor.ownedAssets
+                                                            .filter(asset =>
+                                                                asset.leasedTo != null &&
+                                                                currentFamilyGroup?.members?.some(member => member.registrationNumber === asset.leasedTo?.registrationNumber)
+                                                            )
+                                                            .reduce((result, asset) => {
+                                                                const leaser = asset.leasedTo!;
+                                                                const key = `${leaser.registrationNumber} - ${leaser.name}`;
 
-                        </CustomTable></>
+                                                                result[key] = (result[key] || 0) + asset.amount;
+                                                                return result;
+                                                            }, {} as Record<string, number>)
+                                                    ).map(([leaserInfo, area]) => (
+                                                        <div key={leaserInfo}>
+                                                            {leaserInfo} → {area.toFixed(2)} ha
+                                                        </div>
+                                                    ))
+                                                ) : "Sem arrendamentos"}
+                                            </td>
+                                            <td>{lessor.branch?.name ?? "Sem carteira vinculada."}</td>
+                                            <td>{lessor.technician?.name}</td>
+                                        </tr>
+                                    ))}
+                                </CustomTable>
+                            </>
+                        )}
+                    </>
                 )}
                 <div className="mt-2">
                     <h5 className="fw-bold">
@@ -401,16 +439,18 @@ const FamilyGroupTable = ({
                     </tr>
                 </CustomTable>
 
-                {onAddFarmer && showActions && currentFamilyGroup && (
-                    <div className="text-end my-2">
-                        <button
-                            className="button_agree btn_sm"
-                            onClick={() => onAddFarmer(currentFamilyGroup)}
-                        >
-                            <FaPlus /> Adicionar Participante
-                        </button>
-                    </div>
-                )}
+                {
+                    onAddFarmer && showActions && currentFamilyGroup && (
+                        <div className="text-end my-2">
+                            <button
+                                className="button_agree btn_sm"
+                                onClick={() => onAddFarmer(currentFamilyGroup)}
+                            >
+                                <FaPlus /> Adicionar Participante
+                            </button>
+                        </div>
+                    )
+                }
 
                 <div className="text-end my-2">
                     <button
@@ -420,7 +460,7 @@ const FamilyGroupTable = ({
                         <FaPen /> Editar Cultivo
                     </button>
                 </div>
-            </div>
+            </div >
             <AssetModal
                 show={show}
                 onClose={() => {
@@ -555,7 +595,7 @@ const FamilyGroupTable = ({
                     </Button>
                 </Modal.Footer>
             </Modal>
-        </div>
+        </div >
     );
 };
 

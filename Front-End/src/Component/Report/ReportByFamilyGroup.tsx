@@ -11,7 +11,6 @@ interface ReportByFamilyGroupProps {
     setTotalItems: (total: number) => void;
 }
 
-
 interface FamilyGroupReport {
     familyGroupId: number;
     principal: FarmerType;
@@ -72,10 +71,38 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                     )
                 );
 
+                fetchFamilyGroupByMember(farmer);
+
                 toast.success("Produtor removido com sucesso!");
             }
         } catch (error) {
             toast.error("Erro ao remover o produtor do grupo familiar.");
+        }
+    };
+
+    const fetchFamilyGroupByMember = async (farmerId: String) => {
+        try {
+            const res = await axiosInstance.get<FamilyGroupReport>(`/family-group/member/${farmerId}`);
+            if (res.status === 200 && res.data) {
+                const report = res.data;
+
+                setUseFamilyGroups(prev => {
+                    let found = false;
+                    const updated = prev.map(g => {
+                        if (g.familyGroupId === report.familyGroupId) {
+                            found = true;
+                            return report;
+                        }
+                        return g;
+                    });
+                    if (!found) {
+                        updated.push(report);
+                    }
+                    return updated;
+                });
+            }
+        } catch {
+            toast.error("Erro ao buscar grupo familiar.");
         }
     };
 

@@ -174,4 +174,8 @@ public class FamilyGroupService {
         return Optional.ofNullable(familyGroupRepository.getOwnedArea(familyGroup)).orElse(0.0) +
                 Optional.ofNullable(familyGroupRepository.getLeasedArea(familyGroup)).orElse(0.0);
     }
+
+    public Optional<FamilyGroup> findByMember(Farmer farmer) {
+        return familyGroupRepository.findByMember(farmer);
+    }
 }
