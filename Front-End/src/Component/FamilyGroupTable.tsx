@@ -37,6 +37,8 @@ const FamilyGroupTable = ({
 }: FamilyGroupTableProps) => {
     const [show, setShow] = useState<boolean>(false);
     const [modalFarmerShow, setModalFarmerShow] = useState<boolean>(false);
+    const [modalConfirmRemove, setModalConfirmRemove] = useState<boolean>(false);
+
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
     const [lessors, setLessors] = useState<FarmerType[]>([]);
 
@@ -50,7 +52,6 @@ const FamilyGroupTable = ({
     const [loadingRemoveFarmer, setLoadingRemoveFarmer] = useState<boolean>(false);
     const [loadingPrincipalUpdate, setLoadingPrincipalUpdate] = useState<boolean>(false);
 
-    const [removingFarmer, setRemovingFarmer] = useState<FarmerType | null>(null);
     const [updatingPrincipal, setUpdatingPrincial] = useState<FarmerType | null>(null);
 
     const fetchLessors = async () => {
@@ -133,6 +134,28 @@ const FamilyGroupTable = ({
     const openAssetModal = (farmer: FarmerType) => {
         setCurrentFarmer(farmer);
         setShow(true);
+    }
+
+    const handleOpenRemoveModal = async (farmer: FarmerType) => {
+        setCurrentFarmer(farmer);
+        setModalConfirmRemove(true);
+    }
+
+    const handleCloseConfirmRemove = () => {
+        setModalConfirmRemove(false);
+        setCurrentFarmer(null);
+    }
+
+    const handleFarmerRemove = async () => {
+        if (!onRemoveFarmer || !currentFarmer) return;
+        setLoadingRemoveFarmer(true);
+        try {
+            await onRemoveFarmer(currentFarmer);
+        } finally {
+            setLoadingRemoveFarmer(false);
+            setModalConfirmRemove(false);
+            setCurrentFarmer(null);
+        }
     }
 
     const handleFarmerUpdated = (updatedFarmer: FarmerType) => {
@@ -338,29 +361,15 @@ const FamilyGroupTable = ({
                                                 <FaChessKing />
                                             </button>
                                         )}
-                                        {(loadingRemoveFarmer && removingFarmer?.registrationNumber === f.registrationNumber) ? (
-                                            <div className="spinner-border" role="status">
-                                                <span className="visually-hidden">Loading...</span>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                className="button_remove btn_sm"
-                                                onClick={async () => {
-                                                    if (!onRemoveFarmer) return;
-                                                    setLoadingRemoveFarmer(true);
-                                                    setRemovingFarmer(f);
-                                                    try {
-                                                        await onRemoveFarmer(f);
-                                                    } finally {
-                                                        setLoadingRemoveFarmer(false);
-                                                        setRemovingFarmer(null);
-                                                    }
-                                                }}
-                                                title="Remover Produtor do Grupo Familiar"
-                                            >
-                                                <FaMinus />
-                                            </button>
-                                        )}
+                                        <button
+                                            className="button_remove btn_sm"
+                                            onClick={() => {
+                                                handleOpenRemoveModal(f)
+                                            }}
+                                            title="Remover Produtor do Grupo Familiar"
+                                        >
+                                            <FaMinus />
+                                        </button>
                                     </td>
                                 )}
                             </tr>
@@ -512,6 +521,31 @@ const FamilyGroupTable = ({
                     setCurrentFarmer(prev => prev ? { ...prev, [field]: value } : prev)
                 }
             />
+
+            <Modal show={modalConfirmRemove} onHide={handleCloseConfirmRemove}>
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        Remover o produtor
+                        <span className="fw-bold"> {currentFarmer?.registrationNumber} - {currentFarmer?.name} </span>
+                        do grupo familiar
+                        <span className="fw-bold"> {currentFarmer?.familyGroup?.principal.name}</span>?
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Footer>
+                    {(loadingRemoveFarmer && currentFarmer) ? (
+                        <div className="spinner-border" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    ) : (
+                        <button className="button_remove" onClick={handleFarmerRemove}>
+                            Confirmar
+                        </button>
+                    )}
+                    <button className="button_agree" onClick={handleCloseConfirmRemove}>
+                        Cancelar
+                    </button>
+                </Modal.Footer>
+            </Modal>
 
             <Modal show={showCultivationModal} onHide={handleCloseCultivationModal} size="xl">
                 <Modal.Header closeButton>
