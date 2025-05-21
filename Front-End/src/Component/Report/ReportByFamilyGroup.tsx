@@ -27,6 +27,9 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
     const { data: familyGroups, loading } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
     const [useFamilyGroups, setUseFamilyGroups] = useState<FamilyGroupReport[]>([]);
 
+    const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
+
     useEffect(() => {
         if (familyGroups) {
             setUseFamilyGroups(familyGroups);
@@ -112,6 +115,36 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
         }
     }, [useFamilyGroups]);
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedTerm(searchTerm);
+        }, 300);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [searchTerm]);
+
+    useEffect(() => {
+        if (!debouncedTerm.trim()) {
+            setUseFamilyGroups(familyGroups ?? []);
+            return;
+        }
+
+        const lowerSearch = debouncedTerm.toLowerCase();
+
+        const filtered = (familyGroups ?? []).filter(group => {
+            const principalMatch = group.principal.name.toLowerCase().includes(lowerSearch);
+            const memberMatch = group.members.some(member =>
+                member.name.toLowerCase().includes(lowerSearch) ||
+                member.registrationNumber.toString().includes(lowerSearch)
+            );
+            return principalMatch || memberMatch;
+        });
+
+        setUseFamilyGroups(filtered);
+    }, [debouncedTerm, familyGroups]);
+
     return (
         <div className="p-4">
             {loading ? (
@@ -122,11 +155,19 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                 </div>
             ) : (
                 <div style={{ overflowY: "auto", height: "85vh" }}>
+                    {/* <div className="w-25">
+                        <input
+                            type="text"
+                            placeholder="Pesquisar"
+                            className="form-control mb-3"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div> */}
                     {
                         useFamilyGroups && useFamilyGroups.map((f) => (
-                            <div className="floating_panel my-3">
+                            <div key={f.familyGroupId} className="floating_panel my-3">
                                 <FamilyGroupTable
-                                    key={f.familyGroupId}
                                     familyGroup={{
                                         id: f.familyGroupId,
                                         principal: f.principal,
@@ -139,9 +180,7 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                                         soybeanArea: f.soybeanArea,
                                     }}
                                     showActions={true}
-                                    onMakePrincipal={
-                                        (farmer) => handlePrincipalChange(farmer, f)
-                                    }
+                                    onMakePrincipal={(farmer) => handlePrincipalChange(farmer, f)}
                                     onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber, String(f.familyGroupId))}
                                 />
                             </div>

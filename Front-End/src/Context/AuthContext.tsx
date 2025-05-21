@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
-import { toast } from 'react-toastify';
 
 interface AuthContextProps {
     isAuthenticated: boolean;
@@ -21,7 +20,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('token', token);
         setIsAuthenticated(true);
         setIsLoading(false);
-        toast.success('Login realizado com sucesso!');
         navigate('/');
     };
 

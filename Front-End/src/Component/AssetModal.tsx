@@ -197,6 +197,8 @@ const AssetModal = ({
     };
 
     const handleCloseModal = () => {
+        setRemoveConfirmation(false);
+        setAssetToRemove(null);
         setShowForm(false);
         setNewAsset(null);
         onClose();

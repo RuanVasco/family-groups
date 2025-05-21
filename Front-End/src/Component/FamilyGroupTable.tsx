@@ -69,9 +69,12 @@ const FamilyGroupTable = ({
     }
 
     useEffect(() => {
+        fetchLessors();
+    }, [currentFamilyGroup]);
+
+    useEffect(() => {
         if (familyGroup.members) {
             setCurrentFamilyGroup(familyGroup);
-            fetchLessors();
         }
     }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
 
