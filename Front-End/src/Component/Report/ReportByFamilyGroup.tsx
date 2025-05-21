@@ -27,8 +27,8 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
     const { data: familyGroups, loading } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
     const [useFamilyGroups, setUseFamilyGroups] = useState<FamilyGroupReport[]>([]);
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
+    // const [searchTerm, setSearchTerm] = useState("");
+    // const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
 
     useEffect(() => {
         if (familyGroups) {
@@ -115,35 +115,35 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
         }
     }, [useFamilyGroups]);
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedTerm(searchTerm);
-        }, 300);
+    // useEffect(() => {
+    //     const handler = setTimeout(() => {
+    //         setDebouncedTerm(searchTerm);
+    //     }, 300);
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [searchTerm]);
+    //     return () => {
+    //         clearTimeout(handler);
+    //     };
+    // }, [searchTerm]);
 
-    useEffect(() => {
-        if (!debouncedTerm.trim()) {
-            setUseFamilyGroups(familyGroups ?? []);
-            return;
-        }
+    // useEffect(() => {
+    //     if (!debouncedTerm.trim()) {
+    //         setUseFamilyGroups(familyGroups ?? []);
+    //         return;
+    //     }
 
-        const lowerSearch = debouncedTerm.toLowerCase();
+    //     const lowerSearch = debouncedTerm.toLowerCase();
 
-        const filtered = (familyGroups ?? []).filter(group => {
-            const principalMatch = group.principal.name.toLowerCase().includes(lowerSearch);
-            const memberMatch = group.members.some(member =>
-                member.name.toLowerCase().includes(lowerSearch) ||
-                member.registrationNumber.toString().includes(lowerSearch)
-            );
-            return principalMatch || memberMatch;
-        });
+    //     const filtered = (familyGroups ?? []).filter(group => {
+    //         const principalMatch = group.principal.name.toLowerCase().includes(lowerSearch);
+    //         const memberMatch = group.members.some(member =>
+    //             member.name.toLowerCase().includes(lowerSearch) ||
+    //             member.registrationNumber.toString().includes(lowerSearch)
+    //         );
+    //         return principalMatch || memberMatch;
+    //     });
 
-        setUseFamilyGroups(filtered);
-    }, [debouncedTerm, familyGroups]);
+    //     setUseFamilyGroups(filtered);
+    // }, [debouncedTerm, familyGroups]);
 
     return (
         <div className="p-4">
