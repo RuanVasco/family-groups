@@ -48,8 +48,10 @@ const FamilyGroupTable = ({
 
     const [loadingLessors, setLoadingLessors] = useState<boolean>(false);
     const [loadingRemoveFarmer, setLoadingRemoveFarmer] = useState<boolean>(false);
+    const [loadingPrincipalUpdate, setLoadingPrincipalUpdate] = useState<boolean>(false);
 
     const [removingFarmer, setRemovingFarmer] = useState<FarmerType | null>(null);
+    const [updatingPrincipal, setUpdatingPrincial] = useState<FarmerType | null>(null);
 
     const fetchLessors = async () => {
         if (!currentFamilyGroup) return;
@@ -70,7 +72,7 @@ const FamilyGroupTable = ({
             setCurrentFamilyGroup(familyGroup);
             fetchLessors();
         }
-    }, [familyGroup.id, familyGroup.members]);
+    }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
 
     const farmers = currentFamilyGroup?.members || [];
     const totalArea = farmers.reduce(
@@ -139,7 +141,10 @@ const FamilyGroupTable = ({
             f.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : f
         );
         currentFamilyGroup.members = updatedFarmers;
-        setCurrentFarmer(updatedFarmer);
+
+        if (currentFarmer?.registrationNumber === updatedFarmer.registrationNumber) {
+            setCurrentFarmer(updatedFarmer);
+        }
     };
 
     const handleCloseCultivationModal = () => {
@@ -207,10 +212,12 @@ const FamilyGroupTable = ({
                         "SAP Própria",
                         "SAP Arrendada",
                         "SAP Total",
+                        ...showActions ? ["Editar SAP"] : [],
                         "Própria",
                         "Arrendada",
                         "Total",
-                        ...showActions ? ["Ações"] : []
+                        ...showActions ? ["Editar"] : [],
+                        ...(showActions && currentFamilyGroup?.members && currentFamilyGroup?.members?.length > 1) ? ["Ações"] : []
                     ]}
                     headerStyles={[
                         undefined,
@@ -222,9 +229,11 @@ const FamilyGroupTable = ({
                         { background: "#d0d9d4" },
                         { background: "#d0d9d4" },
                         { background: "#d0d9d4" },
+                        { background: "#d0d9d4" },
                         { background: "#c9c9c9" },
                         { background: "#c9c9c9" },
                         { background: "#c9c9c9" },
+                        { background: "#c9c9c9" }
                     ]}
                     columnStyles={[
                         undefined,
@@ -236,9 +245,11 @@ const FamilyGroupTable = ({
                         { background: "#dae3de" },
                         { background: "#dae3de" },
                         { background: "#dae3de" },
+                        { background: "#dae3de" },
                         { background: "#dbdbdb" },
                         { background: "#dbdbdb" },
                         { background: "#dbdbdb" },
+                        { background: "#dbdbdb" }
                     ]}
                 >
                     {farmers.map((f) => {
@@ -279,60 +290,76 @@ const FamilyGroupTable = ({
                                 <td>{`${ownedAssetsSum} ha`}</td>
                                 <td>{`${leasedAssetsSum} ha`}</td>
                                 <td>{`${totalAssetsArea} ha`}</td>
+                                <td>
+                                    <button
+                                        className="button_info btn_sm"
+                                        onClick={() => openAssetModal(f)}
+                                        title="Editar Bens"
+                                    >
+                                        <FaTractor />
+                                    </button>
+                                </td>
                                 <td>{`${ownedArea} ha`}</td>
                                 <td>{`${leasedArea} ha`}</td>
                                 <td className={totalAssetsArea !== totalArea ? 'text-danger' : ''}>
                                     {`${totalArea} ha`}
                                 </td>
-                                {showActions && (
+                                <td>
+                                    <button
+                                        className="button_edit btn_sm"
+                                        onClick={() => handleEditFarmer(f)}
+                                        title="Editar Produtor"
+                                    >
+                                        <FaPen />
+                                    </button>
+                                </td>
+                                {(showActions && f.registrationNumber !== currentFamilyGroup?.principal.registrationNumber) && (
                                     <td className="d-flex gap-2">
-                                        <button
-                                            className="button_info btn_sm"
-                                            onClick={() => openAssetModal(f)}
-                                            title="Editar Bens"
-                                        >
-                                            <FaTractor />
-                                        </button>
-                                        <button
-                                            className="button_edit btn_sm"
-                                            onClick={() => handleEditFarmer(f)}
-                                            title="Editar Produtor"
-                                        >
-                                            <FaPen />
-                                        </button>
-                                        {f.registrationNumber !== currentFamilyGroup?.principal.registrationNumber && (
-                                            <>
-                                                <button
-                                                    className="button_neutral btn_sm"
-                                                    onClick={() => onMakePrincipal && onMakePrincipal(f)}
-                                                    title="Tornar Principal"
-                                                >
-                                                    <FaChessKing />
-                                                </button>
-                                                {(loadingRemoveFarmer && removingFarmer?.registrationNumber === f.registrationNumber) ? (
-                                                    <div className="spinner-border" role="status">
-                                                        <span className="visually-hidden">Loading...</span>
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        className="button_remove btn_sm"
-                                                        onClick={async () => {
-                                                            if (!onRemoveFarmer) return;
-                                                            setLoadingRemoveFarmer(true);
-                                                            setRemovingFarmer(f);
-                                                            try {
-                                                                await onRemoveFarmer(f);
-                                                            } finally {
-                                                                setLoadingRemoveFarmer(false);
-                                                                setRemovingFarmer(null);
-                                                            }
-                                                        }}
-                                                        title="Remover Produtor do Grupo Familiar"
-                                                    >
-                                                        <FaMinus />
-                                                    </button>
-                                                )}
-                                            </>
+                                        {(loadingPrincipalUpdate && updatingPrincipal?.registrationNumber === f.registrationNumber) ? (
+                                            <div className="spinner-border" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                className="button_neutral btn_sm"
+                                                title="Tornar Principal"
+                                                onClick={async () => {
+                                                    if (!onMakePrincipal) return;
+                                                    setLoadingPrincipalUpdate(true);
+                                                    setUpdatingPrincial(f);
+                                                    try {
+                                                        await onMakePrincipal(f);
+                                                    } finally {
+                                                        setLoadingPrincipalUpdate(false);
+                                                        setUpdatingPrincial(null);
+                                                    }
+                                                }}
+                                            >
+                                                <FaChessKing />
+                                            </button>
+                                        )}
+                                        {(loadingRemoveFarmer && removingFarmer?.registrationNumber === f.registrationNumber) ? (
+                                            <div className="spinner-border" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                className="button_remove btn_sm"
+                                                onClick={async () => {
+                                                    if (!onRemoveFarmer) return;
+                                                    setLoadingRemoveFarmer(true);
+                                                    setRemovingFarmer(f);
+                                                    try {
+                                                        await onRemoveFarmer(f);
+                                                    } finally {
+                                                        setLoadingRemoveFarmer(false);
+                                                        setRemovingFarmer(null);
+                                                    }
+                                                }}
+                                                title="Remover Produtor do Grupo Familiar"
+                                            >
+                                                <FaMinus />
+                                            </button>
                                         )}
                                     </td>
                                 )}

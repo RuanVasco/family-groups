@@ -26,6 +26,8 @@ const Farmer = () => {
     const [currentFarmer, setCurrentFarmer] =
         useState<FarmerType | null>(null);
 
+    const [updatedFarmers, setUpdatedFarmers] = useState<FarmerType[]>([]);
+
     const {
         data: farmers,
         currentPage,
@@ -39,6 +41,12 @@ const Farmer = () => {
     useEffect(() => {
         fetchPage(1);
     }, []);
+
+    useEffect(() => {
+        if (farmers) {
+            setUpdatedFarmers(farmers);
+        }
+    }, [farmers]);
 
     useEffect(() => {
         const id = setTimeout(() => {
@@ -183,13 +191,12 @@ const Farmer = () => {
                         <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
                             <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
                         </div>
-                    ) : farmers.length === 0 ? (
+                    ) : updatedFarmers.length === 0 ? (
                         <h4 className="py-3 text-center fw-bold">Nenhum produtor encontrado.</h4>
                     ) : (
                         <div style={{ overflowX: "auto" }}>
                             <CustomTable
                                 headers={[
-                                    "Ações",
                                     "Matrícula",
                                     "Tipo",
                                     "Nome",
@@ -200,9 +207,11 @@ const Farmer = () => {
                                     "SAP Própria",
                                     "SAP Arrendada",
                                     "SAP Total",
+                                    "Editar",
                                     "Própria",
                                     "Arrendada",
-                                    "Total"
+                                    "Total",
+                                    "Editar"
                                 ]}
                                 headerStyles={[
                                     undefined,
@@ -216,6 +225,8 @@ const Farmer = () => {
                                     { background: "#d0d9d4" },
                                     { background: "#d0d9d4" },
                                     { background: "#d0d9d4" },
+                                    { background: "#d0d9d4" },
+                                    { background: "#c9c9c9" },
                                     { background: "#c9c9c9" },
                                     { background: "#c9c9c9" },
                                     { background: "#c9c9c9" },
@@ -232,12 +243,14 @@ const Farmer = () => {
                                     { background: "#dae3de" },
                                     { background: "#dae3de" },
                                     { background: "#dae3de" },
+                                    { background: "#dae3de" },
+                                    { background: "#dbdbdb" },
                                     { background: "#dbdbdb" },
                                     { background: "#dbdbdb" },
                                     { background: "#dbdbdb" },
                                 ]}
                             >
-                                {farmers.map((f) => {
+                                {updatedFarmers.map((f) => {
                                     const sapOwned = (
                                         f.ownedAssets
                                             ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
@@ -258,22 +271,6 @@ const Farmer = () => {
 
                                     return (
                                         <tr key={Number(f.registrationNumber)}>
-                                            <td className="d-flex gap-2">
-                                                <button
-                                                    className="button_edit"
-                                                    onClick={() => openModal("edit", f)}
-                                                    title="Editar Produtor"
-                                                >
-                                                    <FaPen />
-                                                </button>
-                                                <button
-                                                    className="button_info btn_sm"
-                                                    onClick={() => openAssetModal(f)}
-                                                    title="Editar Bens"
-                                                >
-                                                    <FaTractor />
-                                                </button>
-                                            </td>
                                             <td>{f.registrationNumber}</td>
                                             <td>{f.type?.id}</td>
                                             <td>{f.name}</td>
@@ -288,6 +285,15 @@ const Farmer = () => {
                                             <td>{`${sapOwned} ha`}</td>
                                             <td>{`${sapLeased} ha`}</td>
                                             <td>{`${sapTotal} ha`}</td>
+                                            <td className="d-flex gap-2">
+                                                <button
+                                                    className="button_info btn_sm"
+                                                    onClick={() => openAssetModal(f)}
+                                                    title="Editar Bens"
+                                                >
+                                                    <FaTractor />
+                                                </button>
+                                            </td>
                                             <td>
                                                 {`${ownedArea} ha`}
                                             </td>
@@ -296,6 +302,15 @@ const Farmer = () => {
                                             </td>
                                             <td className={sapTotal !== totalArea ? "text-danger" : ""}>
                                                 {`${totalArea} ha`}
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="button_edit"
+                                                    onClick={() => openModal("edit", f)}
+                                                    title="Editar Produtor"
+                                                >
+                                                    <FaPen />
+                                                </button>
                                             </td>
                                         </tr>
                                     );
@@ -324,7 +339,15 @@ const Farmer = () => {
                 farmer={currentFarmer}
                 onChange={() => { }}
                 onFarmerUpdated={(updatedFarmer) => {
-                    setCurrentFarmer(updatedFarmer)
+                    setUpdatedFarmers(prev =>
+                        prev.map(f =>
+                            f.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : f
+                        )
+                    );
+
+                    if (currentFarmer?.registrationNumber === updatedFarmer.registrationNumber) {
+                        setCurrentFarmer(updatedFarmer);
+                    }
                 }}
             />
         </div>

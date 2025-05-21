@@ -237,10 +237,11 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                 "SAP Própria",
                                 "SAP Arrendada",
                                 "SAP Total",
+                                "Editar",
                                 "Própria",
                                 "Arrendada",
                                 "Total",
-                                "Ações"
+                                "Editar"
                             ]}
                             headerStyles={[
                                 undefined,
@@ -252,6 +253,8 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                 { background: "#d0d9d4" },
                                 { background: "#d0d9d4" },
                                 { background: "#d0d9d4" },
+                                { background: "#d0d9d4" },
+                                { background: "#c9c9c9" },
                                 { background: "#c9c9c9" },
                                 { background: "#c9c9c9" },
                                 { background: "#c9c9c9" },
@@ -266,6 +269,8 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                 { background: "#dae3de" },
                                 { background: "#dae3de" },
                                 { background: "#dae3de" },
+                                { background: "#dae3de" },
+                                { background: "#dbdbdb" },
                                 { background: "#dbdbdb" },
                                 { background: "#dbdbdb" },
                                 { background: "#dbdbdb" },
@@ -305,6 +310,15 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                     <td>{`${sapLeased} ha`}</td>
                                     <td>{`${sapTotal} ha`}</td>
                                     <td>
+                                        <button
+                                            className="button_info btn_sm"
+                                            onClick={() => openAssetModal(f)}
+                                            title="Editar Bens"
+                                        >
+                                            <FaTractor />
+                                        </button>
+                                    </td>
+                                    <td>
                                         {`${ownedArea} ha`}
                                     </td>
                                     <td>
@@ -314,19 +328,13 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                         {`${totalArea} ha`}
                                     </td>
                                     <td className="d-flex gap-2">
+
                                         <button
                                             className="button_edit btn_sm"
                                             onClick={() => { setCurrentFarmer(f); setShow(true); }}
                                             title="Editar Produtor"
                                         >
                                             <FaPen />
-                                        </button>
-                                        <button
-                                            className="button_info btn_sm"
-                                            onClick={() => openAssetModal(f)}
-                                            title="Editar Bens"
-                                        >
-                                            <FaTractor />
                                         </button>
                                     </td>
                                 </tr>

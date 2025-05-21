@@ -43,7 +43,7 @@ const AssetModal = ({
 
     const reloadFarmer = async (
         registrationNumber: String,
-        onlyNotify = false
+        onlyNotify: boolean
     ) => {
         if (!registrationNumber) return;
         setLoading(true);
@@ -51,10 +51,12 @@ const AssetModal = ({
             const res = await axiosInstance.get<FarmerType>(
                 `/farmer/${registrationNumber}`
             );
+
             if (res.status === 200) {
-                if (!onlyNotify) {
+                if (!onlyNotify && registrationNumber === updatedFarmer?.registrationNumber) {
                     setUpdatedFarmer(res.data);
                 }
+
                 onFarmerUpdated(res.data);
             }
         } catch {
@@ -63,22 +65,6 @@ const AssetModal = ({
             setLoading(false);
         }
     };
-
-
-    // const reFetchUpdatedFarmer = async () => {
-    //     if (!updatedFarmer) return;
-    //     try {
-    //         const res = await axiosInstance.get(
-    //             `/farmer/${updatedFarmer.registrationNumber}`
-    //         );
-    //         if (res.status === 200) {
-    //             setUpdatedFarmer(res.data);
-    //             onFarmerUpdated(res.data);
-    //         }
-    //     } catch {
-    //         toast.error("Erro ao buscar produtor atualizado");
-    //     }
-    // };
 
     const loadFarmers = async (input: string) => {
         try {
@@ -109,7 +95,7 @@ const AssetModal = ({
 
     useEffect(() => {
         if (!show || !farmer?.registrationNumber) return;
-        reloadFarmer(farmer.registrationNumber);
+        setUpdatedFarmer(farmer)
     }, [show, farmer?.registrationNumber]);
 
     const handleSubmit = async () => {
@@ -156,7 +142,7 @@ const AssetModal = ({
             if (res.status === 200 || res.status === 201) {
                 toast.success(msg_success);
 
-                await reloadFarmer(updatedFarmer!.registrationNumber);
+                await reloadFarmer(updatedFarmer!.registrationNumber, false);
                 setShowForm(false);
 
                 if (isOwned && newAsset.leasedTo) {
@@ -202,7 +188,7 @@ const AssetModal = ({
 
             await axiosInstance.delete(`/asset/${cleanId}`);
             toast.success("Bem removido");
-            if (updatedFarmer) await reloadFarmer(updatedFarmer.registrationNumber);
+            if (updatedFarmer) await reloadFarmer(updatedFarmer.registrationNumber, false);
             setRemoveConfirmation(false);
             setAssetToRemove(null);
         } catch {
@@ -366,7 +352,6 @@ const AssetModal = ({
                                 <CustomTable
                                     headers={[
                                         "Tipo",
-
                                         "Descrição",
                                         "Endereço",
                                         "Quantidade",

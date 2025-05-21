@@ -55,7 +55,7 @@ const HomePage = () => {
         currentPage: userPage,
         totalPages: userTotalPages,
         fetchPage: fetchUsers,
-    } = usePaginatedFetchData<UserType>("/user", pageSize);
+    } = usePaginatedFetchData<UserType>("/user", pageSize, { "sort": "name" });
 
     useEffect(() => {
         const checkPermission = async () => {
@@ -320,18 +320,20 @@ const HomePage = () => {
 
                     {menuContext === "reportType" && reportType === "byTechnician" && users && (
                         <>
-                            <li
-                                onClick={() => {
-                                    setSelectedUser(null);
-                                    setMenuContext("reportDetailUser");
-                                }}
-                                className={
-                                    "d-flex align-items-center gap-2" +
-                                    (selectedUser === null ? " active" : "")
-                                }
-                            >
-                                Sem Técnico Vinculado
-                            </li>
+                            {userPage === 1 && (
+                                <li
+                                    onClick={() => {
+                                        setSelectedUser(null);
+                                        setMenuContext("reportDetailUser");
+                                    }}
+                                    className={
+                                        "d-flex align-items-center gap-2" +
+                                        (selectedUser === null ? " active" : "")
+                                    }
+                                >
+                                    Sem Técnico Vinculado
+                                </li>
+                            )}
                             {users.map((user) => (
                                 <li
                                     key={user.id}

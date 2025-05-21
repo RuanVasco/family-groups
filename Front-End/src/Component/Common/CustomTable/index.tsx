@@ -67,7 +67,7 @@ const CustomTable = ({
                             const isActive = sortField === header;
                             return (
                                 <th
-                                    key={header}
+                                    key={i}
                                     style={{ width: columnWidths[i] ?? "auto", cursor: onSort ? "pointer" : "default", ...headerStyles[i], }}
                                     onClick={() => onSort?.(header)}
                                     className={isActive ? "sorted" : ""}

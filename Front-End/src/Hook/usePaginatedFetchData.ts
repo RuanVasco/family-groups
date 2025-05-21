@@ -3,7 +3,6 @@ import axiosInstance from "../axiosInstance";
 import { toast } from "react-toastify";
 
 interface PaginationResult<T> {
-  /* dados / paginação */
   data: T[];
   currentPage: number;
   totalPages: number;
