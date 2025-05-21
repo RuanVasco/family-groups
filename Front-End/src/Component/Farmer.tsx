@@ -189,8 +189,52 @@ const Farmer = () => {
                         <div style={{ overflowX: "auto" }}>
                             <CustomTable
                                 headers={[
-                                    "Ações", "Matrícula", "Nome", "Tipo", "Situação", "Técnico", "Carteira", "Grupo familiar",
-                                    "SAP Própria", "SAP Arrendada", "SAP Total", "Própria", "Arrendada", "Total"
+                                    "Ações",
+                                    "Matrícula",
+                                    "Tipo",
+                                    "Nome",
+                                    "Situação",
+                                    "Carteira",
+                                    "Técnico",
+                                    "Grupo Familiar",
+                                    "SAP Própria",
+                                    "SAP Arrendada",
+                                    "SAP Total",
+                                    "Própria",
+                                    "Arrendada",
+                                    "Total"
+                                ]}
+                                headerStyles={[
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    { background: "#d0d9d4" },
+                                    { background: "#d0d9d4" },
+                                    { background: "#d0d9d4" },
+                                    { background: "#c9c9c9" },
+                                    { background: "#c9c9c9" },
+                                    { background: "#c9c9c9" },
+                                ]}
+                                columnStyles={[
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    { background: "#dae3de" },
+                                    { background: "#dae3de" },
+                                    { background: "#dae3de" },
+                                    { background: "#dbdbdb" },
+                                    { background: "#dbdbdb" },
+                                    { background: "#dbdbdb" },
                                 ]}
                             >
                                 {farmers.map((f) => {
@@ -199,8 +243,6 @@ const Farmer = () => {
                                             ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
                                             .reduce((sum, asset) => sum + asset.amount, 0) || 0
                                     ).toFixed(2);
-
-                                    console.log(f)
 
                                     const sapLeased = (
                                         f.leasedAssets
@@ -233,8 +275,8 @@ const Farmer = () => {
                                                 </button>
                                             </td>
                                             <td>{f.registrationNumber}</td>
-                                            <td>{f.name}</td>
                                             <td>{f.type?.id}</td>
+                                            <td>{f.name}</td>
                                             <td>{StatusLabels[f.status]}</td>
                                             <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
                                             <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
@@ -281,7 +323,9 @@ const Farmer = () => {
                 }}
                 farmer={currentFarmer}
                 onChange={() => { }}
-                onFarmerUpdated={() => { }}
+                onFarmerUpdated={(updatedFarmer) => {
+                    setCurrentFarmer(updatedFarmer)
+                }}
             />
         </div>
     );

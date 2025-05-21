@@ -1,6 +1,5 @@
-/* ReportByFarmer.tsx */
 import { useEffect, useMemo, useState } from "react";
-import { FaPen } from "react-icons/fa6";
+import { FaPen, FaTractor } from "react-icons/fa6";
 import axiosInstance from "../../axiosInstance";
 import { toast } from "react-toastify";
 
@@ -14,9 +13,8 @@ import Pagination from "../Common/Pagination";
 import FarmerModal from "../FarmerModal";
 import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
 import Select from "react-select";
+import AssetModal from "../AssetModal";
 
-/* ————————————————————————————————————————————————————— */
-/* pequeno hook de debounce */
 function useDebouncedValue<T>(value: T, delay = 300) {
     const [debounced, setDebounced] = useState(value);
     useEffect(() => {
@@ -25,7 +23,6 @@ function useDebouncedValue<T>(value: T, delay = 300) {
     }, [value, delay]);
     return debounced;
 }
-/* ————————————————————————————————————————————————————— */
 
 interface Props {
     branch?: BranchType;
@@ -49,6 +46,8 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
 
     const [filters, setFilters] = useState<Record<string, string>>({});
     const [currentFarmers, setCurrentFarmers] = useState<FarmerType[]>([]);
+
+    const [showAssetModal, setShowAssetModal] = useState(false);
 
     const endpoint = branch
         ? `/farmer/by-branch/${branch.id}`
@@ -93,7 +92,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
 
     useEffect(() => {
         setFilters(prev => {
-            /* copia mutável */
             const next = { ...prev };
             let changed = false;
 
@@ -109,7 +107,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 }
             }
 
-            return changed ? next : prev;   // evita render extra se nada mudou
+            return changed ? next : prev;
         });
     }, [debouncedSearch]);
 
@@ -122,7 +120,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         if (setTotalItems && totalItems !== undefined) setTotalItems(totalItems);
     }, [totalItems]);
 
-    /* SORT */
     const handleSort = (header: string) => {
         const nextDir = sortFieldUi === header && sortDirUi === "asc" ? "desc" : "asc";
         setSortFieldUi(header);
@@ -134,7 +131,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         fetchPage(1, { ...baseParams, ...newFilters });
     };
 
-    /* FILTRO TIPO */
     const handleType = (opt: any) => {
         setSelectedType(opt);
         const newFilters = { ...filters };
@@ -149,6 +145,11 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
 
     const [show, setShow] = useState(false);
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+
+    const openAssetModal = (farmer: FarmerType) => {
+        setCurrentFarmer(farmer);
+        setShowAssetModal(true);
+    }
 
     const handleSubmitFarmer = async () => {
         if (!currentFarmer?.registrationNumber || !currentFarmer.name) {
@@ -227,32 +228,110 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                     ) : (
                         <CustomTable
                             headers={[
-                                "Matrícula", "Tipo", "Nome", "Situação", "Carteira", "Técnico",
-                                "Própria", "Arrendada", "Total", "Ações"
+                                "Matrícula",
+                                "Tipo",
+                                "Nome",
+                                "Situação",
+                                "Carteira",
+                                "Grupo Familiar",
+                                "SAP Própria",
+                                "SAP Arrendada",
+                                "SAP Total",
+                                "Própria",
+                                "Arrendada",
+                                "Total",
+                                "Ações"
+                            ]}
+                            headerStyles={[
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                { background: "#d0d9d4" },
+                                { background: "#d0d9d4" },
+                                { background: "#d0d9d4" },
+                                { background: "#c9c9c9" },
+                                { background: "#c9c9c9" },
+                                { background: "#c9c9c9" },
+                            ]}
+                            columnStyles={[
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                undefined,
+                                { background: "#dae3de" },
+                                { background: "#dae3de" },
+                                { background: "#dae3de" },
+                                { background: "#dbdbdb" },
+                                { background: "#dbdbdb" },
+                                { background: "#dbdbdb" },
                             ]}
                             sortField={sortFieldUi}
                             sortDir={sortDirUi}
                             onSort={handleSort}
                         >
-                            {currentFarmers.map(f => (
-                                <tr key={Number(f.registrationNumber)}>
+                            {currentFarmers.map(f => {
+
+                                const sapOwned = (
+                                    f.ownedAssets
+                                        ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                ).toFixed(2);
+
+                                const sapLeased = (
+                                    f.leasedAssets
+                                        ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                ).toFixed(2);
+
+                                const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
+
+                                const ownedArea = (f.ownedArea ?? 0).toFixed(2);
+                                const leasedArea = (f.leasedArea ?? 0).toFixed(2);
+                                const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
+
+                                return (<tr key={Number(f.registrationNumber)}>
                                     <td>{f.registrationNumber}</td>
                                     <td>{f.type?.id ?? "-"}</td>
                                     <td>{f.name}</td>
                                     <td>{StatusLabels[f.status]}</td>
                                     <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
-                                    <td>{f.technician?.name ?? "Sem técnico"}</td>
-                                    <td>{f.ownedArea} ha</td>
-                                    <td>{f.leasedArea} ha</td>
-                                    <td>{(f.ownedArea ?? 0) + (f.leasedArea ?? 0)} ha</td>
+                                    <td>{f.familyGroup?.principal.name ?? "Sem grupo familiar"}</td>
+                                    <td>{`${sapOwned} ha`}</td>
+                                    <td>{`${sapLeased} ha`}</td>
+                                    <td>{`${sapTotal} ha`}</td>
                                     <td>
-                                        <button className="button_edit"
-                                            onClick={() => { setCurrentFarmer(f); setShow(true); }}>
-                                            <FaPen /> Editar
+                                        {`${ownedArea} ha`}
+                                    </td>
+                                    <td>
+                                        {`${leasedArea} ha`}
+                                    </td>
+                                    <td className={sapTotal !== totalArea ? "text-danger" : ""}>
+                                        {`${totalArea} ha`}
+                                    </td>
+                                    <td className="d-flex gap-2">
+                                        <button
+                                            className="button_edit btn_sm"
+                                            onClick={() => { setCurrentFarmer(f); setShow(true); }}
+                                            title="Editar Produtor"
+                                        >
+                                            <FaPen />
+                                        </button>
+                                        <button
+                                            className="button_info btn_sm"
+                                            onClick={() => openAssetModal(f)}
+                                            title="Editar Bens"
+                                        >
+                                            <FaTractor />
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                                )
+                            })}
                         </CustomTable>
                     )}
                 </Pagination>
@@ -266,6 +345,22 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                 modalMode="edit"
                 onChange={(field, value) => {
                     setCurrentFarmer(p => p ? { ...p, [field]: value } : p)
+                }}
+            />
+
+            <AssetModal
+                show={showAssetModal}
+                onClose={() => setShowAssetModal(false)}
+                farmer={currentFarmer}
+                onChange={() => { }}
+                onFarmerUpdated={(updatedFarmer) => {
+                    setCurrentFarmers(prev =>
+                        prev.map(f =>
+                            f.registrationNumber === updatedFarmer.registrationNumber
+                                ? updatedFarmer
+                                : f
+                        )
+                    );
                 }}
             />
         </div>

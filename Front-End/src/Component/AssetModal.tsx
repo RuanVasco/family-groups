@@ -109,7 +109,7 @@ const AssetModal = ({
 
     useEffect(() => {
         if (!show || !farmer?.registrationNumber) return;
-        reloadFarmer(farmer.registrationNumber, false);
+        reloadFarmer(farmer.registrationNumber);
     }, [show, farmer?.registrationNumber]);
 
     const handleSubmit = async () => {
@@ -156,13 +156,13 @@ const AssetModal = ({
             if (res.status === 200 || res.status === 201) {
                 toast.success(msg_success);
 
-                await reloadFarmer(updatedFarmer!.registrationNumber, false);
+                await reloadFarmer(updatedFarmer!.registrationNumber);
                 setShowForm(false);
 
                 if (isOwned && newAsset.leasedTo) {
-                    await reloadFarmer(newAsset.leasedTo.registrationNumber);
+                    await reloadFarmer(newAsset.leasedTo.registrationNumber, true);
                 } else if (!isOwned && newAsset.owner) {
-                    await reloadFarmer(newAsset.owner.registrationNumber);
+                    await reloadFarmer(newAsset.owner.registrationNumber, true);
                 }
             }
 
