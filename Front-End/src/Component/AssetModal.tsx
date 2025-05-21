@@ -41,20 +41,44 @@ const AssetModal = ({
         { value: 2, label: "Arrendado" },
     ];
 
-    const reFetchUpdatedFarmer = async () => {
-        if (!updatedFarmer) return;
+    const reloadFarmer = async (
+        registrationNumber: String,
+        onlyNotify = false
+    ) => {
+        if (!registrationNumber) return;
+        setLoading(true);
         try {
-            const res = await axiosInstance.get(
-                `/farmer/${updatedFarmer.registrationNumber}`
+            const res = await axiosInstance.get<FarmerType>(
+                `/farmer/${registrationNumber}`
             );
             if (res.status === 200) {
-                setUpdatedFarmer(res.data);
+                if (!onlyNotify) {
+                    setUpdatedFarmer(res.data);
+                }
                 onFarmerUpdated(res.data);
             }
         } catch {
-            toast.error("Erro ao buscar produtor atualizado");
+            toast.error("Erro ao buscar dados do produtor");
+        } finally {
+            setLoading(false);
         }
     };
+
+
+    // const reFetchUpdatedFarmer = async () => {
+    //     if (!updatedFarmer) return;
+    //     try {
+    //         const res = await axiosInstance.get(
+    //             `/farmer/${updatedFarmer.registrationNumber}`
+    //         );
+    //         if (res.status === 200) {
+    //             setUpdatedFarmer(res.data);
+    //             onFarmerUpdated(res.data);
+    //         }
+    //     } catch {
+    //         toast.error("Erro ao buscar produtor atualizado");
+    //     }
+    // };
 
     const loadFarmers = async (input: string) => {
         try {
@@ -84,26 +108,8 @@ const AssetModal = ({
     }, [updatedFarmer?.ownedAssets, updatedFarmer?.leasedAssets]);
 
     useEffect(() => {
-        if (!show || !farmer) return;
-
-        const fetchFreshFarmer = async () => {
-            setLoading(true);
-            try {
-                const res = await axiosInstance.get(`/farmer/${farmer.registrationNumber}`);
-
-                if (res.status === 200) {
-                    setUpdatedFarmer(res.data);
-                    onFarmerUpdated(res.data);
-                }
-
-            } catch {
-                toast.error("Erro ao buscar dados do produtor");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchFreshFarmer();
+        if (!show || !farmer?.registrationNumber) return;
+        reloadFarmer(farmer.registrationNumber, false);
     }, [show, farmer?.registrationNumber]);
 
     const handleSubmit = async () => {
@@ -149,13 +155,18 @@ const AssetModal = ({
 
             if (res.status === 200 || res.status === 201) {
                 toast.success(msg_success);
-                reFetchUpdatedFarmer();
+
+                await reloadFarmer(updatedFarmer!.registrationNumber, false);
                 setShowForm(false);
-            } else {
-                toast.error(msg_error);
+
+                if (isOwned && newAsset.leasedTo) {
+                    await reloadFarmer(newAsset.leasedTo.registrationNumber);
+                } else if (!isOwned && newAsset.owner) {
+                    await reloadFarmer(newAsset.owner.registrationNumber);
+                }
             }
+
         } catch (error: any) {
-            console.log(error.response)
             const apiMessage = error.response?.data || msg_error;
             toast.error(apiMessage);
         }
@@ -191,9 +202,9 @@ const AssetModal = ({
 
             await axiosInstance.delete(`/asset/${cleanId}`);
             toast.success("Bem removido");
-            reFetchUpdatedFarmer();
-            setAssetToRemove(null);
+            if (updatedFarmer) await reloadFarmer(updatedFarmer.registrationNumber);
             setRemoveConfirmation(false);
+            setAssetToRemove(null);
         } catch {
             toast.error("Erro ao remover o bem");
         }
