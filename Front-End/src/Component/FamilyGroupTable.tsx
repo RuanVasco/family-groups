@@ -453,8 +453,7 @@ const FamilyGroupTable = ({
                         "Milho silagem",
                         "Milho grão",
                         "Feijão",
-                        "Soja",
-                        "Total"
+                        "Soja"
                     ]}
                 >
                     <tr>
@@ -465,16 +464,6 @@ const FamilyGroupTable = ({
                         <td>{currentFamilyGroup?.grainCornArea?.toFixed(2) ?? "0.00"} ha</td>
                         <td>{currentFamilyGroup?.beanArea?.toFixed(2) ?? "0.00"} ha</td>
                         <td>{currentFamilyGroup?.soybeanArea?.toFixed(2) ?? "0.00"} ha</td>
-                        <td>
-                            {`${(
-                                (currentFamilyGroup?.canolaArea || 0) +
-                                (currentFamilyGroup?.wheatArea || 0) +
-                                (currentFamilyGroup?.cornSilageArea || 0) +
-                                (currentFamilyGroup?.grainCornArea || 0) +
-                                (currentFamilyGroup?.beanArea || 0) +
-                                (currentFamilyGroup?.soybeanArea || 0)
-                            ).toFixed(2)} ha`}
-                        </td>
                     </tr>
                 </CustomTable>
 

@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -96,18 +97,30 @@ public class FamilyGroupController {
 
         if (totalFamilyGroupArea == null) totalFamilyGroupArea = 0.0;
 
-        if (totalFamilyGroupArea < cultivationResponseDTO.sum()) {
-            return ResponseEntity.badRequest().body(
-                    String.format(
-                            "A área total de cultivos (%.2f ha) excede a área disponível do grupo familiar (%.2f ha).",
-                            cultivationResponseDTO.sum(),
-                            totalFamilyGroupArea
-                    )
-            );
+        Map<String, Double> cultures = Map.of(
+                "canola", cultivationResponseDTO.canolaArea(),
+                "trigo", cultivationResponseDTO.wheatArea(),
+                "milho para silagem", cultivationResponseDTO.cornSilageArea(),
+                "milho grão", cultivationResponseDTO.grainCornArea(),
+                "feijão", cultivationResponseDTO.beanArea(),
+                "soja", cultivationResponseDTO.soybeanArea()
+        );
+
+        for (Map.Entry<String, Double> entry : cultures.entrySet()) {
+            String name = entry.getKey();
+            double area = entry.getValue();
+            if (totalFamilyGroupArea < area) {
+                return ResponseEntity.badRequest().body(
+                        String.format(
+                                "A área total de cultivo de %s (%.2f ha) excede a área disponível do grupo familiar (%.2f ha).",
+                                name, area, totalFamilyGroupArea
+                        )
+                );
+            }
         }
 
         familyGroupService.updateCultivations(familyGroup, cultivationResponseDTO);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Cultivo atualizado com sucesso.");
     }
 
     @PostMapping
