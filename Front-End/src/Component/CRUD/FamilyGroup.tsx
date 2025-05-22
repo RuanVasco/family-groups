@@ -6,13 +6,14 @@ import { toast } from "react-toastify";
 import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
 import FamilyGroupTable from "../FamilyGroupTable";
 import { Button, Form, Modal } from "react-bootstrap";
-import Select from "react-select";
+import Select, { SingleValue } from "react-select";
 import Pagination from "../Common/Pagination";
 import CustomTable from "../Common/CustomTable";
 import { useFetchItem } from "../../Hook/useFetchItem";
 import { FarmerType } from "../../Type/FarmerType";
 import { FaPlus } from "react-icons/fa6";
 import AssetModal from "../AssetModal";
+import AsyncSelect from "react-select/async";
 
 interface CultivationType {
     canolaArea?: number;
@@ -401,37 +402,82 @@ const FamilyGroup = () => {
                                 <>
                                     <Form.Group>
                                         <Form.Label>Produtor Principal</Form.Label>
-                                        <Form.Select
-                                            value={selectedPrincipalId}
-                                            onChange={(e) => setSelectedPrincipalId(e.target.value)}
-                                        >
-                                            <option value="">Selecione</option>
-                                            {availableFarmers.map((farmer) => (
-                                                <option
-                                                    key={Number(farmer.registrationNumber)}
-                                                    value={Number(farmer.registrationNumber)}
-                                                >
-                                                    {farmer.name} ({farmer.registrationNumber})
-                                                </option>
-                                            ))}
-                                        </Form.Select>
+                                        <AsyncSelect<{ value: string; label: string }, false>
+                                            cacheOptions
+                                            defaultOptions
+                                            value={
+                                                selectedPrincipalId
+                                                    ? {
+                                                        value: selectedPrincipalId,
+                                                        label: `${availableFarmers.find(f => f.registrationNumber === selectedPrincipalId)?.name ?? ""} (${selectedPrincipalId})`
+                                                    }
+                                                    : null
+                                            }
+                                            loadOptions={async (inputValue: string) => {
+                                                try {
+                                                    const res = await axiosInstance.get("/farmer/available", {
+                                                        params: {
+                                                            search: inputValue,
+                                                            page: 0,
+                                                            size: 10
+                                                        }
+                                                    });
+
+                                                    const farmers: FarmerType[] = res.data.content;
+
+                                                    return farmers.map(farmer => ({
+                                                        value: farmer.registrationNumber.toString(),
+                                                        label: `${farmer.name} (${farmer.registrationNumber})`
+                                                    }));
+                                                } catch {
+                                                    toast.error("Erro ao buscar produtores disponíveis.");
+                                                    return [];
+                                                }
+                                            }}
+                                            onChange={(selectedOption: SingleValue<{ value: string; label: string }>) => {
+                                                setSelectedPrincipalId(selectedOption?.value ?? "");
+                                            }}
+                                            isClearable
+                                        />
                                     </Form.Group>
 
                                     <Form.Group>
                                         <Form.Label>Participantes</Form.Label>
-                                        <Select
+                                        <AsyncSelect<{ value: FarmerType; label: string }, true>
                                             isMulti
-                                            options={availableFarmers
-                                                .filter(farmer => farmer.registrationNumber !== selectedPrincipalId)
-                                                .map(farmer => ({
-                                                    value: farmer,
-                                                    label: `${farmer.name} (${farmer.registrationNumber})`
-                                                }))
-                                            }
-                                            value={selectedMembers.map(f => ({ value: f, label: `${f.name} (${f.registrationNumber})` }))}
-                                            onChange={(selectedOptions) =>
-                                                setSelectedMembers(selectedOptions.map(opt => opt.value))
-                                            }
+                                            cacheOptions
+                                            defaultOptions
+                                            loadOptions={async (inputValue: string) => {
+                                                try {
+                                                    const res = await axiosInstance.get("/farmer/available", {
+                                                        params: {
+                                                            search: inputValue,
+                                                            page: 0,
+                                                            size: 10
+                                                        }
+                                                    });
+
+                                                    const farmers: FarmerType[] = res.data.content;
+
+                                                    return farmers
+                                                        .filter(farmer => farmer.registrationNumber !== selectedPrincipalId)
+                                                        .map(farmer => ({
+                                                            value: farmer,
+                                                            label: `${farmer.name} (${farmer.registrationNumber})`
+                                                        }));
+                                                } catch {
+                                                    toast.error("Erro ao buscar participantes.");
+                                                    return [];
+                                                }
+                                            }}
+                                            value={selectedMembers.map(f => ({
+                                                value: f,
+                                                label: `${f.name} (${f.registrationNumber})`
+                                            }))}
+                                            onChange={(selectedOptions: readonly { value: FarmerType; label: string }[]) => {
+                                                setSelectedMembers(selectedOptions.map(opt => opt.value));
+                                            }}
+                                            isClearable={false}
                                         />
                                     </Form.Group>
                                 </>

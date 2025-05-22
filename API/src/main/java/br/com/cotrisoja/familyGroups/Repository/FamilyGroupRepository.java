@@ -15,11 +15,11 @@ import java.util.Optional;
 
 public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> {
 
-    @Query("SELECT f FROM FamilyGroup f WHERE f.principal.technician = :technician")
+    @Query("SELECT f FROM FamilyGroup f WHERE f.principal.technician = :technician ORDER BY f.principal.name")
     List<FamilyGroup> findByTechnician(@Param("technician") User technician);
 
     @Query("SELECT f FROM FamilyGroup f WHERE f.principal = :principal")
-    FamilyGroup findByPrincipal(@Param("principal") Farmer principal);
+    Optional<FamilyGroup> findByPrincipal(@Param("principal") Farmer principal);
 
     @Query("SELECT fg FROM FamilyGroup fg LEFT JOIN FETCH fg.members WHERE fg.principal = :principal")
     FamilyGroup findWithMembersByPrincipal(@Param("principal") Farmer principal);

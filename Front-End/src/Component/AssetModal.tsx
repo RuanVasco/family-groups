@@ -43,6 +43,7 @@ const AssetModal = ({
 
     const [removeConfirmation, setRemoveConfirmation] = useState<boolean>(false);
     const [assetToRemove, setAssetToRemove] = useState<AssetType | null>(null);
+    const [removeType, setRemoveType] = useState<"remove" | "unlease" | null>(null);
 
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -303,6 +304,9 @@ const AssetModal = ({
 
         } catch (e: any) {
             toast.error(e.response?.data || "Erro ao desarrendar.");
+        } finally {
+            setRemoveConfirmation(false);
+            setAssetToRemove(null);
         }
     };
 
@@ -320,19 +324,26 @@ const AssetModal = ({
                     <>
                         {(removeConfirmation && assetToRemove) ? (
                             <>
-                                <h4 className="text-center fw-bold">Tem certeza que deseja remover o bem {assetToRemove.id}?</h4>
-                                <div className="d-flex justify-content-center align-itens-center mt-3 gap-3">
+                                <h4 className="text-center fw-bold">Tem certeza que deseja {removeType === "remove" ? ("remover") : ("desarrendar")} o bem {assetToRemove.id}?</h4>
+                                <div className="d-flex justify-content-center align-items-center mt-3 gap-3">
                                     <button
-                                        className="button_remove button_sm"
-                                        onClick={() => handleRemoveAsset(assetToRemove)}
+                                        className={`button_sm button_remove`}
+                                        onClick={() => {
+                                            if (removeType === "remove") {
+                                                handleRemoveAsset(assetToRemove);
+                                            } else {
+                                                handleUnleaseAsset(assetToRemove);
+                                            }
+                                        }}
                                     >
-                                        <FaMinus /> Remover
+                                        {removeType === "remove" ? <FaMinus /> : <FaHandshakeSlash />} {removeType === "remove" ? "Remover" : "Desarrendar"}
                                     </button>
                                     <button
                                         className="button_agree button_sm"
                                         onClick={() => {
                                             setAssetToRemove(null);
                                             setRemoveConfirmation(false);
+                                            setRemoveType(null);
                                         }}
                                     >
                                         <FaXmark /> Cancelar
@@ -581,21 +592,26 @@ const AssetModal = ({
                                                             <FaPencil />
                                                         </button>
                                                         <button
+                                                            className="button_neutral btn_sm"
+                                                            onClick={() => {
+                                                                setAssetToRemove(asset);
+                                                                setRemoveConfirmation(true);
+                                                                setRemoveType("unlease");
+                                                            }}
+                                                            title="Desarrendar"
+                                                        >
+                                                            <FaHandshakeSlash />
+                                                        </button>
+                                                        <button
                                                             className="button_remove button_sm"
                                                             onClick={() => {
                                                                 setAssetToRemove(asset);
                                                                 setRemoveConfirmation(true);
+                                                                setRemoveType("remove");
                                                             }}
                                                             title="Remover bem"
                                                         >
                                                             <FaMinus />
-                                                        </button>
-                                                        <button
-                                                            className="button_neutral btn_sm"
-                                                            onClick={() => handleUnleaseAsset(asset)}
-                                                            title="Desarrendar"
-                                                        >
-                                                            <FaHandshakeSlash />
                                                         </button>
                                                     </div>
                                                 </td>

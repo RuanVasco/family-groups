@@ -33,9 +33,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
 
     const [groupToRefresh, setGroupToRefresh] = useState<number | null>(null);
 
-    // const [searchTerm, setSearchTerm] = useState("");
-    // const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
-
     useEffect(() => {
         if (familyGroups) {
             setUseFamilyGroups(familyGroups);
@@ -117,7 +114,10 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                     if (!found) {
                         updated.push(report);
                     }
-                    return updated;
+
+                    return [...updated].sort((a, b) =>
+                        (a.principal?.name ?? "").localeCompare(b.principal?.name ?? "", 'pt-BR')
+                    );
                 });
             }
         } catch {
@@ -131,36 +131,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
         }
     }, [useFamilyGroups]);
 
-    // useEffect(() => {
-    //     const handler = setTimeout(() => {
-    //         setDebouncedTerm(searchTerm);
-    //     }, 300);
-
-    //     return () => {
-    //         clearTimeout(handler);
-    //     };
-    // }, [searchTerm]);
-
-    // useEffect(() => {
-    //     if (!debouncedTerm.trim()) {
-    //         setUseFamilyGroups(familyGroups ?? []);
-    //         return;
-    //     }
-
-    //     const lowerSearch = debouncedTerm.toLowerCase();
-
-    //     const filtered = (familyGroups ?? []).filter(group => {
-    //         const principalMatch = group.principal.name.toLowerCase().includes(lowerSearch);
-    //         const memberMatch = group.members.some(member =>
-    //             member.name.toLowerCase().includes(lowerSearch) ||
-    //             member.registrationNumber.toString().includes(lowerSearch)
-    //         );
-    //         return principalMatch || memberMatch;
-    //     });
-
-    //     setUseFamilyGroups(filtered);
-    // }, [debouncedTerm, familyGroups]);
-
     return (
         <div className="p-4">
             {loading ? (
@@ -171,15 +141,6 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                 </div>
             ) : (
                 <div style={{ overflowY: "auto", height: "85vh" }}>
-                    {/* <div className="w-25">
-                        <input
-                            type="text"
-                            placeholder="Pesquisar"
-                            className="form-control mb-3"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div> */}
                     {
                         useFamilyGroups && useFamilyGroups.map((f) => (
                             <div key={f.familyGroupId} className="floating_panel my-3">

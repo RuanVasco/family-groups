@@ -172,8 +172,6 @@ public class FarmerController {
         return ResponseEntity.ok(farmerService.updateFarmer(farmer, farmerRequestDTO));
     }
 
-
-
     private Sort buildSort(String sortParam) {
         String[] s = sortParam.split(",");
         String field = s[0];

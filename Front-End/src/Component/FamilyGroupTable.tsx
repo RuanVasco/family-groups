@@ -502,7 +502,7 @@ const FamilyGroupTable = ({
                         Remover o produtor
                         <span className="fw-bold"> {currentFarmer?.registrationNumber} - {currentFarmer?.name} </span>
                         do grupo familiar
-                        <span className="fw-bold"> {currentFarmer?.familyGroup?.principal.name}</span>?
+                        <span className="fw-bold"> {currentFamilyGroup?.principal.name}</span>?
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Footer>

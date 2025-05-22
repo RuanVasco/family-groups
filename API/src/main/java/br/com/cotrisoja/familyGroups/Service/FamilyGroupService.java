@@ -7,6 +7,7 @@ import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
 import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,29 +25,44 @@ public class FamilyGroupService {
     private final FamilyGroupRepository familyGroupRepository;
     private final FarmerRepository farmerRepository;
 
+    @Transactional
     public FamilyGroup create(FamilyGroupRequestDTO familyGroupRequestDTO) {
         Farmer principal = farmerRepository.findById(familyGroupRequestDTO.principalId())
                 .orElseThrow(() -> new RuntimeException("Produtor principal não encontrado"));
 
-        FamilyGroup familyGroup = new FamilyGroup();
-        familyGroup.setPrincipal(principal);
+        if (principal.getFamilyGroup() != null && principal.getFamilyGroup().getMembers().size() < 2) {
+            FamilyGroup oldGroup = principal.getFamilyGroup();
 
-        familyGroup = familyGroupRepository.save(familyGroup);
+            principal.setFamilyGroup(null);
+            farmerRepository.save(principal);
 
-        List<Farmer> validMembers = new ArrayList<>();
-
-        for (String memberId : familyGroupRequestDTO.membersId()) {
-            Optional<Farmer> optionalFarmer = farmerRepository.findById(memberId);
-            if (optionalFarmer.isPresent()) {
-                Farmer farmer = optionalFarmer.get();
-                farmer.setFamilyGroup(familyGroup);
-                farmerRepository.save(farmer);
-                validMembers.add(farmer);
+            List<Farmer> members = oldGroup.getMembers();
+            for (Farmer member : members) {
+                member.setFamilyGroup(null);
             }
+            farmerRepository.saveAll(members);
+
+            familyGroupRepository.delete(oldGroup);
+
+            farmerRepository.flush();
+            familyGroupRepository.flush();
         }
 
-        familyGroup.setMembers(validMembers);
-        return familyGroupRepository.save(familyGroup);
+        FamilyGroup newGroup = new FamilyGroup();
+        newGroup.setPrincipal(principal);
+        newGroup = familyGroupRepository.save(newGroup);
+
+        List<Farmer> validMembers = new ArrayList<>();
+        for (String memberId : familyGroupRequestDTO.membersId()) {
+            Farmer farmer = farmerRepository.findById(memberId)
+                    .orElseThrow(() -> new RuntimeException("Produtor " + memberId + " não encontrado"));
+            farmer.setFamilyGroup(newGroup);
+            farmerRepository.save(farmer);
+            validMembers.add(farmer);
+        }
+
+        newGroup.setMembers(validMembers);
+        return familyGroupRepository.save(newGroup);
     }
 
     public FamilyGroup addMember(Long familyGroupId, String memberId) {
@@ -76,55 +92,78 @@ public class FamilyGroupService {
         return familyGroupRepository.save(familyGroup);
     }
 
+    @Transactional
     public void removeMember(Long familyGroupId, String memberId) {
-        FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupId)
+
+        FamilyGroup oldGroup = familyGroupRepository.findById(familyGroupId)
                 .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
 
         Farmer member = farmerRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Produtor não encontrado"));
 
-        if (familyGroup.getPrincipal().equals(member)) {
-            throw new RuntimeException("Produtor é o principal do grupo");
-        }
+        if (oldGroup.getPrincipal().equals(member))
+            throw new RuntimeException("Não é possível remover o produtor principal.");
 
-        List<Farmer> farmers = familyGroup.getMembers();
-        if (farmers == null) {
-            farmers = new ArrayList<>();
-        }
-
-        if (!farmers.contains(member)) {
-            throw new RuntimeException("Produtor não faz parte do grupo");
-        }
-
-        farmers.remove(member);
-        familyGroup.setMembers(farmers);
-
-        FamilyGroup newFamilyGroup = new FamilyGroup();
-        newFamilyGroup.setPrincipal(member);
-        familyGroupRepository.save(newFamilyGroup);
-        member.setFamilyGroup(newFamilyGroup);
+        member.setFamilyGroup(null);
+        oldGroup.getMembers().remove(member);
+        familyGroupRepository.save(oldGroup);
         farmerRepository.save(member);
 
-        familyGroupRepository.save(familyGroup);
+        farmerRepository.flush();
+        familyGroupRepository.flush();
+
+        Optional<FamilyGroup> existing =
+                familyGroupRepository.findByPrincipal(member);
+
+        FamilyGroup soloGroup = existing.orElseGet(() -> {
+            FamilyGroup fg = new FamilyGroup();
+            fg.setPrincipal(member);
+            return familyGroupRepository.save(fg);
+        });
+
+        member.setFamilyGroup(soloGroup);
+        farmerRepository.save(member);
     }
 
-    public void changePrincipal(Long familyGroupId, String principalId) {
-        FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupId)
-                .orElseThrow(() -> new IllegalArgumentException("Grupo familiar com ID " + familyGroupId + " não encontrado"));
+    @Transactional
+    public void changePrincipal(Long familyGroupId, String newPrincipalId) {
 
-        Farmer member = farmerRepository.findById(principalId)
-                .orElseThrow(() -> new IllegalArgumentException("Produtor com ID " + principalId + " não encontrado"));
+        FamilyGroup targetGroup = familyGroupRepository.findById(familyGroupId)
+                .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
 
-        if (Objects.equals(member, familyGroup.getPrincipal())) {
-            throw new IllegalStateException("Produtor já é o principal do grupo");
-        }
+        Farmer newPrincipal = farmerRepository.findById(newPrincipalId)
+                .orElseThrow(() -> new RuntimeException("Produtor não encontrado"));
 
-        if (!familyGroup.getMembers().contains(member)) {
-            throw new IllegalStateException("Produtor com ID " + principalId + " não faz parte do grupo familiar com ID " + familyGroupId);
-        }
+        if (newPrincipal.equals(targetGroup.getPrincipal()))
+            throw new IllegalStateException("Produtor já é o principal do grupo.");
 
-        familyGroup.setPrincipal(member);
-        familyGroupRepository.save(familyGroup);
+        if (!targetGroup.getMembers().contains(newPrincipal))
+            throw new IllegalStateException("Produtor não é membro do grupo.");
+
+        familyGroupRepository.findByPrincipal(newPrincipal)
+                .filter(g -> !g.getId().equals(familyGroupId))
+                .ifPresent(g -> {
+                    newPrincipal.setFamilyGroup(null);
+                    farmerRepository.save(newPrincipal);
+
+                    familyGroupRepository.delete(g);
+                    familyGroupRepository.flush();
+                });
+
+        Farmer oldPrincipal = targetGroup.getPrincipal();
+
+        targetGroup.getMembers().remove(newPrincipal);
+
+        if (!targetGroup.getMembers().contains(oldPrincipal))
+            targetGroup.getMembers().add(oldPrincipal);
+
+        targetGroup.setPrincipal(newPrincipal);
+        familyGroupRepository.save(targetGroup);
+
+        newPrincipal.setFamilyGroup(targetGroup);
+        oldPrincipal.setFamilyGroup(targetGroup);
+        farmerRepository.save(newPrincipal);
+        farmerRepository.save(oldPrincipal);
     }
 
 
