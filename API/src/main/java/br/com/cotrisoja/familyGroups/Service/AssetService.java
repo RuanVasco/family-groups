@@ -6,9 +6,11 @@ import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Repository.AssetRepository;
 import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -78,6 +80,36 @@ public class AssetService {
 		}
 
 		assetRepository.save(asset);
+	}
+
+	public List<Asset> findAvailableAssetsByOwner(Farmer owner) {
+		return assetRepository.findAvailableAssetsByOwner(owner);
+	}
+
+	@Transactional
+	public Asset leaseTo(Asset asset, Farmer lessee) {
+
+		if (asset.getLeasedTo() != null) {
+			throw new IllegalStateException("O bem já está arrendado para outro produtor.");
+		}
+		if (asset.getOwner() != null &&
+				asset.getOwner().getRegistrationNumber()
+						.equals(lessee.getRegistrationNumber())) {
+			throw new IllegalStateException("Proprietário e arrendatário não podem ser o mesmo produtor.");
+		}
+
+		asset.setLeasedTo(lessee);
+
+		return assetRepository.save(asset);
+	}
+
+	@Transactional
+	public Asset unlease(Asset asset) {
+		if (asset.getLeasedTo() == null)
+			throw new IllegalStateException("Bem não está arrendado.");
+
+		asset.setLeasedTo(null);
+		return assetRepository.save(asset);
 	}
 
 	public Optional<Map.Entry<String, Long>> parseAssetId(String assetId) {

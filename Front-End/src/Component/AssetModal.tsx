@@ -3,7 +3,7 @@ import { FarmerType } from "../Type/FarmerType";
 import axiosInstance from "../axiosInstance";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { FaFloppyDisk, FaMinus, FaPencil, FaPlus, FaXmark } from "react-icons/fa6";
+import { FaFloppyDisk, FaHandshake, FaHandshakeSlash, FaMinus, FaPencil, FaPlus, FaXmark } from "react-icons/fa6";
 import AssetType from "../Type/AssetType";
 import CustomTable from "./Common/CustomTable";
 import Select from "react-select";
@@ -31,9 +31,15 @@ const AssetModal = ({
 }: AssetModalProps) => {
     const [mergedAssets, setMergedAssets] = useState<AssetType[]>([]);
     const [showForm, setShowForm] = useState<boolean>(false);
-    const [formMode, setFormMode] = useState<"create" | "update" | null>(null);
+    const [formMode, setFormMode] = useState<"create" | "update" | "lease" | null>(null);
     const [newAsset, setNewAsset] = useState<AssetType | null>(null);
     const [isOwned, setIsOwner] = useState<boolean | null>(null);
+
+    const [ownerAssets, setOwnerAssets] = useState<AssetType[]>([]);
+    const [selectedAssetOpt, setSelectedAssetOpt] = useState<
+        | { value: AssetType; label: string }
+        | null
+    >(null);
 
     const [removeConfirmation, setRemoveConfirmation] = useState<boolean>(false);
     const [assetToRemove, setAssetToRemove] = useState<AssetType | null>(null);
@@ -87,8 +93,21 @@ const AssetModal = ({
         }
     };
 
+    const fetchAssetsByOwner = async (ownerRegNumber: String) => {
+        try {
+            const res = await axiosInstance.get<AssetType[]>(
+                `/asset/available/${ownerRegNumber}`
+            );
+            setOwnerAssets(res.data);
+        } catch {
+            toast.error("Erro ao buscar bens do proprietário.");
+            setOwnerAssets([]);
+        }
+    };
+
     const handleShowFormToggle = () => {
         setShowForm(!showForm);
+        setSelectedAssetOpt(null);
     }
 
     useEffect(() => {
@@ -101,65 +120,92 @@ const AssetModal = ({
     const handleSubmit = async () => {
         if (!newAsset || !currentFarmer) return;
 
-        if (isOwned === undefined || isOwned === null) {
-            toast.error("Por favor preencher os campos obrigatórios.");
-            return;
-        }
-
-        const data = {
-            description: newAsset.description,
-            address: newAsset.address,
-            amount: newAsset.amount,
-            ownerRegistrationNumber: isOwned
-                ? currentFarmer.registrationNumber
-                : newAsset.owner?.registrationNumber,
-            leasedToRegistrationNumber: isOwned
-                ? newAsset.leasedTo?.registrationNumber
-                : currentFarmer.registrationNumber,
-            assetTypeId: 1
-        };
-
-        let res;
-        let msg_success = "";
-        let msg_error = "";
-
         try {
+            let res;
+            let msgSuccess = "";
+
             switch (formMode) {
                 case "create":
-                    res = await axiosInstance.post("/asset", data);
-                    msg_success = "Bem adicionado";
-                    msg_error = "Erro ao adicionar o bem";
+                    res = await axiosInstance.post("/asset", {
+                        description: newAsset.description,
+                        address: newAsset.address,
+                        amount: newAsset.amount,
+                        ownerRegistrationNumber: isOwned
+                            ? currentFarmer.registrationNumber
+                            : newAsset.owner?.registrationNumber,
+                        leasedToRegistrationNumber: isOwned
+                            ? newAsset.leasedTo?.registrationNumber
+                            : currentFarmer.registrationNumber,
+                        assetTypeId: 1,
+                    });
+                    msgSuccess = "Bem adicionado";
                     break;
+
                 case "update":
-                    res = await axiosInstance.put(`/asset/${newAsset.id}`, data);
-                    msg_success = "Bem atualizado";
-                    msg_error = "Erro ao atualizar o bem";
+                    res = await axiosInstance.put(`/asset/${newAsset.id}`, {
+                        description: newAsset.description,
+                        address: newAsset.address,
+                        amount: newAsset.amount,
+                        ownerRegistrationNumber: isOwned
+                            ? currentFarmer.registrationNumber
+                            : newAsset.owner?.registrationNumber,
+                        leasedToRegistrationNumber: isOwned
+                            ? newAsset.leasedTo?.registrationNumber
+                            : currentFarmer.registrationNumber,
+                        assetTypeId: 1,
+                    });
+                    msgSuccess = "Bem atualizado";
                     break;
+
+                case "lease":
+                    if (!newAsset.id || !newAsset.owner) {
+                        toast.error("Selecione o proprietário e o bem a ser arrendado.");
+                        return;
+                    }
+
+                    res = await axiosInstance.put("/asset/lease", {
+                        assetId: newAsset.id,
+                        lessee: currentFarmer.registrationNumber,
+                    });
+                    msgSuccess = "Bem arrendado";
+                    break;
+
                 default:
                     return;
             }
 
             if (res.status === 200 || res.status === 201) {
-                toast.success(msg_success);
+                toast.success(msgSuccess);
 
-                await reloadFarmer(currentFarmer!.registrationNumber, false);
+                await reloadFarmer(currentFarmer.registrationNumber, false);
                 setShowForm(false);
-
                 onGroupUpdated?.();
 
-                if (isOwned && newAsset.leasedTo) {
-                    await reloadFarmer(newAsset.leasedTo.registrationNumber, true);
-                    onOtherFarmerUpdated?.(newAsset.leasedTo);
-                } else if (!isOwned && newAsset.owner) {
-                    await reloadFarmer(newAsset.owner.registrationNumber, true);
-                    onOtherFarmerUpdated?.(newAsset.owner);
+                if (formMode === "lease") {
+                    await reloadFarmer(newAsset.owner!.registrationNumber, true);
+                    onOtherFarmerUpdated?.(newAsset.owner!);
                 }
             }
-
-        } catch (error: any) {
-            const apiMessage = error.response?.data || msg_error;
-            toast.error(apiMessage);
+        } catch (e: any) {
+            toast.error(e.response?.data || "Erro ao salvar.");
         }
+    };
+
+    const handleLeasseNewAsset = async () => {
+        setFormMode("lease");
+        if (!showForm) {
+            setIsOwner(null);
+            setNewAsset({
+                id: undefined,
+                description: "",
+                address: "",
+                amount: 0,
+                owner: undefined,
+                leasedTo: undefined,
+                assetType: { id: 0, description: "" },
+            });
+        }
+        handleShowFormToggle();
     };
 
     const handleAddNewAsset = async () => {
@@ -224,6 +270,34 @@ const AssetModal = ({
         onClose();
     }
 
+    const handleUnleaseAsset = async (asset: AssetType) => {
+        try {
+            await axiosInstance.put("/asset/unlease", { assetId: asset.id });
+            toast.success("Bem desarrendado");
+
+            setMergedAssets(prev =>
+                prev
+                    .filter(a => !(currentFarmer && a.id === asset.id &&
+                        a.leasedTo?.registrationNumber === currentFarmer.registrationNumber))
+                    .map(a =>
+                        a.id === asset.id
+                            ? { ...a, leasedTo: undefined }
+                            : a
+                    )
+            );
+
+            await reloadFarmer(currentFarmer!.registrationNumber, false);
+
+            if (asset.owner)
+                await reloadFarmer(asset.owner.registrationNumber, true);
+
+            onGroupUpdated?.();
+
+        } catch (e: any) {
+            toast.error(e.response?.data || "Erro ao desarrendar.");
+        }
+    };
+
     return (
         <Modal show={show} onHide={handleCloseModal} size="xl">
             <Modal.Header closeButton>
@@ -260,116 +334,213 @@ const AssetModal = ({
                         ) : (
                             <><div className="d-flex justify-content-between mb-2">
                                 <h5 className="fw-bold">Bens</h5>
-                                <button className={`button_${showForm ? "edit" : "agree"}`} onClick={handleAddNewAsset}>
-                                    {showForm ? <><FaMinus /> Fechar formulário</> : <><FaPlus /> Criar bem</>}
-                                </button>
+                                <div className="d-flex gap-2">
+                                    {showForm ? (
+                                        <>
+                                            <button
+                                                onClick={handleLeasseNewAsset}
+                                                className="button_edit"
+                                            >
+                                                <FaMinus /> Fechar formulário
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button className={`button_info`} onClick={handleAddNewAsset}>
+                                                <FaPlus /> Criar bem
+                                            </button>
+                                            <button className={`button_info`} onClick={handleLeasseNewAsset}>
+                                                <FaHandshake /> Arrendar bem
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                                 {showForm && (
-                                    <div>
-                                        <Form.Group className="mt-2">
-                                            <Form.Label>
-                                                Área (ha)
-                                            </Form.Label>
-                                            <Form.Control
-                                                value={newAsset?.amount || ""}
-                                                type="number"
-                                                onChange={(e) =>
-                                                    setNewAsset((prev) => prev ? { ...prev, amount: parseFloat(e.target.value.replace(",", ".")) || 0 } : null)
-                                                }
-                                            />
-                                        </Form.Group>
-                                        <Form.Group className="mt-2">
-                                            <Form.Label>
-                                                Tipo *
-                                            </Form.Label>
-                                            <Select
-                                                options={assetOptions}
-                                                required
-                                                value={isOwned == null ? null : assetOptions[isOwned ? 1 : 2]}
-                                                onChange={(opt) => {
-                                                    setIsOwner(opt?.value === 1);
-                                                    setNewAsset((prev) => prev ? {
-                                                        ...prev,
-                                                        assetCategory: {
-                                                            id: opt?.value ?? 0,
-                                                            description: opt?.label ?? ""
-                                                        },
-                                                        owner: null,
-                                                        leasedTo: null,
-                                                    } : null);
-                                                }}
-                                                menuPortalTarget={document.body}
-                                                styles={{
-                                                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                                }}
-                                            />
-                                        </Form.Group>
-                                        {newAsset && (
+                                    formMode === "lease" ? (
+                                        <div className="mb-3">
                                             <Form.Group className="mt-2">
-                                                <Form.Label>
-                                                    {isOwned ? "Arrendatário" : "Proprietário"}
-                                                </Form.Label>
+                                                <Form.Label>Proprietário</Form.Label>
+
                                                 <AsyncSelect
                                                     isClearable
                                                     loadOptions={loadFarmers}
                                                     defaultOptions
                                                     value={
-                                                        isOwned === null
-                                                            ? null
-                                                            : isOwned
-                                                                ? newAsset.leasedTo
-                                                                    ? { value: newAsset.leasedTo, label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}` }
-                                                                    : null
-                                                                : newAsset.owner
-                                                                    ? { value: newAsset.owner, label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}` }
-                                                                    : null
+                                                        newAsset?.owner
+                                                            ? {
+                                                                value: newAsset.owner,
+                                                                label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}`,
+                                                            }
+                                                            : null
                                                     }
+                                                    onChange={opt => {
+                                                        setNewAsset(prev =>
+                                                            prev
+                                                                ? {
+                                                                    ...prev,
+                                                                    owner: opt?.value ?? null,
+                                                                    leasedTo: currentFarmer ?? null,
+                                                                    id: undefined,
+                                                                    description: "",
+                                                                    address: "",
+                                                                    amount: 0,
+                                                                }
+                                                                : null
+                                                        );
 
-                                                    onChange={(opt) => {
-                                                        setNewAsset((prev) => prev ? {
-                                                            ...prev,
-                                                            leasedTo: isOwned ? opt?.value ?? null : prev.leasedTo,
-                                                            owner: !isOwned ? opt?.value ?? null : prev.owner,
-                                                        } : null);
+                                                        setSelectedAssetOpt(null);
+                                                        setOwnerAssets([]);
+
+                                                        if (opt?.value) fetchAssetsByOwner(opt.value.registrationNumber);
                                                     }}
                                                     menuPortalTarget={document.body}
-                                                    styles={{
-                                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                                    }}
+                                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                                 />
                                             </Form.Group>
-                                        )}
-                                        <Form.Group className="mt-2">
-                                            <Form.Label>
-                                                Descrição
-                                            </Form.Label>
-                                            <Form.Control
-                                                value={newAsset?.description || ""}
-                                                onChange={(e) =>
-                                                    setNewAsset((prev) => prev ? { ...prev, description: e.target.value } : null)
-                                                }
-                                            />
-                                        </Form.Group>
-                                        <Form.Group className="mt-2">
-                                            <Form.Label>
-                                                Endereço
-                                            </Form.Label>
-                                            <Form.Control
-                                                value={newAsset?.address || ""}
-                                                onChange={(e) =>
-                                                    setNewAsset((prev) => prev ? { ...prev, address: e.target.value } : null)
-                                                }
-                                            />
-                                        </Form.Group>
-                                        <div className="d-flex align-items-center justify-content-end my-3 gap-2">
-                                            <button
-                                                className="button_info button_sm"
-                                                onClick={handleSubmit}
-                                            >
-                                                <FaFloppyDisk /> Salvar
-                                            </button>
+
+                                            {ownerAssets.length > 0 && (
+                                                <>
+                                                    <Form.Group className="mt-2">
+                                                        <Form.Label>Bem disponível</Form.Label>
+
+                                                        <Select
+                                                            isClearable
+                                                            options={ownerAssets.map(a => ({
+                                                                value: a,
+                                                                label: `${a.id} - ${a.description} (${a.amount} ha)`,
+                                                            }))}
+                                                            value={selectedAssetOpt}
+                                                            onChange={opt => {
+                                                                setSelectedAssetOpt(opt ?? null);
+                                                                setNewAsset(prev =>
+                                                                    prev
+                                                                        ? {
+                                                                            ...prev,
+                                                                            ...opt?.value,
+                                                                            owner: prev.owner,
+                                                                            leasedTo: prev.leasedTo,
+                                                                        }
+                                                                        : null
+                                                                );
+                                                            }}
+                                                            menuPortalTarget={document.body}
+                                                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        />
+                                                    </Form.Group>
+                                                    <div className="d-flex justify-content-end my-3 gap-2">
+                                                        <button className="button_info button_sm" onClick={handleSubmit}>
+                                                            <FaFloppyDisk /> Salvar
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+
+
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div>
+                                            <Form.Group className="mt-2">
+                                                <Form.Label>Área (ha)</Form.Label>
+                                                <Form.Control
+                                                    type="number"
+                                                    value={newAsset?.amount ?? ""}
+                                                    onChange={e =>
+                                                        setNewAsset(prev =>
+                                                            prev ? { ...prev, amount: parseFloat(e.target.value.replace(",", ".")) || 0 } : null
+                                                        )
+                                                    }
+                                                />
+                                            </Form.Group>
+
+                                            <Form.Group className="mt-2">
+                                                <Form.Label>Tipo *</Form.Label>
+                                                <Select
+                                                    options={assetOptions}
+                                                    required
+                                                    value={isOwned == null ? null : assetOptions[isOwned ? 1 : 2]}
+                                                    onChange={opt => {
+                                                        setIsOwner(opt?.value === 1);
+                                                        setNewAsset(prev =>
+                                                            prev
+                                                                ? {
+                                                                    ...prev,
+                                                                    assetCategory: { id: opt?.value ?? 0, description: opt?.label ?? "" },
+                                                                    owner: null,
+                                                                    leasedTo: null,
+                                                                }
+                                                                : null
+                                                        );
+                                                    }}
+                                                    menuPortalTarget={document.body}
+                                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                />
+                                            </Form.Group>
+
+                                            {newAsset && (
+                                                <Form.Group className="mt-2">
+                                                    <Form.Label>{isOwned ? "Arrendatário" : "Proprietário"}</Form.Label>
+                                                    <AsyncSelect
+                                                        isClearable
+                                                        loadOptions={loadFarmers}
+                                                        defaultOptions
+                                                        value={
+                                                            isOwned == null
+                                                                ? null
+                                                                : isOwned
+                                                                    ? newAsset.leasedTo && {
+                                                                        value: newAsset.leasedTo,
+                                                                        label: `${newAsset.leasedTo.registrationNumber} - ${newAsset.leasedTo.name}`,
+                                                                    }
+                                                                    : newAsset.owner && {
+                                                                        value: newAsset.owner,
+                                                                        label: `${newAsset.owner.registrationNumber} - ${newAsset.owner.name}`,
+                                                                    }
+                                                        }
+                                                        onChange={opt =>
+                                                            setNewAsset(prev =>
+                                                                prev
+                                                                    ? {
+                                                                        ...prev,
+                                                                        leasedTo: isOwned ? opt?.value ?? null : prev.leasedTo,
+                                                                        owner: !isOwned ? opt?.value ?? null : prev.owner,
+                                                                    }
+                                                                    : null
+                                                            )
+                                                        }
+                                                        menuPortalTarget={document.body}
+                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                    />
+                                                </Form.Group>
+                                            )}
+
+                                            <Form.Group className="mt-2">
+                                                <Form.Label>Descrição</Form.Label>
+                                                <Form.Control
+                                                    value={newAsset?.description ?? ""}
+                                                    onChange={e =>
+                                                        setNewAsset(prev => (prev ? { ...prev, description: e.target.value } : null))
+                                                    }
+                                                />
+                                            </Form.Group>
+
+                                            <Form.Group className="mt-2">
+                                                <Form.Label>Endereço</Form.Label>
+                                                <Form.Control
+                                                    value={newAsset?.address ?? ""}
+                                                    onChange={e =>
+                                                        setNewAsset(prev => (prev ? { ...prev, address: e.target.value } : null))
+                                                    }
+                                                />
+                                            </Form.Group>
+
+                                            <div className="d-flex justify-content-end my-3 gap-2">
+                                                <button className="button_info button_sm" onClick={handleSubmit}>
+                                                    <FaFloppyDisk /> Salvar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )
                                 )}
                                 <CustomTable
                                     headers={[
@@ -396,6 +567,8 @@ const AssetModal = ({
                                                         <button
                                                             className="button_edit button_sm"
                                                             onClick={() => handleUpdateAsset(asset)}
+                                                            disabled={showForm}
+                                                            title="Editar bem"
                                                         >
                                                             <FaPencil />
                                                         </button>
@@ -405,8 +578,16 @@ const AssetModal = ({
                                                                 setAssetToRemove(asset);
                                                                 setRemoveConfirmation(true);
                                                             }}
+                                                            title="Remover bem"
                                                         >
                                                             <FaMinus />
+                                                        </button>
+                                                        <button
+                                                            className="button_neutral btn_sm"
+                                                            onClick={() => handleUnleaseAsset(asset)}
+                                                            title="Desarrendar"
+                                                        >
+                                                            <FaHandshakeSlash />
                                                         </button>
                                                     </div>
                                                 </td>
