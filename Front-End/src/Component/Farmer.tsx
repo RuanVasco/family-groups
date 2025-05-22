@@ -1,35 +1,39 @@
-// Farmer.tsx
 import { useEffect, useState } from "react";
 import { FaPen, FaPlus, FaTractor } from "react-icons/fa6";
 import { toast } from "react-toastify";
+
 import { FarmerType } from "../Type/FarmerType";
-import axiosInstance from "../axiosInstance";
 import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
-import Pagination from "./Common/Pagination";
-import FarmerModal from "./FarmerModal";
 import { usePaginatedFetchData } from "../Hook/usePaginatedFetchData";
+import axiosInstance from "../axiosInstance";
+
+import Pagination from "./Common/Pagination";
 import CustomTable from "./Common/CustomTable";
-import Select from "react-select";
+import FarmerModal from "./FarmerModal";
 import AssetModal from "./AssetModal";
+import Select from "react-select";
 
 const Farmer = () => {
+    /* -------------------- estados -------------------- */
     const [searchValue, setSearchValue] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+
     const [filters, setFilters] = useState<Record<string, string>>({});
-    const [show, setShow] = useState(false);
-    const [showAssetModal, setShowAssetModal] = useState(false);
     const [selectedType, setSelectedType] = useState<{ label: string; value: string } | null>({
         label: "Todos",
-        value: ""
+        value: "",
     });
-    const [currentFarmer, setCurrentFarmer] =
-        useState<FarmerType | null>(null);
 
-    const [updatedFarmers, setUpdatedFarmers] = useState<FarmerType[]>([]);
+    const [showFarmerModal, setShowFarmerModal] = useState(false);
+    const [showAssetModal, setShowAssetModal] = useState(false);
 
+    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+    const [farmers, setFarmers] = useState<FarmerType[]>([]);
+
+    /* -------------------- paginação -------------------- */
     const {
-        data: farmers,
+        data: apiFarmers,
         currentPage,
         totalPages,
         totalItems,
@@ -38,114 +42,84 @@ const Farmer = () => {
         setPageSize: hookSetPageSize,
     } = usePaginatedFetchData<FarmerType>("/farmer", pageSize);
 
+    /* -------------------- efeitos -------------------- */
     useEffect(() => {
         fetchPage(1);
     }, []);
 
     useEffect(() => {
-        if (farmers) {
-            setUpdatedFarmers(farmers);
-        }
-    }, [farmers]);
+        if (apiFarmers) setFarmers(apiFarmers);
+    }, [apiFarmers]);
 
+    /* debounce simples p/ busca */
     useEffect(() => {
         const id = setTimeout(() => {
-            const filters =
-                searchValue.length >= 3 ? { value: searchValue.trim() } : {};
-            fetchPage(1, filters);
+            const params = searchValue.length >= 3 ? { value: searchValue.trim() } : {};
+            fetchPage(1, { ...params, ...filters });
         }, 300);
-
         return () => clearTimeout(id);
-    }, [searchValue]);
+    }, [searchValue, filters]);
 
-    const openModal = (mode: "create" | "edit", farmer?: FarmerType) => {
+    /* -------------------- handlers -------------------- */
+    const openFarmerModal = (mode: "create" | "edit", farmer?: FarmerType) => {
         setModalMode(mode);
-        if (mode === "edit" && farmer) {
-            setCurrentFarmer(farmer);
-        } else if (mode === "create") {
-            setCurrentFarmer({
-                registrationNumber: "",
-                name: "",
-                status: StatusEnum.ACTIVE,
-            });
+        setCurrentFarmer(
+            mode === "edit" && farmer
+                ? farmer
+                : {
+                    registrationNumber: "",
+                    name: "",
+                    status: StatusEnum.ACTIVE,
+                }
+        );
+        setShowFarmerModal(true);
+    };
+
+    const saveFarmer = async () => {
+        if (!currentFarmer?.name || !currentFarmer.registrationNumber) {
+            toast.warn("Preencha todos os campos obrigatórios.");
+            return;
         }
-        setShow(true);
-    };
 
-    const handleModalClose = () => setShow(false);
+        const body = {
+            registrationNumber: currentFarmer.registrationNumber,
+            name: currentFarmer.name,
+            status: currentFarmer.status,
+            familyGroupId: currentFarmer.familyGroup?.id,
+            technicianId: currentFarmer.technician?.id,
+            ownedArea: currentFarmer.ownedArea,
+            leasedArea: currentFarmer.leasedArea,
+            branch: currentFarmer.branch?.id,
+        };
 
-    const handleChange = (field: keyof FarmerType, value: any) => {
-        setCurrentFarmer((prev) => {
-            if (!prev) return prev;
-            return { ...prev, [field]: value };
-        });
-    };
-
-    const handleSubmit = async () => {
         try {
-            if (!currentFarmer?.name || !currentFarmer?.registrationNumber) {
-                toast.warn("Preencha todos os campos obrigatórios.");
-                return;
-            }
-
-            const body = {
-                registrationNumber: currentFarmer.registrationNumber,
-                name: currentFarmer.name,
-                status: currentFarmer.status,
-                familyGroupId: currentFarmer.familyGroup?.id,
-                technicianId: currentFarmer.technician?.id,
-                ownedArea: currentFarmer.ownedArea,
-                leasedArea: currentFarmer.leasedArea,
-                branch: currentFarmer.branch?.id
-            };
-
             const res =
                 modalMode === "create"
                     ? await axiosInstance.post("/farmer", body)
-                    : await axiosInstance.put(
-                        `/farmer/${currentFarmer.registrationNumber}`,
-                        body
-                    );
+                    : await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, body);
 
             if (res.status === 200 || res.status === 201) {
-                toast.success(
-                    modalMode === "create"
-                        ? "Produtor criado com sucesso!"
-                        : "Produtor atualizado com sucesso!"
-                );
+                toast.success(modalMode === "create" ? "Produtor criado!" : "Produtor atualizado!");
                 fetchPage(currentPage);
             }
         } catch {
             toast.error("Erro ao salvar produtor.");
         } finally {
-            handleModalClose();
+            setShowFarmerModal(false);
         }
-    };
-
-    const handleType = (opt: any) => {
-        setSelectedType(opt);
-
-        const newFilters = { ...filters };
-        if (opt?.value) {
-            newFilters.typeId = opt.value;
-        } else {
-            delete newFilters.typeId;
-        }
-
-        setFilters(newFilters);
-
-        fetchPage(1, { ...newFilters, value: searchValue.length >= 3 ? searchValue.trim() : undefined });
     };
 
     const openAssetModal = (farmer: FarmerType) => {
         setCurrentFarmer(farmer);
         setShowAssetModal(true);
-    }
+    };
 
+    /* -------------------- render -------------------- */
     return (
         <div className="pt-3 px-4 pb-5">
+            {/* Barra de ações */}
             <div className="my-3 floating_panel d-flex align-items-center justify-content-between">
-                <button className="button_agree" onClick={() => openModal("create")}>
+                <button className="button_agree" onClick={() => openFarmerModal("create")}>
                     <FaPlus /> Criar Produtor
                 </button>
 
@@ -153,12 +127,13 @@ const Farmer = () => {
                     className="w-50"
                     placeholder="Pesquisar (mín. 3 letras)"
                     value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
+                    onChange={e => setSearchValue(e.target.value)}
                 />
 
                 <h4 className="fw-bold m-0">Total: {totalItems}</h4>
             </div>
 
+            {/* Filtro de tipo */}
             <div className="d-flex align-items-center justify-content-between mt-4 mb-3">
                 <Select
                     className="w-25"
@@ -169,29 +144,33 @@ const Farmer = () => {
                         { label: "3 - Pessoa Jurídica Associado", value: "3" },
                         { label: "4 - Pessoa Jurídica Terceiro", value: "4" },
                     ]}
-                    onChange={handleType}
                     value={selectedType}
+                    onChange={opt => {
+                        setSelectedType(opt);
+                        const f = { ...filters };
+                        opt?.value ? (f.typeId = opt.value) : delete f.typeId;
+                        setFilters(f);
+                    }}
                 />
             </div>
 
+            {/* Tabela + paginação */}
             <Pagination
                 itemsPerPage={pageSize}
-                onItemsPerPageChange={(val) => {
+                onItemsPerPageChange={val => {
                     setPageSize(val);
                     hookSetPageSize(val);
                 }}
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={(page) =>
-                    fetchPage(page, searchValue.length >= 3 ? { value: searchValue } : {})
-                }
+                onPageChange={page => fetchPage(page, searchValue.length >= 3 ? { value: searchValue.trim(), ...filters } : filters)}
             >
                 <div className="my-3 floating_panel">
                     {isLoading ? (
                         <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
-                            <div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div>
+                            <div className="spinner-border" role="status" />
                         </div>
-                    ) : updatedFarmers.length === 0 ? (
+                    ) : farmers.length === 0 ? (
                         <h4 className="py-3 text-center fw-bold">Nenhum produtor encontrado.</h4>
                     ) : (
                         <div style={{ overflowX: "auto" }}>
@@ -201,8 +180,8 @@ const Farmer = () => {
                                     "Tipo",
                                     "Nome",
                                     "Situação",
-                                    "Carteira",
                                     "Técnico",
+                                    "Carteira",
                                     "Grupo Familiar",
                                     "SAP Própria",
                                     "SAP Arrendada",
@@ -211,28 +190,9 @@ const Farmer = () => {
                                     "Própria",
                                     "Arrendada",
                                     "Total",
-                                    "Editar"
-                                ]}
-                                headerStyles={[
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    undefined,
-                                    { background: "#d0d9d4" },
-                                    { background: "#d0d9d4" },
-                                    { background: "#d0d9d4" },
-                                    { background: "#d0d9d4" },
-                                    { background: "#c9c9c9" },
-                                    { background: "#c9c9c9" },
-                                    { background: "#c9c9c9" },
-                                    { background: "#c9c9c9" },
+                                    "Editar",
                                 ]}
                                 columnStyles={[
-                                    undefined,
                                     undefined,
                                     undefined,
                                     undefined,
@@ -250,65 +210,45 @@ const Farmer = () => {
                                     { background: "#dbdbdb" },
                                 ]}
                             >
-                                {updatedFarmers.map((f) => {
-                                    const sapOwned = (
-                                        f.ownedAssets
-                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
-                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
-                                    ).toFixed(2);
+                                {farmers.map(f => {
+                                    const sapOwned =
+                                        f.ownedAssets?.filter(a => a.assetType.id === 1 || a.assetType.id === 2).reduce((s, a) => s + a.amount, 0) || 0;
 
-                                    const sapLeased = (
-                                        f.leasedAssets
-                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
-                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
-                                    ).toFixed(2);
+                                    const sapLeased =
+                                        f.leasedAssets?.filter(a => a.assetType.id === 1 || a.assetType.id === 2).reduce((s, a) => s + a.amount, 0) || 0;
 
-                                    const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
+                                    const sapTotal = sapOwned + sapLeased;
 
-                                    const ownedArea = (f.ownedArea ?? 0).toFixed(2);
-                                    const leasedArea = (f.leasedArea ?? 0).toFixed(2);
-                                    const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
+                                    const ownedArea = f.ownedArea ?? 0;
+                                    const leasedArea = f.leasedArea ?? 0;
+                                    const totalArea = ownedArea + leasedArea;
 
                                     return (
                                         <tr key={Number(f.registrationNumber)}>
                                             <td>{f.registrationNumber}</td>
-                                            <td>{f.type?.id}</td>
+                                            <td>{f.type?.id ?? "-"}</td>
                                             <td>{f.name}</td>
                                             <td>{StatusLabels[f.status]}</td>
-                                            <td>{f.technician?.name ?? "Sem técnico vinculado"}</td>
-                                            <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                            <td>{f.technician?.name ?? "Sem técnico"}</td>
+                                            <td>{f.branch?.name ?? "Sem carteira"}</td>
                                             <td>
                                                 {f.familyGroup
                                                     ? `${f.familyGroup.principal.registrationNumber} - ${f.familyGroup.principal.name}`
-                                                    : "Sem grupo familiar"}
+                                                    : "Sem grupo"}
                                             </td>
-                                            <td>{`${sapOwned} ha`}</td>
-                                            <td>{`${sapLeased} ha`}</td>
-                                            <td>{`${sapTotal} ha`}</td>
-                                            <td className="d-flex gap-2">
-                                                <button
-                                                    className="button_info btn_sm"
-                                                    onClick={() => openAssetModal(f)}
-                                                    title="Editar Bens"
-                                                >
+                                            <td>{sapOwned.toFixed(2)} ha</td>
+                                            <td>{sapLeased.toFixed(2)} ha</td>
+                                            <td>{sapTotal.toFixed(2)} ha</td>
+                                            <td>
+                                                <button className="button_info btn_sm" onClick={() => openAssetModal(f)} title="Editar bens">
                                                     <FaTractor />
                                                 </button>
                                             </td>
+                                            <td>{ownedArea.toFixed(2)} ha</td>
+                                            <td>{leasedArea.toFixed(2)} ha</td>
+                                            <td className={sapTotal !== totalArea ? "text-danger" : ""}>{totalArea.toFixed(2)} ha</td>
                                             <td>
-                                                {`${ownedArea} ha`}
-                                            </td>
-                                            <td>
-                                                {`${leasedArea} ha`}
-                                            </td>
-                                            <td className={sapTotal !== totalArea ? "text-danger" : ""}>
-                                                {`${totalArea} ha`}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="button_edit"
-                                                    onClick={() => openModal("edit", f)}
-                                                    title="Editar Produtor"
-                                                >
+                                                <button className="button_edit" onClick={() => openFarmerModal("edit", f)} title="Editar produtor">
                                                     <FaPen />
                                                 </button>
                                             </td>
@@ -316,39 +256,36 @@ const Farmer = () => {
                                     );
                                 })}
                             </CustomTable>
-
                         </div>
                     )}
                 </div>
             </Pagination>
 
+            {/* ---------- Modais ---------- */}
             <FarmerModal
-                show={show}
-                onClose={handleModalClose}
-                onSubmit={handleSubmit}
+                show={showFarmerModal}
+                onClose={() => setShowFarmerModal(false)}
+                onSubmit={saveFarmer}
                 currentFarmer={currentFarmer}
                 modalMode={modalMode}
-                onChange={handleChange}
+                onChange={(field, val) => setCurrentFarmer(prev => (prev ? { ...prev, [field]: val } : prev))}
             />
 
             <AssetModal
                 show={showAssetModal}
-                onClose={() => {
-                    setShowAssetModal(false);
-                }}
-                farmer={currentFarmer}
+                onClose={() => setShowAssetModal(false)}
+                currentFarmer={currentFarmer}
+                setCurrentFarmer={setCurrentFarmer}
                 onChange={() => { }}
-                onFarmerUpdated={(updatedFarmer) => {
-                    setUpdatedFarmers(prev =>
-                        prev.map(f =>
-                            f.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : f
-                        )
-                    );
-
-                    if (currentFarmer?.registrationNumber === updatedFarmer.registrationNumber) {
-                        setCurrentFarmer(updatedFarmer);
-                    }
+                /* Produtor editado no próprio modal */
+                onFarmerUpdated={updated => {
+                    setFarmers(prev => prev.map(f => (f.registrationNumber === updated.registrationNumber ? updated : f)));
+                    if (currentFarmer?.registrationNumber === updated.registrationNumber) setCurrentFarmer(updated);
                 }}
+                /* Produtores afetados como arrendador/arrendatário */
+                onOtherFarmerUpdated={affected =>
+                    setFarmers(prev => prev.map(f => (f.registrationNumber === affected.registrationNumber ? affected : f)))
+                }
             />
         </div>
     );

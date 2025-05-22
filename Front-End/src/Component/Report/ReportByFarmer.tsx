@@ -359,7 +359,8 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
             <AssetModal
                 show={showAssetModal}
                 onClose={() => setShowAssetModal(false)}
-                farmer={currentFarmer}
+                currentFarmer={currentFarmer}
+                setCurrentFarmer={setCurrentFarmer}
                 onChange={() => { }}
                 onFarmerUpdated={(updatedFarmer) => {
                     setCurrentFarmers(prev =>
