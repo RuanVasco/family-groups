@@ -184,6 +184,14 @@ const AssetModal = ({
                 if (formMode === "lease") {
                     await reloadFarmer(newAsset.owner!.registrationNumber, true);
                     onOtherFarmerUpdated?.(newAsset.owner!);
+                } else {
+                    if (isOwned && newAsset.leasedTo) {
+                        await reloadFarmer(newAsset.leasedTo.registrationNumber, true);
+                        onOtherFarmerUpdated?.(newAsset.leasedTo);
+                    } else if (!isOwned && newAsset.owner) {
+                        await reloadFarmer(newAsset.owner.registrationNumber, true);
+                        onOtherFarmerUpdated?.(newAsset.owner);
+                    }
                 }
             }
         } catch (e: any) {
