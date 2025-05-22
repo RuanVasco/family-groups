@@ -12,18 +12,23 @@ import AsyncSelect from "react-select/async";
 interface AssetModalProps {
     show: boolean;
     onClose: () => void;
-    farmer: FarmerType | null;
+    currentFarmer: FarmerType | null;
+    setCurrentFarmer: (farmer: FarmerType | null) => void;
     onFarmerUpdated: (f: FarmerType) => void;
     onChange: (field: keyof FarmerType, value: any) => void;
+    onOtherFarmerUpdated?: (farmer: FarmerType) => void;
+    onGroupUpdated?: () => void;
 }
 
 const AssetModal = ({
     show,
     onClose,
-    farmer,
+    currentFarmer,
+    setCurrentFarmer,
     onFarmerUpdated,
+    onOtherFarmerUpdated,
+    onGroupUpdated
 }: AssetModalProps) => {
-    const [updatedFarmer, setUpdatedFarmer] = useState<FarmerType | null>(null);
     const [mergedAssets, setMergedAssets] = useState<AssetType[]>([]);
     const [showForm, setShowForm] = useState<boolean>(false);
     const [formMode, setFormMode] = useState<"create" | "update" | null>(null);
@@ -53,8 +58,8 @@ const AssetModal = ({
             );
 
             if (res.status === 200) {
-                if (!onlyNotify && registrationNumber === updatedFarmer?.registrationNumber) {
-                    setUpdatedFarmer(res.data);
+                if (!onlyNotify && registrationNumber === currentFarmer?.registrationNumber) {
+                    setCurrentFarmer(res.data);
                 }
 
                 onFarmerUpdated(res.data);
@@ -72,7 +77,7 @@ const AssetModal = ({
                 params: { value: input, size: 10 },
             });
             return res.data.content
-                .filter((f: FarmerType) => f.registrationNumber !== updatedFarmer?.registrationNumber)
+                .filter((f: FarmerType) => f.registrationNumber !== currentFarmer?.registrationNumber)
                 .map((f: FarmerType) => ({
                     value: f,
                     label: `${f.registrationNumber} - ${f.name}`,
@@ -88,18 +93,13 @@ const AssetModal = ({
 
     useEffect(() => {
         setMergedAssets([
-            ...(updatedFarmer?.ownedAssets ?? []),
-            ...(updatedFarmer?.leasedAssets ?? []),
+            ...(currentFarmer?.ownedAssets ?? []),
+            ...(currentFarmer?.leasedAssets ?? []),
         ]);
-    }, [updatedFarmer?.ownedAssets, updatedFarmer?.leasedAssets]);
-
-    useEffect(() => {
-        if (!show || !farmer?.registrationNumber) return;
-        setUpdatedFarmer(farmer)
-    }, [show, farmer?.registrationNumber]);
+    }, [currentFarmer?.ownedAssets, currentFarmer?.leasedAssets]);
 
     const handleSubmit = async () => {
-        if (!newAsset || !updatedFarmer) return;
+        if (!newAsset || !currentFarmer) return;
 
         if (isOwned === undefined || isOwned === null) {
             toast.error("Por favor preencher os campos obrigatórios.");
@@ -111,11 +111,11 @@ const AssetModal = ({
             address: newAsset.address,
             amount: newAsset.amount,
             ownerRegistrationNumber: isOwned
-                ? updatedFarmer.registrationNumber
+                ? currentFarmer.registrationNumber
                 : newAsset.owner?.registrationNumber,
             leasedToRegistrationNumber: isOwned
                 ? newAsset.leasedTo?.registrationNumber
-                : updatedFarmer.registrationNumber,
+                : currentFarmer.registrationNumber,
             assetTypeId: 1
         };
 
@@ -142,13 +142,17 @@ const AssetModal = ({
             if (res.status === 200 || res.status === 201) {
                 toast.success(msg_success);
 
-                await reloadFarmer(updatedFarmer!.registrationNumber, false);
+                await reloadFarmer(currentFarmer!.registrationNumber, false);
                 setShowForm(false);
+
+                onGroupUpdated?.();
 
                 if (isOwned && newAsset.leasedTo) {
                     await reloadFarmer(newAsset.leasedTo.registrationNumber, true);
+                    onOtherFarmerUpdated?.(newAsset.leasedTo);
                 } else if (!isOwned && newAsset.owner) {
                     await reloadFarmer(newAsset.owner.registrationNumber, true);
+                    onOtherFarmerUpdated?.(newAsset.owner);
                 }
             }
 
@@ -176,25 +180,41 @@ const AssetModal = ({
     };
 
     const handleUpdateAsset = async (asset: AssetType) => {
-        (asset.owner?.registrationNumber === updatedFarmer?.registrationNumber) ? setIsOwner(true) : false;
+        (asset.owner?.registrationNumber === currentFarmer?.registrationNumber) ? setIsOwner(true) : false;
         setFormMode("update");
         setNewAsset(asset);
         handleShowFormToggle();
     };
 
-    const handleRemoveAsset = async (id: string) => {
+    const handleRemoveAsset = async (asset: AssetType) => {
         try {
+            const id = `${asset.id!} - ${asset.owner?.registrationNumber}`;
             const cleanId = id.split(" - ")[0].trim();
 
             await axiosInstance.delete(`/asset/${cleanId}`);
             toast.success("Bem removido");
-            if (updatedFarmer) await reloadFarmer(updatedFarmer.registrationNumber, false);
+
+            if (currentFarmer) {
+                await reloadFarmer(currentFarmer.registrationNumber, false);
+            }
+
+            onGroupUpdated?.();
+
+            const relatedFarmers = [asset.owner, asset.leasedTo]
+                .filter(f => f?.registrationNumber && f.registrationNumber !== currentFarmer?.registrationNumber);
+
+            for (const farmer of relatedFarmers) {
+                await reloadFarmer(farmer!.registrationNumber, true);
+                onOtherFarmerUpdated?.(farmer!);
+            }
+
             setRemoveConfirmation(false);
             setAssetToRemove(null);
         } catch {
             toast.error("Erro ao remover o bem");
         }
     };
+
 
     const handleCloseModal = () => {
         setRemoveConfirmation(false);
@@ -207,7 +227,7 @@ const AssetModal = ({
     return (
         <Modal show={show} onHide={handleCloseModal} size="xl">
             <Modal.Header closeButton>
-                <Modal.Title>Editar bens do produtor {updatedFarmer?.registrationNumber} - {updatedFarmer?.name}</Modal.Title>
+                <Modal.Title>Editar bens do produtor {currentFarmer?.registrationNumber} - {currentFarmer?.name}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {loading ? (
@@ -222,7 +242,7 @@ const AssetModal = ({
                                 <div className="d-flex justify-content-center align-itens-center mt-3 gap-3">
                                     <button
                                         className="button_remove button_sm"
-                                        onClick={() => handleRemoveAsset(`${assetToRemove.id!} - ${assetToRemove.owner?.registrationNumber}`)}
+                                        onClick={() => handleRemoveAsset(assetToRemove)}
                                     >
                                         <FaMinus /> Remover
                                     </button>
@@ -365,7 +385,7 @@ const AssetModal = ({
                                     {mergedAssets.map((asset) => (
                                         (asset.assetType.id === 1 || asset.assetType.id === 2) && (
                                             <tr key={asset.id}>
-                                                <td>{asset.owner?.registrationNumber === updatedFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
+                                                <td>{asset.owner?.registrationNumber === currentFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
                                                 <td>{asset.description}</td>
                                                 <td>{asset.address}</td>
                                                 <td>{asset.amount} ha</td>

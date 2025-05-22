@@ -12,6 +12,7 @@ import CustomTable from "../Common/CustomTable";
 import { useFetchItem } from "../../Hook/useFetchItem";
 import { FarmerType } from "../../Type/FarmerType";
 import { FaPlus } from "react-icons/fa6";
+import AssetModal from "../AssetModal";
 
 interface CultivationType {
     canolaArea?: number;
@@ -38,10 +39,12 @@ const FamilyGroup = () => {
     const [modalMode, setModalMode] = useState<"create" | "select" | "add-farmer" | "edit" | null>(null);
     const itemsPerPage = 10;
     const [show, setShow] = useState(false);
+    const [showAssets, setShowAssets] = useState<boolean>(false);
     const [searchValue, setSearchValue] = useState<string>("");
     const [selectedPrincipalId, setSelectedPrincipalId] = useState<string>("");
     const [selectedMembers, setSelectedMembers] = useState<FarmerType[]>([]);
     const [availableSearchValue, setAvailableSearchValue] = useState<string>("");
+    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
 
     const {
         data: initialFamilyGroups,
@@ -185,6 +188,33 @@ const FamilyGroup = () => {
         }
     };
 
+    const handleOpenAssetModal = (farmer: FarmerType) => {
+        setCurrentFarmer(farmer);
+        setShowAssets(true);
+    }
+
+    const handleCloseAssetModal = () => {
+        setCurrentFarmer(null);
+        setShowAssets(false);
+    }
+
+    const handleFarmerAssetsUpdated = (updatedFarmer: FarmerType) => {
+        setSelectedFamilyGroup(prev => {
+            if (!prev) return prev;
+
+            const members = prev.members?.map(m =>
+                m.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : m
+            ) ?? [];
+
+            const principal =
+                prev.principal.registrationNumber === updatedFarmer.registrationNumber
+                    ? updatedFarmer
+                    : prev.principal;
+
+            return { ...prev, principal, members };
+        });
+    };
+
     useEffect(() => {
         if (selectedFamilyGroup && cultivations) {
             setSelectedFamilyGroup(prev => prev ? { ...prev, ...cultivations } : prev);
@@ -240,11 +270,21 @@ const FamilyGroup = () => {
                             showActions={true}
                             onMakePrincipal={(farmer) => handlePrincipalChange(farmer.registrationNumber)}
                             onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber)}
+                            onEditAssets={(farmer) => handleOpenAssetModal(farmer)}
                         />
                     </div>
                 </>
             )
             }
+
+            <AssetModal
+                show={showAssets}
+                onClose={handleCloseAssetModal}
+                currentFarmer={currentFarmer}
+                setCurrentFarmer={setCurrentFarmer}
+                onChange={() => { }}
+                onFarmerUpdated={handleFarmerAssetsUpdated}
+            />
 
             <Modal show={show && modalMode !== "edit"} onHide={handleClose} size="xl">
                 <Modal.Header closeButton>

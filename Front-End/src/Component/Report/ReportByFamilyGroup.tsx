@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "../../axiosInstance";
 import FamilyGroupTable from "../FamilyGroupTable";
+import AssetModal from "../AssetModal";
 
 interface ReportByFamilyGroupProps {
     technician: UserType;
@@ -26,6 +27,11 @@ interface FamilyGroupReport {
 const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupProps) => {
     const { data: familyGroups, loading } = useFetchItem<FamilyGroupReport[]>(`/family-group/by-technician/${technician.id}`);
     const [useFamilyGroups, setUseFamilyGroups] = useState<FamilyGroupReport[]>([]);
+
+    const [showAssets, setShowAssets] = useState<boolean>(false);
+    const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
+
+    const [groupToRefresh, setGroupToRefresh] = useState<number | null>(null);
 
     // const [searchTerm, setSearchTerm] = useState("");
     // const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
@@ -82,6 +88,16 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
             toast.error("Erro ao remover o produtor do grupo familiar.");
         }
     };
+
+    const handleOpenAssetModal = (farmer: FarmerType) => {
+        setCurrentFarmer(farmer);
+        setShowAssets(true);
+    }
+
+    const handleCloseAssetModal = () => {
+        setCurrentFarmer(null);
+        setShowAssets(false);
+    }
 
     const fetchFamilyGroupByMember = async (farmerId: String) => {
         try {
@@ -182,10 +198,38 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                                     showActions={true}
                                     onMakePrincipal={(farmer) => handlePrincipalChange(farmer, f)}
                                     onRemoveFarmer={(farmer) => handleRemoveMember(farmer.registrationNumber, String(f.familyGroupId))}
+                                    onEditAssets={(farmer) => handleOpenAssetModal(farmer)}
+                                    groupToRefresh={groupToRefresh}
+                                    onRefreshComplete={() => setGroupToRefresh(null)}
                                 />
                             </div>
                         ))
                     }
+
+                    <AssetModal
+                        show={showAssets}
+                        onClose={handleCloseAssetModal}
+                        currentFarmer={currentFarmer}
+                        setCurrentFarmer={setCurrentFarmer}
+                        onChange={() => { }}
+                        onFarmerUpdated={(updatedFarmer) => {
+                            setUseFamilyGroups(prevGroups =>
+                                prevGroups.map(group => {
+                                    if (group.familyGroupId === updatedFarmer.familyGroup?.id) {
+                                        const members = group.members.map(member =>
+                                            member.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : member
+                                        );
+                                        return { ...group, members };
+                                    }
+                                    return group;
+                                })
+                            );
+                        }}
+                        onOtherFarmerUpdated={(farmer) => {
+                            fetchFamilyGroupByMember(farmer?.registrationNumber);
+                            if (farmer.familyGroup) setGroupToRefresh(farmer.familyGroup?.id);
+                        }}
+                    />
                 </div>
             )}
         </div>

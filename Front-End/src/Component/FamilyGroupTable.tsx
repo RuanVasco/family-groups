@@ -4,7 +4,6 @@ import { FarmerType } from "../Type/FarmerType";
 import { StatusLabels } from "../Enum/StatusEnum";
 import CustomTable from "./Common/CustomTable";
 import { memo, useEffect, useState } from "react";
-import AssetModal from "./AssetModal";
 import axiosInstance from "../axiosInstance";
 import { Button, Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
@@ -17,6 +16,9 @@ interface FamilyGroupTableProps {
     onMakePrincipal?: (farmer: FarmerType) => void;
     onRemoveFarmer?: (farmer: FarmerType) => void;
     onAddFarmer?: (group: FamilyGroupType) => void;
+    onEditAssets?: (farmer: FarmerType) => void;
+    groupToRefresh?: number | null;
+    onRefreshComplete?: () => void;
 }
 
 interface CultivationType {
@@ -34,13 +36,14 @@ const FamilyGroupTable = ({
     onMakePrincipal,
     onRemoveFarmer,
     onAddFarmer,
+    onEditAssets,
+    groupToRefresh,
+    onRefreshComplete
 }: FamilyGroupTableProps) => {
-    const [show, setShow] = useState<boolean>(false);
     const [modalFarmerShow, setModalFarmerShow] = useState<boolean>(false);
     const [modalConfirmRemove, setModalConfirmRemove] = useState<boolean>(false);
 
     const [currentFarmer, setCurrentFarmer] = useState<FarmerType | null>(null);
-    const [lessors, setLessors] = useState<FarmerType[]>([]);
 
     const [currentFamilyGroup, setCurrentFamilyGroup] = useState<FamilyGroupType | null>(null);
 
@@ -48,18 +51,31 @@ const FamilyGroupTable = ({
     const [editCultivation, setEditCultivation] = useState<CultivationType>({});
     const [showCultivationModal, setShowCultivationModal] = useState<boolean>(false);
 
-    const [loadingLessors, setLoadingLessors] = useState<boolean>(false);
     const [loadingRemoveFarmer, setLoadingRemoveFarmer] = useState<boolean>(false);
     const [loadingPrincipalUpdate, setLoadingPrincipalUpdate] = useState<boolean>(false);
 
     const [updatingPrincipal, setUpdatingPrincial] = useState<FarmerType | null>(null);
 
-    const fetchLessors = async () => {
-        if (!currentFamilyGroup) return;
+    const [lessors, setLessors] = useState<FarmerType[]>([]);
+    const [loadingLessors, setLoadingLessors] = useState<boolean>(false);
 
+    useEffect(() => {
+        if (familyGroup.members) {
+            setCurrentFamilyGroup(familyGroup);
+            fetchLessors(familyGroup.id);
+        }
+    }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
+
+    const farmers = currentFamilyGroup?.members || [];
+    const totalArea = farmers.reduce(
+        (acc, farmer) => acc + (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0),
+        0
+    );
+
+    const fetchLessors = async (id: number) => {
         setLoadingLessors(true);
 
-        const res = await axiosInstance(`/family-group/lessors/${currentFamilyGroup.id}`);
+        const res = await axiosInstance(`/family-group/lessors/${id}`);
 
         if (res.status === 200) {
             setLessors(res.data)
@@ -69,20 +85,11 @@ const FamilyGroupTable = ({
     }
 
     useEffect(() => {
-        fetchLessors();
-    }, [currentFamilyGroup]);
-
-    useEffect(() => {
-        if (familyGroup.members) {
-            setCurrentFamilyGroup(familyGroup);
+        if (groupToRefresh === familyGroup.id) {
+            fetchLessors(groupToRefresh);
+            onRefreshComplete?.();
         }
-    }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
-
-    const farmers = currentFamilyGroup?.members || [];
-    const totalArea = farmers.reduce(
-        (acc, farmer) => acc + (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0),
-        0
-    );
+    }, [groupToRefresh]);
 
     const handleEditFarmer = (farmer: FarmerType) => {
         setModalFarmerShow(true);
@@ -134,11 +141,6 @@ const FamilyGroupTable = ({
         }
     };
 
-    const openAssetModal = (farmer: FarmerType) => {
-        setCurrentFarmer(farmer);
-        setShow(true);
-    }
-
     const handleOpenRemoveModal = async (farmer: FarmerType) => {
         setCurrentFarmer(farmer);
         setModalConfirmRemove(true);
@@ -160,18 +162,6 @@ const FamilyGroupTable = ({
             setCurrentFarmer(null);
         }
     }
-
-    const handleFarmerUpdated = (updatedFarmer: FarmerType) => {
-        if (!currentFamilyGroup) return;
-        const updatedFarmers = (currentFamilyGroup.members ?? []).map(f =>
-            f.registrationNumber === updatedFarmer.registrationNumber ? updatedFarmer : f
-        );
-        currentFamilyGroup.members = updatedFarmers;
-
-        if (currentFarmer?.registrationNumber === updatedFarmer.registrationNumber) {
-            setCurrentFarmer(updatedFarmer);
-        }
-    };
 
     const handleCloseCultivationModal = () => {
         setShowCultivationModal(false);
@@ -319,7 +309,9 @@ const FamilyGroupTable = ({
                                 <td>
                                     <button
                                         className="button_info btn_sm"
-                                        onClick={() => openAssetModal(f)}
+                                        onClick={() => {
+                                            onEditAssets && onEditAssets(f)
+                                        }}
                                         title="Editar Bens"
                                     >
                                         <FaTractor />
@@ -380,7 +372,7 @@ const FamilyGroupTable = ({
                     })}
 
                 </CustomTable>
-                {lessors.length > 0 && (
+                {lessors && lessors.length > 0 && (
                     <>
                         {loadingLessors ? (
                             <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>
@@ -489,16 +481,6 @@ const FamilyGroupTable = ({
                     </button>
                 </div>
             </div >
-            <AssetModal
-                show={show}
-                onClose={() => {
-                    fetchLessors();
-                    setShow(false);
-                }}
-                farmer={currentFarmer}
-                onChange={() => { }}
-                onFarmerUpdated={handleFarmerUpdated}
-            />
 
             <FarmerModal
                 show={modalFarmerShow}
