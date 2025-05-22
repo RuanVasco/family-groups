@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { usePaginatedFetchData } from "../../Hook/usePaginatedFetchData";
 import FamilyGroupTable from "../FamilyGroupTable";
 import { Button, Form, Modal } from "react-bootstrap";
-import Select, { SingleValue } from "react-select";
+import { SingleValue } from "react-select";
 import Pagination from "../Common/Pagination";
 import CustomTable from "../Common/CustomTable";
 import { useFetchItem } from "../../Hook/useFetchItem";
