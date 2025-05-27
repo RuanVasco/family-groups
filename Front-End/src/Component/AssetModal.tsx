@@ -238,7 +238,7 @@ const AssetModal = ({
         (asset.owner?.registrationNumber === currentFarmer?.registrationNumber) ? setIsOwner(true) : false;
         setFormMode("update");
         setNewAsset(asset);
-        handleShowFormToggle();
+        if (!showForm) handleShowFormToggle();
     };
 
     const handleRemoveAsset = async (asset: AssetType) => {
@@ -585,8 +585,9 @@ const AssetModal = ({
                                                     <div className="d-flex gap-2">
                                                         <button
                                                             className="button_edit button_sm"
-                                                            onClick={() => handleUpdateAsset(asset)}
-                                                            disabled={showForm}
+                                                            onClick={() => {
+                                                                handleUpdateAsset(asset)
+                                                            }}
                                                             title="Editar bem"
                                                         >
                                                             <FaPencil />

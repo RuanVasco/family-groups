@@ -4,29 +4,22 @@ import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.Type;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
+import br.com.cotrisoja.familyGroups.Repository.Spec.FarmerSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.security.core.parameters.P;
+import jakarta.persistence.criteria.Predicate;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public interface FarmerRepository extends JpaRepository<Farmer, String> {
-
-//    @Query("""
-//    SELECT f FROM Farmer f
-//        WHERE f.status = 'ACTIVE' AND
-//              (f.familyGroup IS NULL OR f.familyGroup.id IN (
-//                  SELECT fg.id FROM FamilyGroup fg
-//                  JOIN fg.members m
-//                  GROUP BY fg.id
-//                  HAVING COUNT(m) = 1
-//              ))
-//    """)
-//    Page<Farmer> findAvailableFarmers(Pageable pageable);
+public interface FarmerRepository extends
+        JpaRepository<Farmer, String>,
+        JpaSpecificationExecutor<Farmer> {
 
     @Query("""
         SELECT f FROM Farmer f
@@ -39,144 +32,169 @@ public interface FarmerRepository extends JpaRepository<Farmer, String> {
     """)
     Page<Farmer> findAvailableFarmers(Pageable pageable);
 
-    @Query("""
-    SELECT f FROM Farmer f
-    WHERE f.status = 'ACTIVE'
-      AND (f.familyGroup IS NULL OR f.familyGroup.id IN (
-           SELECT fg.id FROM FamilyGroup fg
-           JOIN fg.members m
-           GROUP BY fg.id
-           HAVING COUNT(m) = 1))
-      AND LOWER(CAST(f.name AS text)) LIKE LOWER(CONCAT('%', :search, '%'))
-""")
-    Page<Farmer> findAvailableFarmersByName(@Param("search") String search, Pageable pageable);
+    default Page<Farmer> findAvailableFarmersByName(String search, Pageable page) {
+        Specification<Farmer> spec = Specification.<Farmer>where(FarmerSpecifications.nameContainsTokens(search))
+                .and((r, q, cb) -> cb.equal(r.get("status"), StatusEnum.ACTIVE))
+                .and((r, q, cb) -> cb.or(
+                        cb.isNull(r.get("familyGroup")),
+                        cb.equal(cb.size(r.get("familyGroup").get("members")), 1)
+                ));
+        return findAll(spec, page);
+    }
 
-    @Query("""
-        SELECT f
-        FROM   Farmer f
-        LEFT JOIN f.familyGroup fg
-        LEFT JOIN fg.principal p
-        WHERE  LOWER(f.name) LIKE LOWER(CONCAT('%', :value, '%'))
-           OR  LOWER(CAST(f.registrationNumber AS string)) LIKE LOWER(CONCAT('%', :value, '%'))
-           OR  LOWER(p.name) LIKE LOWER(CONCAT('%', :value, '%'))
-        """)
-    Page<Farmer> findByValue(@Param("value") String value, Pageable pageable);
+    default Page<Farmer> findByValue(String value, Pageable page) {
 
-    @Query("""
-    SELECT f FROM Farmer f
-    WHERE (LOWER(f.name) LIKE LOWER(CONCAT('%', :value, '%'))
-       OR LOWER(CAST(f.registrationNumber AS string)) LIKE LOWER(CONCAT('%', :value, '%'))
-       OR LOWER(f.familyGroup.principal.name) LIKE LOWER(CONCAT('%', :value, '%')))
-      AND f.type.id = :typeId
-""")
-    Page<Farmer> findByValueAndType(@Param("value") String value, @Param("typeId") Long typeId, Pageable pageable);
+        value = (value == null) ? "" : value.trim().toLowerCase();
+        String[] tokens = value.split("\\s+");
 
-    @Query("SELECT f FROM Farmer f WHERE f.technician = :technician")
-    Page<Farmer> findByTechnician(@Param("technician") User technician, Pageable pageable);
+        String finalValue = value;
+        Specification<Farmer> spec = (root, q, cb) -> {
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.technician = :technician
-          AND LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
-    """)
-    Page<Farmer> findByTechnicianWithSearch(
-            @Param("technician") User technician,
-            @Param("search") String search,
-            Pageable pageable);
+            List<Predicate> nameParts = new ArrayList<>();
+            for (String t : tokens) {
+                nameParts.add(cb.like(cb.lower(root.get("name")), "%" + t + "%"));
+            }
+            Predicate nameHasAllTokens = cb.and(nameParts.toArray(Predicate[]::new));
 
-    /* ---- Sem Técnico ---- */
-    @Query("SELECT f FROM Farmer f WHERE f.technician IS NULL")
-    Page<Farmer> findWithoutTechnician(Pageable pageable);
+            List<Predicate> principalParts = new ArrayList<>();
+            for (String t : tokens) {
+                principalParts.add(
+                        cb.like(cb.lower(root.join("familyGroup")
+                                .join("principal")
+                                .get("name")), "%" + t + "%"));
+            }
+            Predicate principalHasAllTokens = cb.and(principalParts.toArray(Predicate[]::new));
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.technician IS NULL
-          AND LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
-    """)
-    Page<Farmer> findWithoutTechnicianWithSearch(
-            @Param("search") String search,
-            Pageable pageable);
+            Predicate regLike = cb.like(
+                    cb.lower(root.get("registrationNumber").as(String.class)),
+                    "%" + finalValue + "%");
 
-    /* ---- Por Técnico + Tipo ---- */
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.technician = :technician AND f.type = :type
-    """)
-    Page<Farmer> findByTechnicianAndType(
-            @Param("technician") User technician,
-            @Param("type") Type type,
-            Pageable pageable);
+            return cb.or(nameHasAllTokens, principalHasAllTokens, regLike);
+        };
+        return findAll(spec, page);
+    }
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.technician = :technician AND f.type = :type
-          AND LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
-    """)
-    Page<Farmer> findByTechnicianAndTypeWithSearch(
-            @Param("technician") User technician,
-            @Param("type") Type type,
-            @Param("search") String search,
-            Pageable pageable);
 
-    /* ---- Sem Técnico + Tipo ---- */
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.technician IS NULL AND f.type = :type
-    """)
-    Page<Farmer> findWithoutTechnicianAndType(
-            @Param("type") Type type,
-            Pageable pageable);
+    default Page<Farmer> findByValueAndType(String value,
+                                            Long   typeId,
+                                            Pageable page) {
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.technician IS NULL AND f.type = :type
-          AND LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
-    """)
-    Page<Farmer> findWithoutTechnicianAndTypeWithSearch(
-            @Param("type") Type type,
-            @Param("search") String search,
-            Pageable pageable);
+        Specification<Farmer> baseType =
+                (r, q, cb) -> cb.equal(r.get("type").get("id"), typeId);
 
-    /* ---- Por Carteira (Branch) ---- */
-    @Query("SELECT f FROM Farmer f WHERE f.branch = :branch")
-    Page<Farmer> findByEffectiveBranch(
-            @Param("branch") Branch branch,
-            Pageable pageable);
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.branch = :branch
-          AND LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
-    """)
-    Page<Farmer> findByEffectiveBranchWithSearch(
-            @Param("branch") Branch branch,
-            @Param("search") String search,
-            Pageable pageable);
+        Specification<Farmer> nameTokens =
+                FarmerSpecifications.nameContainsTokens(value);
 
-    /* ---- Carteira + Tipo ---- */
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.branch = :branch AND f.type = :type
-    """)
-    Page<Farmer> findByEffectiveBranchAndType(
-            @Param("branch") Branch branch,
-            @Param("type") Type type,
-            Pageable pageable);
+        Specification<Farmer> principalTokens = (r, q, cb) -> {
+            if (value == null || value.isBlank()) return cb.conjunction();
+            String[] toks = value.trim().toLowerCase().split("\\s+");
+            var principal = r.join("familyGroup").join("principal");
+            List<Predicate> ps = new ArrayList<>();
+            for (String t : toks) {
+                ps.add(cb.like(cb.lower(principal.get("name")), "%" + t + "%"));
+            }
+            return cb.and(ps.toArray(Predicate[]::new));
+        };
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.branch = :branch AND f.type = :type
-          AND LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
-    """)
-    Page<Farmer> findByEffectiveBranchAndTypeWithSearch(
-            @Param("branch") Branch branch,
-            @Param("type") Type type,
-            @Param("search") String search,
-            Pageable pageable);
+        String like = "%" + value.toLowerCase() + "%";
+        Specification<Farmer> regNumber =
+                (r, q, cb) -> cb.like(cb.lower(r.get("registrationNumber")
+                        .as(String.class)), like);
 
-    @Query("""
-        SELECT f FROM Farmer f
-        WHERE f.type.id = :typeId
-    """)
-    Page<Farmer> findByType(@Param("typeId") Long typeId, Pageable pageable);
+        Specification<Farmer> full =
+                baseType.and( nameTokens.or(regNumber).or(principalTokens) );
+
+        System.out.println(nameTokens);
+
+        return findAll(full, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* POR TÉCNICO ---------------------------------------------------------- */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByTechnician(User technician, Pageable pageable);
+
+    default Page<Farmer> findByTechnicianWithSearch(User tech, String search, Pageable page) {
+        Specification<Farmer> spec = Specification.<Farmer>where(
+                        (r, q, cb) -> cb.equal(r.get("technician"), tech))
+                .and(FarmerSpecifications.nameContainsTokens(search));
+        return findAll(spec, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* SEM TÉCNICO ---------------------------------------------------------- */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByTechnicianIsNull(Pageable pageable);
+
+    default Page<Farmer> findByTechnicianIsNullWithSearch(String search, Pageable page) {
+        Specification<Farmer> spec = Specification.<Farmer>where(
+                        (r, q, cb) -> cb.isNull(r.get("technician")))
+                .and(FarmerSpecifications.nameContainsTokens(search));
+        return findAll(spec, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* POR TÉCNICO + TIPO --------------------------------------------------- */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByTechnicianAndType(User technician, Type type, Pageable pageable);
+
+    default Page<Farmer> findByTechnicianAndTypeWithSearch(
+            User tech, Type type, String search, Pageable page) {
+
+        Specification<Farmer> spec = Specification.<Farmer>where(
+                        (r, q, cb) -> cb.equal(r.get("technician"), tech))
+                .and((r, q, cb) -> cb.equal(r.get("type"), type))
+                .and(FarmerSpecifications.nameContainsTokens(search));
+        return findAll(spec, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* SEM TÉCNICO + TIPO --------------------------------------------------- */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByTechnicianIsNullAndType(Type type, Pageable pageable);
+
+    default Page<Farmer> findByTechnicianIsNullAndTypeWithSearch(
+            Type type, String search, Pageable page) {
+
+        Specification<Farmer> spec = Specification.<Farmer>where(
+                        (r, q, cb) -> cb.isNull(r.get("technician")))
+                .and((r, q, cb) -> cb.equal(r.get("type"), type))
+                .and(FarmerSpecifications.nameContainsTokens(search));
+        return findAll(spec, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* POR CARTEIRA (BRANCH) ------------------------------------------------ */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByBranch(Branch branch, Pageable pageable);
+
+    default Page<Farmer> findByEffectiveBranchWithSearch(
+            Branch branch, String search, Pageable page) {
+
+        Specification<Farmer> spec = Specification.<Farmer>where(
+                        (r, q, cb) -> cb.equal(r.get("branch"), branch))
+                .and(FarmerSpecifications.nameContainsTokens(search));
+        return findAll(spec, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* CARTEIRA + TIPO ------------------------------------------------------ */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByBranchAndType(Branch branch, Type type, Pageable pageable);
+
+    default Page<Farmer> findByEffectiveBranchAndTypeWithSearch(
+            Branch branch, Type type, String search, Pageable page) {
+
+        Specification<Farmer> spec = Specification.<Farmer>where(
+                        (r, q, cb) -> cb.equal(r.get("branch"), branch))
+                .and((r, q, cb) -> cb.equal(r.get("type"), type))
+                .and(FarmerSpecifications.nameContainsTokens(search));
+        return findAll(spec, page);
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* SOMENTE TIPO --------------------------------------------------------- */
+    /* --------------------------------------------------------------------- */
+    Page<Farmer> findByType(Long typeId, Pageable pageable);
 }

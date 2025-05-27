@@ -144,8 +144,8 @@ public class FarmerService {
         String s = (search == null || search.isBlank()) ? null : search.trim();
 
         return (s == null)
-                ? farmerRepository.findWithoutTechnician(pageable)
-                : farmerRepository.findWithoutTechnicianWithSearch(s, pageable);
+                ? farmerRepository.findByTechnicianIsNull(pageable)
+                : farmerRepository.findByTechnicianIsNullWithSearch(s, pageable);
     }
 
     public Page<Farmer> findByTechnicianAndType(User technician,
@@ -173,8 +173,8 @@ public class FarmerService {
         String s = (search == null || search.isBlank()) ? null : search.trim();
 
         return (s == null)
-                ? farmerRepository.findWithoutTechnicianAndType(type, pageable)
-                : farmerRepository.findWithoutTechnicianAndTypeWithSearch(type, s, pageable);
+                ? farmerRepository.findByTechnicianIsNullAndType(type, pageable)
+                : farmerRepository.findByTechnicianIsNullAndTypeWithSearch(type, s, pageable);
     }
 
     /* ----------------------------------------------------------
@@ -187,7 +187,7 @@ public class FarmerService {
         String s = (search == null || search.isBlank()) ? null : search.trim();
 
         return (s == null)
-                ? farmerRepository.findByEffectiveBranch(branch, pageable)
+                ? farmerRepository.findByBranch(branch, pageable)
                 : farmerRepository.findByEffectiveBranchWithSearch(branch, s, pageable);
     }
 
@@ -202,7 +202,7 @@ public class FarmerService {
         String s = (search == null || search.isBlank()) ? null : search.trim();
 
         return (s == null)
-                ? farmerRepository.findByEffectiveBranchAndType(branch, type, pageable)
+                ? farmerRepository.findByBranchAndType(branch, type, pageable)
                 : farmerRepository.findByEffectiveBranchAndTypeWithSearch(branch, type, s, pageable);
     }
 

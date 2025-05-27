@@ -279,67 +279,69 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                             sortDir={sortDirUi}
                             onSort={handleSort}
                         >
-                            {currentFarmers.map(f => {
+                            {currentFarmers
+                                .filter(f => (f.technician?.id === technician?.id))
+                                .map(f => {
 
-                                const sapOwned = (
-                                    f.ownedAssets
-                                        ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
-                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
-                                ).toFixed(2);
+                                    const sapOwned = (
+                                        f.ownedAssets
+                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                    ).toFixed(2);
 
-                                const sapLeased = (
-                                    f.leasedAssets
-                                        ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
-                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
-                                ).toFixed(2);
+                                    const sapLeased = (
+                                        f.leasedAssets
+                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                    ).toFixed(2);
 
-                                const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
+                                    const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
 
-                                const ownedArea = (f.ownedArea ?? 0).toFixed(2);
-                                const leasedArea = (f.leasedArea ?? 0).toFixed(2);
-                                const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
+                                    const ownedArea = (f.ownedArea ?? 0).toFixed(2);
+                                    const leasedArea = (f.leasedArea ?? 0).toFixed(2);
+                                    const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
 
-                                return (<tr key={Number(f.registrationNumber)}>
-                                    <td>{f.registrationNumber}</td>
-                                    <td>{f.type?.id ?? "-"}</td>
-                                    <td>{f.name}</td>
-                                    <td>{StatusLabels[f.status]}</td>
-                                    <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
-                                    <td>{f.familyGroup?.principal.name ?? "Sem grupo familiar"}</td>
-                                    <td>{`${sapOwned} ha`}</td>
-                                    <td>{`${sapLeased} ha`}</td>
-                                    <td>{`${sapTotal} ha`}</td>
-                                    <td>
-                                        <button
-                                            className="button_info btn_sm"
-                                            onClick={() => openAssetModal(f)}
-                                            title="Editar Bens"
-                                        >
-                                            <FaTractor />
-                                        </button>
-                                    </td>
-                                    <td>
-                                        {`${ownedArea} ha`}
-                                    </td>
-                                    <td>
-                                        {`${leasedArea} ha`}
-                                    </td>
-                                    <td className={sapTotal !== totalArea ? "text-danger" : ""}>
-                                        {`${totalArea} ha`}
-                                    </td>
-                                    <td className="d-flex gap-2">
+                                    return (<tr key={Number(f.registrationNumber)}>
+                                        <td>{f.registrationNumber}</td>
+                                        <td>{f.type?.id ?? "-"}</td>
+                                        <td>{f.name}</td>
+                                        <td>{StatusLabels[f.status]}</td>
+                                        <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                        <td>{f.familyGroup?.principal.name ?? "Sem grupo familiar"}</td>
+                                        <td>{`${sapOwned} ha`}</td>
+                                        <td>{`${sapLeased} ha`}</td>
+                                        <td>{`${sapTotal} ha`}</td>
+                                        <td>
+                                            <button
+                                                className="button_info btn_sm"
+                                                onClick={() => openAssetModal(f)}
+                                                title="Editar Bens"
+                                            >
+                                                <FaTractor />
+                                            </button>
+                                        </td>
+                                        <td>
+                                            {`${ownedArea} ha`}
+                                        </td>
+                                        <td>
+                                            {`${leasedArea} ha`}
+                                        </td>
+                                        <td className={sapTotal !== totalArea ? "text-danger" : ""}>
+                                            {`${totalArea} ha`}
+                                        </td>
+                                        <td className="d-flex gap-2">
 
-                                        <button
-                                            className="button_edit btn_sm"
-                                            onClick={() => { setCurrentFarmer(f); setShow(true); }}
-                                            title="Editar Produtor"
-                                        >
-                                            <FaPen />
-                                        </button>
-                                    </td>
-                                </tr>
-                                )
-                            })}
+                                            <button
+                                                className="button_edit btn_sm"
+                                                onClick={() => { setCurrentFarmer(f); setShow(true); }}
+                                                title="Editar Produtor"
+                                            >
+                                                <FaPen />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    )
+                                })}
                         </CustomTable>
                     )}
                 </Pagination>
