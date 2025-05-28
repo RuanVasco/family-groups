@@ -1,11 +1,10 @@
 package br.com.cotrisoja.familyGroups.Repository;
 
-import br.com.cotrisoja.familyGroups.Entity.Branch;
-import br.com.cotrisoja.familyGroups.Entity.Farmer;
-import br.com.cotrisoja.familyGroups.Entity.Type;
-import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Entity.*;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 import br.com.cotrisoja.familyGroups.Repository.Spec.FarmerSpecifications;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,14 +32,25 @@ public interface FarmerRepository extends
     Page<Farmer> findAvailableFarmers(Pageable pageable);
 
     default Page<Farmer> findAvailableFarmersByName(String search, Pageable page) {
-        Specification<Farmer> spec = Specification.<Farmer>where(FarmerSpecifications.nameContainsTokens(search))
-                .and((r, q, cb) -> cb.equal(r.get("status"), StatusEnum.ACTIVE))
-                .and((r, q, cb) -> cb.or(
-                        cb.isNull(r.get("familyGroup")),
-                        cb.equal(cb.size(r.get("familyGroup").get("members")), 1)
-                ));
-        return findAll(spec, page);
+        return findAll((root, query, cb) -> {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<Farmer> subRoot = subquery.from(Farmer.class);
+            subquery.select(cb.count(subRoot))
+                    .where(cb.equal(subRoot.get("familyGroup"), root.get("familyGroup")));
+
+            Predicate namePredicate = FarmerSpecifications.nameContainsTokens(search).toPredicate(root, query, cb);
+            Predicate statusPredicate = cb.equal(root.get("status"), StatusEnum.ACTIVE);
+            Predicate noGroupPredicate = cb.isNull(root.get("familyGroup"));
+            Predicate oneMemberPredicate = cb.equal(subquery, 1L);
+
+            return cb.and(
+                    namePredicate,
+                    statusPredicate,
+                    cb.or(noGroupPredicate, oneMemberPredicate)
+            );
+        }, page);
     }
+
 
     default Page<Farmer> findByValue(String value, Pageable page) {
 
@@ -75,16 +85,16 @@ public interface FarmerRepository extends
     }
 
 
-    default Page<Farmer> findByValueAndType(String value,
-                                            Long   typeId,
-                                            Pageable page) {
-
+    default Page<Farmer> findByValueAndType(String value, Long typeId, Pageable page) {
         Specification<Farmer> baseType =
                 (r, q, cb) -> cb.equal(r.get("type").get("id"), typeId);
 
+        Specification<Farmer> nameTokens = FarmerSpecifications.nameContainsTokens(value);
 
-        Specification<Farmer> nameTokens =
-                FarmerSpecifications.nameContainsTokens(value);
+        Specification<Farmer> regNumber = (r, q, cb) -> {
+            if (value == null || value.isBlank()) return cb.conjunction();
+            return cb.like(cb.lower(r.get("registrationNumber").as(String.class)), "%" + value.toLowerCase() + "%");
+        };
 
         Specification<Farmer> principalTokens = (r, q, cb) -> {
             if (value == null || value.isBlank()) return cb.conjunction();
@@ -94,25 +104,16 @@ public interface FarmerRepository extends
             for (String t : toks) {
                 ps.add(cb.like(cb.lower(principal.get("name")), "%" + t + "%"));
             }
-            return cb.and(ps.toArray(Predicate[]::new));
+            return cb.and(ps.toArray(new Predicate[0]));
         };
 
-        String like = "%" + value.toLowerCase() + "%";
-        Specification<Farmer> regNumber =
-                (r, q, cb) -> cb.like(cb.lower(r.get("registrationNumber")
-                        .as(String.class)), like);
-
-        Specification<Farmer> full =
-                baseType.and( nameTokens.or(regNumber).or(principalTokens) );
-
-        System.out.println(nameTokens);
+        Specification<Farmer> full = baseType.and(
+                Specification.where(nameTokens).or(regNumber).or(principalTokens)
+        );
 
         return findAll(full, page);
     }
 
-    /* --------------------------------------------------------------------- */
-    /* POR TÉCNICO ---------------------------------------------------------- */
-    /* --------------------------------------------------------------------- */
     Page<Farmer> findByTechnician(User technician, Pageable pageable);
 
     default Page<Farmer> findByTechnicianWithSearch(User tech, String search, Pageable page) {
@@ -122,9 +123,6 @@ public interface FarmerRepository extends
         return findAll(spec, page);
     }
 
-    /* --------------------------------------------------------------------- */
-    /* SEM TÉCNICO ---------------------------------------------------------- */
-    /* --------------------------------------------------------------------- */
     Page<Farmer> findByTechnicianIsNull(Pageable pageable);
 
     default Page<Farmer> findByTechnicianIsNullWithSearch(String search, Pageable page) {
@@ -193,8 +191,5 @@ public interface FarmerRepository extends
         return findAll(spec, page);
     }
 
-    /* --------------------------------------------------------------------- */
-    /* SOMENTE TIPO --------------------------------------------------------- */
-    /* --------------------------------------------------------------------- */
-    Page<Farmer> findByType(Long typeId, Pageable pageable);
+    Page<Farmer> findByType(Type type, Pageable pageable);
 }

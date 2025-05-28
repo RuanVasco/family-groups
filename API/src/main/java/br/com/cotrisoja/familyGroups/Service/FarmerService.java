@@ -134,8 +134,8 @@ public class FarmerService {
         String s = (search == null || search.isBlank()) ? null : search.trim();
 
         return (s == null)
-                ? farmerRepository.findByTechnician(technician, pageable)               // sem filtro
-                : farmerRepository.findByTechnicianWithSearch(technician, s, pageable); // com filtro
+                ? farmerRepository.findByTechnician(technician, pageable)
+                : farmerRepository.findByTechnicianWithSearch(technician, s, pageable);
     }
 
     public Page<Farmer> findWithoutTechnician(String search,
@@ -210,7 +210,7 @@ public class FarmerService {
         return farmerRepository.findByValueAndType(value, typeId, pageable);
     }
 
-    public Page<Farmer> findByType(Long typeId, Pageable pageable) {
-        return farmerRepository.findByType(typeId, pageable);
+    public Page<Farmer> findByType(Type type, Pageable pageable) {
+        return farmerRepository.findByType(type, pageable);
     }
 }

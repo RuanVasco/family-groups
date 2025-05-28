@@ -3,9 +3,13 @@ package br.com.cotrisoja.familyGroups.Controller;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
+import br.com.cotrisoja.familyGroups.Entity.AssetType;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
+import br.com.cotrisoja.familyGroups.Entity.Type;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Repository.AssetTypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
+import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,7 @@ public class FarmerController {
     private final FarmerService farmerService;
     private final UserRepository userRepository;
     private final BranchRepository branchRepository;
+    private final TypeRepository typeRepository;
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FarmerRequestDTO farmerRequestDTO) {
@@ -39,7 +44,7 @@ public class FarmerController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<FarmerResponseCompleteDTO>> findAll(
+    public ResponseEntity<?> findAll(
             @RequestParam(required = false) String value,
             @RequestParam(required = false) Long typeId,
             Pageable pageable
@@ -51,7 +56,17 @@ public class FarmerController {
         } else if (value != null && !value.isBlank()) {
             farmers = farmerService.findByValue(value, pageable);
         } else if (typeId != null) {
-            farmers = farmerService.findByType(typeId, pageable);
+            if (typeId > Integer.MAX_VALUE) {
+                return ResponseEntity.badRequest().body("ID fora do intervalo válido.");
+            }
+
+            Optional<Type> type = typeRepository.findById(typeId.intValue());
+
+            if (type.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            farmers = farmerService.findByType(type.get(), pageable);
         } else {
             farmers = farmerService.findAll(pageable);
         }

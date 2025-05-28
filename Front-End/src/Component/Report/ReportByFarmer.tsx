@@ -219,7 +219,7 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                     totalPages={totalPages}
                     onPageChange={page => fetchPage(page, { ...baseParams, ...filters })}
                 >
-                    {!currentFarmers.length ? (
+                    {currentFarmers && currentFarmers.length === 0 ? (
                         <h5 className="fw-bold mx-auto my-3">Nenhum dado encontrado.</h5>
                     ) : isLoading ? (
                         <div className="d-flex justify-content-center align-items-center py-5" style={{ height: 100 }}>

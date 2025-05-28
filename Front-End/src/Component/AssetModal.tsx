@@ -618,7 +618,6 @@ const AssetModal = ({
                                     headers={[
                                         "Tipo",
                                         "Descrição",
-                                        "CAR",
                                         "Endereço",
                                         "Quantidade",
                                         "Proprietário",
@@ -631,7 +630,6 @@ const AssetModal = ({
                                             <tr key={asset.id}>
                                                 <td>{asset.owner?.registrationNumber === currentFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
                                                 <td>{asset.description}</td>
-                                                <td>{asset.car}</td>
                                                 <td>{asset.address}</td>
                                                 <td>{asset.amount} ha</td>
                                                 <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
