@@ -121,6 +121,11 @@ const AssetModal = ({
     const handleSubmit = async () => {
         if (!newAsset || !currentFarmer) return;
 
+        if (newAsset.cultivable > newAsset.amount) {
+            toast.error("A área cultivável não pode ser maior do que a área total do bem.");
+            return;
+        }
+
         try {
             let res;
             let msgSuccess = "";
