@@ -8,6 +8,7 @@ import AssetType from "../Type/AssetType";
 import CustomTable from "./Common/CustomTable";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
+import StatusDot from "./Common/StatusDot";
 
 interface AssetModalProps {
     show: boolean;
@@ -619,9 +620,11 @@ const AssetModal = ({
                                         "Tipo",
                                         "Descrição",
                                         "Endereço",
-                                        "Quantidade",
+                                        "Área",
+                                        "Cultivavel",
                                         "Proprietário",
                                         "Arrendatário",
+                                        "CAR",
                                         "Ações",
                                     ]}
                                 >
@@ -632,8 +635,10 @@ const AssetModal = ({
                                                 <td>{asset.description}</td>
                                                 <td>{asset.address}</td>
                                                 <td>{asset.amount} ha</td>
+                                                <td>{asset.cultivable ? asset.cultivable + " ha" : "Não informado"}</td>
                                                 <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>
                                                 <td>{asset.leasedTo?.registrationNumber} - {asset.leasedTo?.name}</td>
+                                                <td><StatusDot color={asset.car ? 'green' : 'red'} /></td>
                                                 <td>
                                                     <div className="d-flex gap-2">
                                                         <button
