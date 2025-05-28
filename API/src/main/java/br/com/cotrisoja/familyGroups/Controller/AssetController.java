@@ -29,25 +29,7 @@ public class AssetController {
 	public ResponseEntity<?> createAsset(
 			@RequestBody AssetRequestDTO asset
 	) {
-		String description = asset.description();
-
-		AssetType assetType = assetTypeRepository.findById(asset.assetTypeId())
-				.orElseGet(() -> assetTypeRepository.findById(1L)
-						.orElseThrow(() -> new IllegalStateException("Tipo padrão não encontrado.")));
-
-		Farmer owner = null;
-		Optional<Farmer> optionalOwner = farmerService.findById(asset.ownerRegistrationNumber());
-		if (optionalOwner.isEmpty()) {
-			return ResponseEntity.badRequest().body("Produtor proprietário não foi encontrado.");
-		}
-		owner = optionalOwner.get();
-
-		Farmer leaser = null;
-		if (asset.leasedToRegistrationNumber() != null && !asset.leasedToRegistrationNumber().isEmpty()) {
-			leaser = farmerService.findById(asset.leasedToRegistrationNumber()).orElse(null);
-		}
-
-		assetService.create(assetType, asset.amount(), asset.address(), description, owner, leaser);
+		assetService.create(asset);
 
 		return ResponseEntity.ok().build();
 	}
@@ -79,46 +61,10 @@ public class AssetController {
 	@PutMapping("/{assetId}")
 	public ResponseEntity<?> updateAsset(
 			@PathVariable String assetId,
-			@RequestBody AssetRequestDTO asset
-	) {
-		Optional<Map.Entry<String, Long>> parsedId = assetService.parseAssetId(assetId);
+			@RequestBody AssetRequestDTO dto) {
 
-		if (parsedId.isEmpty()) {
-			return ResponseEntity.badRequest().body("Formato de assetId inválido. Use 'registrationNumber-sapId'.");
-		}
-
-		String registrationNumber = parsedId.get().getKey();
-		Long sapId = parsedId.get().getValue();
-
-		Optional<Asset> assetOptional = assetService.findById(registrationNumber, sapId);
-
-		if (assetOptional.isEmpty()) {
-			return ResponseEntity.badRequest().body("Bem não encontrado.");
-		}
-
-		AssetType assetType = assetTypeRepository.findById(asset.assetTypeId())
-				.orElseGet(() -> assetTypeRepository.findById(1L)
-						.orElseThrow(() -> new IllegalStateException("Tipo padrão não encontrado.")));
-
-		Farmer owner = farmerService.findById(asset.ownerRegistrationNumber())
-				.orElseThrow(() -> new IllegalStateException("Produtor proprietário não foi encontrado."));
-
-		Farmer leaser = null;
-		if (asset.leasedToRegistrationNumber() != null && !asset.leasedToRegistrationNumber().isEmpty()) {
-			leaser = farmerService.findById(asset.leasedToRegistrationNumber()).orElse(null);
-		}
-
-		assetService.update(
-				assetOptional.get(),
-				assetType,
-				asset.amount(),
-				asset.address(),
-				asset.description(),
-				owner,
-				leaser
-		);
-
-		return ResponseEntity.ok().build();
+		Asset updated = assetService.update(assetId, dto);
+		return ResponseEntity.ok(AssetDTO.fromEntity(updated));
 	}
 
 	@PutMapping("/lease")

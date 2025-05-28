@@ -10,7 +10,10 @@ public record AssetDTO(
 		double amount,
 		AssetTypeDTO assetType,
 		FarmerResponseMinimalDTO leasedTo,
-		FarmerResponseMinimalDTO owner
+		FarmerResponseMinimalDTO owner,
+		String car,
+		String registration,
+		Double cultivable
 ) {
 	public static AssetDTO fromEntity(Asset asset) {
 		String compositeId =
@@ -25,7 +28,10 @@ public record AssetDTO(
 				asset.getAmount(),
 				asset.getAssetType() != null ? AssetTypeDTO.fromEntity(asset.getAssetType()) : null,
 				FarmerResponseMinimalDTO.fromEntity(asset.getLeasedTo()),
-				FarmerResponseMinimalDTO.fromEntity(asset.getOwner())
+				FarmerResponseMinimalDTO.fromEntity(asset.getOwner()),
+				asset.getCar(),
+				asset.getRegistration(),
+				asset.getCultivable()
 		);
 	}
 }

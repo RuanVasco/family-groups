@@ -138,12 +138,15 @@ const AssetModal = ({
                             ? newAsset.leasedTo?.registrationNumber
                             : currentFarmer.registrationNumber,
                         assetTypeId: 1,
+                        registration: newAsset.registration,
+                        car: newAsset.car,
+                        cultivable: newAsset.cultivable
                     });
                     msgSuccess = "Bem adicionado";
                     break;
 
                 case "update":
-                    res = await axiosInstance.put(`/asset/${newAsset.id}`, {
+                    const payload = {
                         description: newAsset.description,
                         address: newAsset.address,
                         amount: newAsset.amount,
@@ -154,7 +157,13 @@ const AssetModal = ({
                             ? newAsset.leasedTo?.registrationNumber
                             : currentFarmer.registrationNumber,
                         assetTypeId: 1,
-                    });
+                        registration: newAsset.registration,
+                        car: newAsset.car,
+                        cultivable: newAsset.cultivable,
+                    };
+
+                    res = await axiosInstance.put(`/asset/${newAsset.id}`, payload);
+
                     msgSuccess = "Bem atualizado";
                     break;
 
@@ -212,6 +221,9 @@ const AssetModal = ({
                 owner: undefined,
                 leasedTo: undefined,
                 assetType: { id: 0, description: "" },
+                registration: "",
+                car: "",
+                cultivable: 0
             });
         }
         handleShowFormToggle();
@@ -229,6 +241,9 @@ const AssetModal = ({
                 owner: undefined,
                 leasedTo: undefined,
                 assetType: { id: 0, description: "" },
+                registration: "",
+                car: "",
+                cultivable: 0
             });
         }
         handleShowFormToggle();
@@ -473,6 +488,19 @@ const AssetModal = ({
                                             </Form.Group>
 
                                             <Form.Group className="mt-2">
+                                                <Form.Label>Área Cultivável (ha)</Form.Label>
+                                                <Form.Control
+                                                    type="number"
+                                                    value={newAsset?.cultivable ?? ""}
+                                                    onChange={e =>
+                                                        setNewAsset(prev =>
+                                                            prev ? { ...prev, cultivable: parseFloat(e.target.value.replace(",", ".")) || 0 } : null
+                                                        )
+                                                    }
+                                                />
+                                            </Form.Group>
+
+                                            <Form.Group className="mt-2">
                                                 <Form.Label>Tipo *</Form.Label>
                                                 <Select
                                                     options={assetOptions}
@@ -544,6 +572,26 @@ const AssetModal = ({
                                             </Form.Group>
 
                                             <Form.Group className="mt-2">
+                                                <Form.Label>Matrícula</Form.Label>
+                                                <Form.Control
+                                                    value={newAsset?.registration ?? ""}
+                                                    onChange={e =>
+                                                        setNewAsset(prev => (prev ? { ...prev, registration: e.target.value } : null))
+                                                    }
+                                                />
+                                            </Form.Group>
+
+                                            <Form.Group className="mt-2">
+                                                <Form.Label>CAR</Form.Label>
+                                                <Form.Control
+                                                    value={newAsset?.car ?? ""}
+                                                    onChange={e =>
+                                                        setNewAsset(prev => (prev ? { ...prev, car: e.target.value } : null))
+                                                    }
+                                                />
+                                            </Form.Group>
+
+                                            <Form.Group className="mt-2">
                                                 <Form.Label>Endereço</Form.Label>
                                                 <Form.Control
                                                     value={newAsset?.address ?? ""}
@@ -565,6 +613,7 @@ const AssetModal = ({
                                     headers={[
                                         "Tipo",
                                         "Descrição",
+                                        "CAR",
                                         "Endereço",
                                         "Quantidade",
                                         "Proprietário",
@@ -577,6 +626,7 @@ const AssetModal = ({
                                             <tr key={asset.id}>
                                                 <td>{asset.owner?.registrationNumber === currentFarmer?.registrationNumber ? "Própria" : "Arrendada"}</td>
                                                 <td>{asset.description}</td>
+                                                <td>{asset.car}</td>
                                                 <td>{asset.address}</td>
                                                 <td>{asset.amount} ha</td>
                                                 <td>{asset.owner?.registrationNumber} - {asset.owner?.name}</td>

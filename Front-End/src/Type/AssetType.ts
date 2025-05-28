@@ -9,6 +9,9 @@ export interface AssetType {
   owner?: FarmerType | null;
   leasedTo?: FarmerType | null;
   assetType: AssetTypeType;
+  registration: string;
+  car: string;
+  cultivable: number;
 }
 
 export default AssetType;

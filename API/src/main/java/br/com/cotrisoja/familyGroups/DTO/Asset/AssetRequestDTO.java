@@ -7,5 +7,8 @@ public record AssetRequestDTO(
 		String ownerRegistrationNumber,
 		String leasedToRegistrationNumber,
 		Long assetCategoryId,
-		Long assetTypeId
+		Long assetTypeId,
+		String car,
+		String registration,
+		Double cultivable
 ) {}
