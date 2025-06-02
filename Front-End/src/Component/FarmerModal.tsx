@@ -1,14 +1,21 @@
 import { Button, Form, Modal } from "react-bootstrap";
+import { useEffect, useMemo } from "react";
+import Select, { SingleValue } from "react-select";
+import AsyncSelect from "react-select/async";
+import axiosInstance from "../axiosInstance";
+import { useFetchData } from "../Hook/useFetchData";
+
 import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { FarmerType } from "../Type/FarmerType";
 import { UserType } from "../Type/UserType";
-import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
-import Select from "react-select";
-import AsyncSelect from 'react-select/async';
-import axiosInstance from "../axiosInstance";
-import { useFetchData } from "../Hook/useFetchData";
-import { useEffect } from "react";
 import { BranchType } from "../Type/BranchType";
+import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
+
+
+type TechnicianOption = {
+    value: UserType | null;
+    label: string;
+};
 
 interface FarmerModalProps {
     show: boolean;
@@ -19,25 +26,40 @@ interface FarmerModalProps {
     onChange: (field: keyof FarmerType, value: any) => void;
 }
 
+
 const FarmerModal = ({
     show,
     onClose,
     onSubmit,
     currentFarmer,
     modalMode,
-    onChange
+    onChange,
 }: FarmerModalProps) => {
-    const { data: users, fetch } = useFetchData<UserType[]>();
+    const { data: users = [], fetch } = useFetchData<UserType[]>();
 
     useEffect(() => {
         fetch("/user/all", "Failed to load users.");
-    }, []);
+    }, [fetch]);
+
+    const technicianOptions: TechnicianOption[] = [
+        { value: null, label: "Sem técnico" },
+        ...(users ?? []).map<TechnicianOption>((u) => ({
+            value: u,
+            label: u.name,
+        })),
+    ];
+
+    const selectedTechnician: TechnicianOption | null = useMemo(() => {
+        if (!currentFarmer?.technician) return null;
+        return technicianOptions.find(
+            (opt) => opt.value?.id === currentFarmer.technician?.id,
+        ) ?? null;
+    }, [technicianOptions, currentFarmer?.technician]);
 
     const toPositiveNumberOrUndefined = (raw: string) => {
-        if (raw === '') return undefined;
+        if (raw === "") return undefined;
         const n = Number(raw);
-        return Number.isFinite(n) && n >= 0 ? n
-            : undefined;
+        return Number.isFinite(n) && n >= 0 ? n : undefined;
     };
 
     return (
@@ -47,6 +69,7 @@ const FarmerModal = ({
                     {modalMode === "create" ? "Criar Produtor" : "Editar Produtor"}
                 </Modal.Title>
             </Modal.Header>
+
             <Modal.Body>
                 <Form>
                     <Form.Group className="mb-3">
@@ -54,10 +77,13 @@ const FarmerModal = ({
                         <Form.Control
                             type="text"
                             value={Number(currentFarmer?.registrationNumber) || ""}
-                            onChange={(e) => onChange("registrationNumber", e.target.value)}
+                            onChange={(e) =>
+                                onChange("registrationNumber", e.target.value)
+                            }
                             disabled={modalMode === "edit"}
                         />
                     </Form.Group>
+
                     <Form.Group className="mb-3">
                         <Form.Label>Nome</Form.Label>
                         <Form.Control
@@ -68,21 +94,25 @@ const FarmerModal = ({
                             disabled={modalMode === "edit"}
                         />
                     </Form.Group>
+
                     <Form.Group className="mb-3">
                         <Form.Label>Situação</Form.Label>
                         <Form.Select
                             required
                             value={currentFarmer?.status || ""}
-                            onChange={(e) => onChange("status", e.target.value as StatusEnum)}
+                            onChange={(e) =>
+                                onChange("status", e.target.value as StatusEnum)
+                            }
                         >
                             <option value="">Selecione uma opção</option>
-                            {Object.values(StatusEnum).map((status) => (
-                                <option key={status} value={status}>
-                                    {StatusLabels[status]}
+                            {Object.values(StatusEnum).map((s) => (
+                                <option key={s} value={s}>
+                                    {StatusLabels[s]}
                                 </option>
                             ))}
                         </Form.Select>
                     </Form.Group>
+
                     <Form.Group className="mb-3">
                         <Form.Label>Área própria (ha)</Form.Label>
                         <Form.Control
@@ -90,12 +120,13 @@ const FarmerModal = ({
                             type="number"
                             min={0}
                             step="any"
-                            value={currentFarmer?.ownedArea ?? ''}
-                            onChange={e =>
-                                onChange('ownedArea', toPositiveNumberOrUndefined(e.target.value))
+                            value={currentFarmer?.ownedArea ?? ""}
+                            onChange={(e) =>
+                                onChange("ownedArea", toPositiveNumberOrUndefined(e.target.value))
                             }
                         />
                     </Form.Group>
+
                     <Form.Group className="mb-3">
                         <Form.Label>Área arrendada (ha)</Form.Label>
                         <Form.Control
@@ -103,66 +134,72 @@ const FarmerModal = ({
                             type="number"
                             min={0}
                             step="any"
-                            value={currentFarmer?.leasedArea ?? ''}
-                            onChange={e =>
-                                onChange('leasedArea', toPositiveNumberOrUndefined(e.target.value))
+                            value={currentFarmer?.leasedArea ?? ""}
+                            onChange={(e) =>
+                                onChange("leasedArea", toPositiveNumberOrUndefined(e.target.value))
                             }
                         />
                     </Form.Group>
+
                     <Form.Group className="mb-3">
                         <Form.Label>Grupo Familiar</Form.Label>
                         <AsyncSelect
                             cacheOptions
                             loadOptions={async (inputValue) => {
                                 try {
-                                    const res = await axiosInstance.get(`/family-group`, { params: { search: inputValue, size: 10 } });
+                                    const res = await axiosInstance.get("/family-group", {
+                                        params: { search: inputValue, size: 10 },
+                                    });
                                     return res.data.content.map((group: FamilyGroupType) => ({
                                         value: group,
-                                        label: group.principal.name
+                                        label: group.principal.name,
                                     }));
-                                } catch (error) {
+                                } catch {
                                     return [];
                                 }
                             }}
                             value={
                                 currentFarmer?.familyGroup
-                                    ? { value: currentFarmer.familyGroup, label: currentFarmer.familyGroup.principal.name }
+                                    ? {
+                                        value: currentFarmer.familyGroup,
+                                        label: currentFarmer.familyGroup.principal.name,
+                                    }
                                     : null
                             }
-                            onChange={(selectedOption) => onChange("familyGroup", selectedOption?.value)}
+                            onChange={(opt) => onChange("familyGroup", opt?.value)}
                             placeholder="Buscar grupo familiar..."
                             isClearable
                         />
                     </Form.Group>
-                    {users && (
-                        <Form.Group>
-                            <Form.Label>Técnico</Form.Label>
-                            <Select
-                                options={users.map((user) => ({
-                                    value: user,
-                                    label: user.name
-                                }))}
-                                value={users
-                                    .map((user) => ({ value: user, label: user.name }))
-                                    .find(opt => opt.value.id === currentFarmer?.technician?.id)}
-                                onChange={(selectedOption) => onChange("technician", selectedOption?.value)}
-                                placeholder="Selecione um técnico"
-                                isClearable
-                            />
-                        </Form.Group>
-                    )}
+
+                    <Form.Group>
+                        <Form.Label>Técnico</Form.Label>
+                        <Select<TechnicianOption, false>
+                            options={technicianOptions}
+                            value={selectedTechnician}
+                            onChange={(opt: SingleValue<TechnicianOption>) =>
+                                onChange("technician", opt?.value ?? null)
+                            }
+                            placeholder="Selecione um técnico"
+                            isClearable
+                            getOptionValue={(opt) => opt.value?.id?.toString() ?? "none"}
+                        />
+                    </Form.Group>
+
                     <Form.Group className="mt-3">
                         <Form.Label>Carteira</Form.Label>
                         <AsyncSelect
                             cacheOptions
                             loadOptions={async (inputValue) => {
                                 try {
-                                    const res = await axiosInstance.get(`/branch`, { params: { search: inputValue, size: 10 } });
+                                    const res = await axiosInstance.get("/branch", {
+                                        params: { search: inputValue, size: 10 },
+                                    });
                                     return res.data.map((branch: BranchType) => ({
                                         value: branch,
-                                        label: branch.name
+                                        label: branch.name,
                                     }));
-                                } catch (error) {
+                                } catch {
                                     return [];
                                 }
                             }}
@@ -171,13 +208,14 @@ const FarmerModal = ({
                                     ? { value: currentFarmer.branch, label: currentFarmer.branch.name }
                                     : null
                             }
-                            onChange={(selectedOption) => onChange("branch", selectedOption?.value)}
+                            onChange={(opt) => onChange("branch", opt?.value)}
                             placeholder="Buscar carteira..."
                             isClearable
                         />
                     </Form.Group>
                 </Form>
             </Modal.Body>
+
             <Modal.Footer>
                 <Button variant="secondary" onClick={onClose}>
                     Cancelar
@@ -187,7 +225,7 @@ const FarmerModal = ({
                 </Button>
             </Modal.Footer>
         </Modal>
-    )
-}
+    );
+};
 
 export default FarmerModal;
