@@ -8,7 +8,6 @@ import { useFetchData } from "../Hook/useFetchData";
 import { FamilyGroupType } from "../Type/FamilyGroupType";
 import { FarmerType } from "../Type/FarmerType";
 import { UserType } from "../Type/UserType";
-import { BranchType } from "../Type/BranchType";
 import { StatusEnum, StatusLabels } from "../Enum/StatusEnum";
 
 
@@ -38,8 +37,9 @@ const FarmerModal = ({
     const { data: users = [], fetch } = useFetchData<UserType[]>();
 
     useEffect(() => {
+        if (!fetch) return;
         fetch("/user/all", "Failed to load users.");
-    }, [fetch]);
+    }, [show]);
 
     const technicianOptions: TechnicianOption[] = [
         { value: null, label: "Sem técnico" },
@@ -60,6 +60,15 @@ const FarmerModal = ({
         if (raw === "") return undefined;
         const n = Number(raw);
         return Number.isFinite(n) && n >= 0 ? n : undefined;
+    };
+
+    const loadBranch27 = async () => {
+        try {
+            const { data } = await axiosInstance.get("/branch/27");
+            return data ? [{ value: data, label: data.name }] : [];
+        } catch {
+            return [];
+        }
     };
 
     return (
@@ -190,26 +199,15 @@ const FarmerModal = ({
                         <Form.Label>Carteira</Form.Label>
                         <AsyncSelect
                             cacheOptions
-                            loadOptions={async (inputValue) => {
-                                try {
-                                    const res = await axiosInstance.get("/branch", {
-                                        params: { search: inputValue, size: 10 },
-                                    });
-                                    return res.data.map((branch: BranchType) => ({
-                                        value: branch,
-                                        label: branch.name,
-                                    }));
-                                } catch {
-                                    return [];
-                                }
-                            }}
+                            defaultOptions
+                            loadOptions={loadBranch27}
                             value={
                                 currentFarmer?.branch
                                     ? { value: currentFarmer.branch, label: currentFarmer.branch.name }
                                     : null
                             }
                             onChange={(opt) => onChange("branch", opt?.value)}
-                            placeholder="Buscar carteira..."
+                            placeholder="Carteira 27"
                             isClearable
                         />
                     </Form.Group>

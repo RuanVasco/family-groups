@@ -8,6 +8,7 @@ import axiosInstance from "../axiosInstance";
 import { Button, Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import FarmerModal from "./FarmerModal";
+import { NumericFormat } from "react-number-format";
 
 interface FamilyGroupTableProps {
     familyGroup: FamilyGroupType;
@@ -28,6 +29,13 @@ interface CultivationType {
     grainCornArea?: number;
     beanArea?: number;
     soybeanArea?: number;
+
+    canolaAreaParticipation?: number;
+    wheatAreaParticipation?: number;
+    cornSilageAreaParticipation?: number;
+    grainCornAreaParticipation?: number;
+    beanAreaParticipation?: number;
+    soybeanAreaParticipation?: number;
 }
 
 const FamilyGroupTable = ({
@@ -176,6 +184,13 @@ const FamilyGroupTable = ({
                 grainCornArea: currentFamilyGroup.grainCornArea,
                 beanArea: currentFamilyGroup.beanArea,
                 soybeanArea: currentFamilyGroup.soybeanArea,
+
+                canolaAreaParticipation: currentFamilyGroup.canolaAreaParticipation,
+                wheatAreaParticipation: currentFamilyGroup.wheatAreaParticipation,
+                cornSilageAreaParticipation: currentFamilyGroup.cornSilageAreaParticipation,
+                grainCornAreaParticipation: currentFamilyGroup.grainCornAreaParticipation,
+                beanAreaParticipation: currentFamilyGroup.beanAreaParticipation,
+                soybeanAreaParticipation: currentFamilyGroup.soybeanAreaParticipation,
             });
 
             setShowCultivationModal(true);
@@ -205,6 +220,9 @@ const FamilyGroupTable = ({
             setLoadingUpdateCultivations(false);
         }
     };
+
+    const pct = (part?: number, area?: number) =>
+        area && part !== undefined ? ((part / area) * 100).toFixed(2) : "0.00";
 
     return (
         <div>
@@ -441,21 +459,40 @@ const FamilyGroupTable = ({
                     headers={[
                         "Safra",
                         "Canola",
+                        "Participação",
                         "Trigo",
+                        "Participação",
                         "Milho silagem",
+                        "Participação",
                         "Milho grão",
+                        "Participação",
                         "Feijão",
-                        "Soja"
+                        "Participação",
+                        "Soja",
+                        "Participação"
                     ]}
                 >
+
                     <tr>
                         <td>2025/2026</td>
-                        <td>{currentFamilyGroup?.canolaArea?.toFixed(2) ?? "0.00"} ha</td>
-                        <td>{currentFamilyGroup?.wheatArea?.toFixed(2) ?? "0.00"} ha</td>
-                        <td>{currentFamilyGroup?.cornSilageArea?.toFixed(2) ?? "0.00"} ha</td>
-                        <td>{currentFamilyGroup?.grainCornArea?.toFixed(2) ?? "0.00"} ha</td>
-                        <td>{currentFamilyGroup?.beanArea?.toFixed(2) ?? "0.00"} ha</td>
-                        <td>{currentFamilyGroup?.soybeanArea?.toFixed(2) ?? "0.00"} ha</td>
+
+                        <td>{(currentFamilyGroup?.canolaArea ?? 0).toFixed(2)} ha</td>
+                        <td>{pct(currentFamilyGroup?.canolaAreaParticipation, currentFamilyGroup?.canolaArea)}%</td>
+
+                        <td>{(currentFamilyGroup?.wheatArea ?? 0).toFixed(2)} ha</td>
+                        <td>{pct(currentFamilyGroup?.wheatAreaParticipation, currentFamilyGroup?.wheatArea)}%</td>
+
+                        <td>{(currentFamilyGroup?.cornSilageArea ?? 0).toFixed(2)} ha</td>
+                        <td>{pct(currentFamilyGroup?.cornSilageAreaParticipation, currentFamilyGroup?.cornSilageArea)}%</td>
+
+                        <td>{(currentFamilyGroup?.grainCornArea ?? 0).toFixed(2)} ha</td>
+                        <td>{pct(currentFamilyGroup?.grainCornAreaParticipation, currentFamilyGroup?.grainCornArea)}%</td>
+
+                        <td>{(currentFamilyGroup?.beanArea ?? 0).toFixed(2)} ha</td>
+                        <td>{pct(currentFamilyGroup?.beanAreaParticipation, currentFamilyGroup?.beanArea)}%</td>
+
+                        <td>{(currentFamilyGroup?.soybeanArea ?? 0).toFixed(2)} ha</td>
+                        <td>{pct(currentFamilyGroup?.soybeanAreaParticipation, currentFamilyGroup?.soybeanArea)}%</td>
                     </tr>
                 </CustomTable>
 
@@ -534,101 +571,290 @@ const FamilyGroupTable = ({
                         </div>
                     ) : (
                         <Form>
-                            <Form.Group className="mb-2">
-                                <Form.Label>
-                                    Canola
-                                </Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.canolaArea === undefined
-                                        ? ""
-                                        : editCultivation.canolaArea}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            canolaArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-2">
-                                <Form.Label>Trigo</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.wheatArea === undefined
-                                        ? ""
-                                        : editCultivation.wheatArea}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            wheatArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-2">
-                                <Form.Label>Milho silagem</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.cornSilageArea === undefined
-                                        ? ""
-                                        : editCultivation.cornSilageArea}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            cornSilageArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                        }))
-                                    }
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-2">
-                                <Form.Label>Milho grão</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.grainCornArea === undefined
-                                        ? ""
-                                        : editCultivation.grainCornArea}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            grainCornArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                        }))
-                                    }
-                                />
+                            <Form.Group className="mb-2 d-flex gap-3">
+                                <div>
+                                    <Form.Label>Canola (ha)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editCultivation.canolaArea ?? ""}
+                                        onChange={(e) => {
+                                            const area = parseFloat(e.target.value);
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                canolaArea: isNaN(area) ? undefined : area,
+                                                canolaAreaParticipation:
+                                                    isNaN(area) || p.canolaAreaParticipation === undefined
+                                                        ? undefined
+                                                        : (p.canolaAreaParticipation / (p.canolaArea || 1)) * area,
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Form.Label>Participação (%)</Form.Label>
+                                    <NumericFormat
+                                        value={
+                                            editCultivation.canolaAreaParticipation !== undefined &&
+                                                editCultivation.canolaArea
+                                                ? (
+                                                    (editCultivation.canolaAreaParticipation /
+                                                        editCultivation.canolaArea) *
+                                                    100
+                                                ).toFixed(2)
+                                                : ""
+                                        }
+                                        onValueChange={({ floatValue }) => {
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                canolaAreaParticipation:
+                                                    floatValue === undefined || p.canolaArea === undefined
+                                                        ? undefined
+                                                        : (floatValue / 100) * p.canolaArea,
+                                            }));
+                                        }}
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        suffix="%"
+                                        inputMode="decimal"
+                                        placeholder="0,00%"
+                                        className="form-control"
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    />
+                                </div>
                             </Form.Group>
 
-                            <Form.Group className="mb-2">
-                                <Form.Label>Feijão</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.beanArea === undefined
-                                        ? ""
-                                        : editCultivation.beanArea}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            beanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                        }))
-                                    }
-                                />
+                            <Form.Group className="mb-2 d-flex gap-3">
+                                <div>
+                                    <Form.Label>Trigo (ha)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editCultivation.wheatArea ?? ""}
+                                        onChange={(e) => {
+                                            const area = parseFloat(e.target.value);
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                wheatArea: isNaN(area) ? undefined : area,
+                                                wheatAreaParticipation:
+                                                    isNaN(area) || p.wheatAreaParticipation === undefined
+                                                        ? undefined
+                                                        : (p.wheatAreaParticipation / (p.wheatArea || 1)) * area,
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Form.Label>Participação (%)</Form.Label>
+                                    <NumericFormat
+                                        value={
+                                            editCultivation.wheatAreaParticipation !== undefined &&
+                                                editCultivation.wheatArea
+                                                ? (
+                                                    (editCultivation.wheatAreaParticipation /
+                                                        editCultivation.wheatArea) *
+                                                    100
+                                                ).toFixed(2)
+                                                : ""
+                                        }
+                                        onValueChange={({ floatValue }) => {
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                wheatAreaParticipation:
+                                                    floatValue === undefined || p.wheatArea === undefined
+                                                        ? undefined
+                                                        : (floatValue / 100) * p.wheatArea,
+                                            }));
+                                        }}
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        suffix="%"
+                                        inputMode="decimal"
+                                        placeholder="0,00%"
+                                        className="form-control"
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    />
+                                </div>
                             </Form.Group>
 
-                            <Form.Group className="mb-2">
-                                <Form.Label>Soja</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    value={editCultivation.soybeanArea === undefined
-                                        ? ""
-                                        : editCultivation.soybeanArea}
-                                    onChange={(e) =>
-                                        setEditCultivation(prev => ({
-                                            ...prev,
-                                            soybeanArea: e.target.value === "" ? undefined : parseFloat(e.target.value)
-                                        }))
-                                    }
-                                />
+                            <Form.Group className="mb-2 d-flex gap-3">
+                                <div>
+                                    <Form.Label>Milho Silagem (ha)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editCultivation.cornSilageArea ?? ""}
+                                        onChange={(e) => {
+                                            const area = parseFloat(e.target.value);
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                cornSilageArea: isNaN(area) ? undefined : area,
+                                                cornSilageAreaParticipation:
+                                                    isNaN(area) || p.cornSilageAreaParticipation === undefined
+                                                        ? undefined
+                                                        : (p.cornSilageAreaParticipation / (p.cornSilageArea || 1)) *
+                                                        area,
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Form.Label>Participação (%)</Form.Label>
+                                    <NumericFormat
+                                        value={
+                                            editCultivation.cornSilageAreaParticipation !== undefined &&
+                                                editCultivation.cornSilageArea
+                                                ? (
+                                                    (editCultivation.cornSilageAreaParticipation /
+                                                        editCultivation.cornSilageArea) *
+                                                    100
+                                                ).toFixed(2)
+                                                : ""
+                                        }
+                                        onValueChange={({ floatValue }) => {
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                cornSilageAreaParticipation:
+                                                    floatValue === undefined || p.cornSilageArea === undefined
+                                                        ? undefined
+                                                        : (floatValue / 100) * p.cornSilageArea,
+                                            }));
+                                        }}
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        suffix="%"
+                                        inputMode="decimal"
+                                        placeholder="0,00%"
+                                        className="form-control"
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    />
+                                </div>
+                            </Form.Group>
+
+                            <Form.Group className="mb-2 d-flex gap-3">
+                                <div>
+                                    <Form.Label>Feijão (ha)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editCultivation.beanArea ?? ""}
+                                        onChange={(e) => {
+                                            const area = parseFloat(e.target.value);
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                beanArea: isNaN(area) ? undefined : area,
+                                                beanAreaParticipation:
+                                                    isNaN(area) || p.beanAreaParticipation === undefined
+                                                        ? undefined
+                                                        : (p.beanAreaParticipation / (p.beanArea || 1)) * area,
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Form.Label>Participação (%)</Form.Label>
+                                    <NumericFormat
+                                        value={
+                                            editCultivation.beanAreaParticipation !== undefined &&
+                                                editCultivation.beanArea
+                                                ? (
+                                                    (editCultivation.beanAreaParticipation /
+                                                        editCultivation.beanArea) *
+                                                    100
+                                                ).toFixed(2)
+                                                : ""
+                                        }
+                                        onValueChange={({ floatValue }) => {
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                beanAreaParticipation:
+                                                    floatValue === undefined || p.beanArea === undefined
+                                                        ? undefined
+                                                        : (floatValue / 100) * p.beanArea,
+                                            }));
+                                        }}
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        suffix="%"
+                                        inputMode="decimal"
+                                        placeholder="0,00%"
+                                        className="form-control"
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    />
+                                </div>
+                            </Form.Group>
+
+                            <Form.Group className="mb-2 d-flex gap-3">
+                                <div>
+                                    <Form.Label>Soja (ha)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editCultivation.soybeanArea ?? ""}
+                                        onChange={(e) => {
+                                            const area = parseFloat(e.target.value);
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                soybeanArea: isNaN(area) ? undefined : area,
+                                                soybeanAreaParticipation:
+                                                    isNaN(area) || p.soybeanAreaParticipation === undefined
+                                                        ? undefined
+                                                        : (p.soybeanAreaParticipation / (p.soybeanArea || 1)) * area,
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Form.Label>Participação (%)</Form.Label>
+                                    <NumericFormat
+                                        value={
+                                            editCultivation.soybeanAreaParticipation !== undefined &&
+                                                editCultivation.soybeanArea
+                                                ? (
+                                                    (editCultivation.soybeanAreaParticipation /
+                                                        editCultivation.soybeanArea) *
+                                                    100
+                                                ).toFixed(2)
+                                                : ""
+                                        }
+                                        onValueChange={({ floatValue }) => {
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                soybeanAreaParticipation:
+                                                    floatValue === undefined || p.soybeanArea === undefined
+                                                        ? undefined
+                                                        : (floatValue / 100) * p.soybeanArea,
+                                            }));
+                                        }}
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        suffix="%"
+                                        inputMode="decimal"
+                                        placeholder="0,00%"
+                                        className="form-control"
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    />
+                                </div>
                             </Form.Group>
                         </Form>
                     )}

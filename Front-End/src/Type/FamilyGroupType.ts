@@ -11,4 +11,11 @@ export interface FamilyGroupType {
   grainCornArea?: number;
   beanArea?: number;
   soybeanArea?: number;
+
+  canolaAreaParticipation?: number;
+  wheatAreaParticipation?: number;
+  cornSilageAreaParticipation?: number;
+  grainCornAreaParticipation?: number;
+  beanAreaParticipation?: number;
+  soybeanAreaParticipation?: number;
 }

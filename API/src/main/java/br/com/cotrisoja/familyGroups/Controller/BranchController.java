@@ -3,6 +3,7 @@ package br.com.cotrisoja.familyGroups.Controller;
 import br.com.cotrisoja.familyGroups.DTO.Branch.BranchRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.Branch.BranchResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.Branch;
+import br.com.cotrisoja.familyGroups.Exception.BadRequestException;
 import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
 import br.com.cotrisoja.familyGroups.Service.BranchService;
 import lombok.RequiredArgsConstructor;
@@ -65,5 +66,13 @@ public class BranchController {
 
     }
 
+    @GetMapping("/{branchId}")
+    public ResponseEntity<?> getBranch(
+            @PathVariable Long branchId
+    ) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new BadRequestException("Carteira não encontrada."));
 
+        return ResponseEntity.ok(BranchResponseDTO.from(branch));
+    }
 }
