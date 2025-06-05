@@ -745,6 +745,64 @@ const FamilyGroupTable = ({
 
                             <Form.Group className="mb-2 d-flex gap-3">
                                 <div>
+                                    <Form.Label>Milho Grão (ha)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editCultivation.grainCornArea ?? ""}
+                                        onChange={(e) => {
+                                            const area = parseFloat(e.target.value);
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                grainCornArea: isNaN(area) ? undefined : area,
+                                                grainCornAreaParticipation:
+                                                    isNaN(area) || p.grainCornAreaParticipation === undefined
+                                                        ? undefined
+                                                        : (p.grainCornAreaParticipation / (p.grainCornArea || 1)) *
+                                                        area,
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Form.Label>Participação (%)</Form.Label>
+                                    <NumericFormat
+                                        value={
+                                            editCultivation.grainCornAreaParticipation !== undefined &&
+                                                editCultivation.grainCornArea
+                                                ? (
+                                                    (editCultivation.grainCornAreaParticipation /
+                                                        editCultivation.grainCornArea) *
+                                                    100
+                                                ).toFixed(2)
+                                                : ""
+                                        }
+                                        onValueChange={({ floatValue }) => {
+                                            setEditCultivation((p) => ({
+                                                ...p,
+                                                grainCornAreaParticipation:
+                                                    floatValue === undefined || p.grainCornArea === undefined
+                                                        ? undefined
+                                                        : (floatValue / 100) * p.grainCornArea,
+                                            }));
+                                        }}
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        suffix="%"
+                                        inputMode="decimal"
+                                        placeholder="0,00%"
+                                        className="form-control"
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    />
+                                </div>
+                            </Form.Group>
+
+                            <Form.Group className="mb-2 d-flex gap-3">
+                                <div>
                                     <Form.Label>Feijão (ha)</Form.Label>
                                     <Form.Control
                                         type="number"
