@@ -37,7 +37,7 @@ const FarmerModal = ({
     const { data: users = [], fetch } = useFetchData<UserType[]>();
 
     useEffect(() => {
-        if (!fetch) return;
+        if (!fetch || !show) return;
         fetch("/user/all", "Failed to load users.");
     }, [show]);
 

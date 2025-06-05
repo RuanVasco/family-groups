@@ -1,5 +1,6 @@
 package br.com.cotrisoja.familyGroups.Repository;
 
+import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
@@ -82,4 +83,18 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
          WHERE m = :farmer
     """)
     Optional<FamilyGroup> findByMember(@Param("farmer") Farmer farmer);
+
+    @Query("""
+        SELECT fg
+            FROM FamilyGroup fg
+        WHERE fg.principal.branch = :branch
+    """)
+    List<FamilyGroup> findByBranch(@Param("branch") Branch branch);
+
+    @Query("""
+        SELECT fg
+            FROM FamilyGroup fg
+        WHERE fg.principal.technician = :user
+    """)
+    List<FamilyGroup> findByUser(@Param("user") User user);
 }

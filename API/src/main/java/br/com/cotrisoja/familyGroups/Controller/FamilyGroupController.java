@@ -4,7 +4,6 @@ import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.CultivationResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupMembersResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupResponseDTO;
-import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseCompleteDTO;
 import br.com.cotrisoja.familyGroups.DTO.Farmer.FarmerResponseDTO;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
@@ -189,5 +188,23 @@ public class FamilyGroupController {
         }
 
         return ResponseEntity.ok().body(FamilyGroupMembersResponseDTO.fromEntity(familyGroupOptional.get()));
+    }
+
+    @GetMapping("/cultivation/branch/{branchId}")
+    public ResponseEntity<?> findByBranch (
+            @PathVariable Long branchId
+    ) {
+        return ResponseEntity.ok(
+                familyGroupService.getCultivationsByBranch(branchId)
+        );
+    }
+
+    @GetMapping("/cultivation/user/{userId}")
+    public ResponseEntity<?> findByUser (
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(
+                familyGroupService.getCultivationsByUser(userId)
+        );
     }
 }

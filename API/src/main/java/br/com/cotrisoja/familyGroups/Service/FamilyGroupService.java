@@ -2,11 +2,15 @@ package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.CultivationResponseDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
+import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
 import br.com.cotrisoja.familyGroups.Entity.User;
+import br.com.cotrisoja.familyGroups.Exception.BadRequestException;
+import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
 import br.com.cotrisoja.familyGroups.Repository.FamilyGroupRepository;
 import br.com.cotrisoja.familyGroups.Repository.FarmerRepository;
+import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +28,8 @@ public class FamilyGroupService {
 
     private final FamilyGroupRepository familyGroupRepository;
     private final FarmerRepository farmerRepository;
+    private final BranchRepository branchRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public FamilyGroup create(FamilyGroupRequestDTO familyGroupRequestDTO) {
@@ -190,6 +196,13 @@ public class FamilyGroupService {
         familyGroup.setBeanArea(cultivationDTO.beanArea());
         familyGroup.setSoybeanArea(cultivationDTO.soybeanArea());
 
+        familyGroup.setCanolaAreaParticipation(cultivationDTO.canolaAreaParticipation());
+        familyGroup.setWheatAreaParticipation(cultivationDTO.wheatAreaParticipation());
+        familyGroup.setCornSilageAreaParticipation(cultivationDTO.cornSilageAreaParticipation());
+        familyGroup.setGrainCornAreaParticipation(cultivationDTO.grainCornAreaParticipation());
+        familyGroup.setBeanAreaParticipation(cultivationDTO.beanAreaParticipation());
+        familyGroup.setSoybeanAreaParticipation(cultivationDTO.soybeanAreaParticipation());
+
         familyGroupRepository.save(familyGroup);
     }
 
@@ -216,5 +229,21 @@ public class FamilyGroupService {
 
     public Optional<FamilyGroup> findByMember(Farmer farmer) {
         return familyGroupRepository.findByMember(farmer);
+    }
+
+    public List<CultivationResponseDTO> getCultivationsByBranch(Long branchId) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new BadRequestException("Branch not found"));
+
+        List<FamilyGroup> familyGroups = familyGroupRepository.findByBranch(branch);
+        return familyGroups.stream().map((CultivationResponseDTO::fromEntity)).toList();
+    }
+
+    public List<CultivationResponseDTO> getCultivationsByUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        List<FamilyGroup> familyGroups = familyGroupRepository.findByUser(user);
+        return familyGroups.stream().map((CultivationResponseDTO::fromEntity)).toList();
     }
 }

@@ -8,7 +8,7 @@ import User from '../Component/CRUD/User';
 import "../assets/styles/_sidebar.scss";
 import Branch from '../Component/Branch';
 import { Button, Form, Modal } from 'react-bootstrap';
-import { FaArrowRightFromBracket, FaChartColumn, FaChevronLeft, FaChevronRight, FaUpload, FaUser, FaUserGroup, FaWallet, FaWheatAwn } from 'react-icons/fa6';
+import { FaArrowRightFromBracket, FaChartColumn, FaChevronLeft, FaChevronRight, FaTable, FaUpload, FaUser, FaUserGroup, FaWallet, FaWheatAwn } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import axiosInstance from '../axiosInstance';
 import { BranchType } from '../Type/BranchType';
@@ -17,6 +17,7 @@ import { UserType } from '../Type/UserType';
 import ReportByFarmer from '../Component/Report/ReportByFarmer';
 import ReportByFamilyGroup from '../Component/Report/ReportByFamilyGroup';
 import ButtonCollapse from '../Component/Common/Buttons/ButtonColapse';
+import Dashboard from '../Component/Dashboard';
 
 interface SideBarPagenableProps {
     className?: string;
@@ -139,7 +140,7 @@ const HomePage = () => {
                             {menuContext === "reports" && (
                                 <span className="d-flex align-items-center gap-2 report-title">
                                     <>
-                                        <FaChartColumn />
+                                        <FaTable />
                                         {!collapsed && "Relatórios"}
                                     </>
 
@@ -251,9 +252,23 @@ const HomePage = () => {
                                             "d-flex align-items-center gap-2"
                                         }
                                     >
-                                        <FaChartColumn />
+                                        <FaTable />
                                         {!collapsed && (
                                             <>Relatórios <span className="ms-auto"><FaChevronRight /></span></>
+                                        )}
+                                    </li>
+                                    <li
+                                        onClick={() => {
+                                            setViewType("dashboard");
+                                        }}
+                                        className={
+                                            "d-flex align-items-center gap-2" +
+                                            (viewType === "dashboard" ? " active" : "")
+                                        }
+                                    >
+                                        <FaChartColumn />
+                                        {!collapsed && (
+                                            <>Gerencial</>
                                         )}
                                     </li>
                                     <li
@@ -425,6 +440,7 @@ const HomePage = () => {
                     {!viewType && (<></>)}
                     {viewType === "familyGroup" && <FamilyGroup />}
                     {viewType === "farmer" && <Farmer />}
+                    {viewType === "dashboard" && <Dashboard />}
                     {canViewUsers && (
                         <>
                             {viewType === "user" && <User />}

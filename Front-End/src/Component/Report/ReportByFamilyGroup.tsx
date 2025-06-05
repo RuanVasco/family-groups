@@ -21,7 +21,13 @@ interface FamilyGroupReport {
     cornSilageArea: number,
     grainCornArea: number,
     beanArea: number,
-    soybeanArea: number
+    soybeanArea: number,
+    canolaAreaParticipation?: number,
+    wheatAreaParticipation?: number,
+    cornSilageAreaParticipation?: number,
+    grainCornAreaParticipation?: number,
+    beanAreaParticipation?: number,
+    soybeanAreaParticipation?: number,
 }
 
 const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupProps) => {
@@ -155,6 +161,12 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                                         grainCornArea: f.grainCornArea,
                                         beanArea: f.beanArea,
                                         soybeanArea: f.soybeanArea,
+                                        canolaAreaParticipation: f.canolaAreaParticipation,
+                                        wheatAreaParticipation: f.wheatAreaParticipation,
+                                        cornSilageAreaParticipation: f.cornSilageAreaParticipation,
+                                        grainCornAreaParticipation: f.grainCornAreaParticipation,
+                                        beanAreaParticipation: f.beanAreaParticipation,
+                                        soybeanAreaParticipation: f.soybeanAreaParticipation,
                                     }}
                                     showActions={true}
                                     onMakePrincipal={(farmer) => handlePrincipalChange(farmer, f)}

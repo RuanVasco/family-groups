@@ -267,6 +267,13 @@ const FamilyGroup = () => {
                                 grainCornArea: selectedFamilyGroup.grainCornArea,
                                 beanArea: selectedFamilyGroup.beanArea,
                                 soybeanArea: selectedFamilyGroup.soybeanArea,
+
+                                canolaAreaParticipation: selectedFamilyGroup.canolaAreaParticipation,
+                                wheatAreaParticipation: selectedFamilyGroup.wheatAreaParticipation,
+                                cornSilageAreaParticipation: selectedFamilyGroup.cornSilageAreaParticipation,
+                                grainCornAreaParticipation: selectedFamilyGroup.grainCornAreaParticipation,
+                                beanAreaParticipation: selectedFamilyGroup.beanAreaParticipation,
+                                soybeanAreaParticipation: selectedFamilyGroup.soybeanAreaParticipation
                             }}
                             showActions={true}
                             onMakePrincipal={(farmer) => handlePrincipalChange(farmer.registrationNumber)}
