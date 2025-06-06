@@ -221,9 +221,6 @@ const FamilyGroupTable = ({
         }
     };
 
-    const pct = (part?: number, area?: number) =>
-        area && part !== undefined ? ((part / area) * 100).toFixed(2) : "0.00";
-
     return (
         <div>
             <div key={currentFamilyGroup?.id}>
@@ -471,28 +468,58 @@ const FamilyGroupTable = ({
                         "Soja",
                         "Participação"
                     ]}
+                    headerStyles={[
+                        undefined,
+                        { background: "#8bb1cc" },
+                        { background: "#8bb1cc" },
+                        { background: "#bf6f6f" },
+                        { background: "#bf6f6f" },
+                        { background: "#8fba9b" },
+                        { background: "#8fba9b" },
+                        { background: "#c9c591" },
+                        { background: "#c9c591" },
+                        { background: "#ad8c7d" },
+                        { background: "#ad8c7d" },
+                        { background: "#babf71" },
+                        { background: "#babf71" }
+                    ]}
+                    columnStyles={[
+                        undefined,
+                        { background: "#98bbd4" },
+                        { background: "#98bbd4" },
+                        { background: "#c78585" },
+                        { background: "#c78585" },
+                        { background: "#a5c2ac" },
+                        { background: "#a5c2ac" },
+                        { background: "#d4d0a7" },
+                        { background: "#d4d0a7" },
+                        { background: "#bfa69b" },
+                        { background: "#bfa69b" },
+                        { background: "#bcbf88" },
+                        { background: "#bcbf88" }
+                    ]}
                 >
 
                     <tr>
                         <td>2025/2026</td>
 
                         <td>{(currentFamilyGroup?.canolaArea ?? 0).toFixed(2)} ha</td>
-                        <td>{pct(currentFamilyGroup?.canolaAreaParticipation, currentFamilyGroup?.canolaArea)}%</td>
+                        <td>{(currentFamilyGroup?.canolaAreaParticipation ?? 0).toFixed(2)} ha</td>
 
                         <td>{(currentFamilyGroup?.wheatArea ?? 0).toFixed(2)} ha</td>
-                        <td>{pct(currentFamilyGroup?.wheatAreaParticipation, currentFamilyGroup?.wheatArea)}%</td>
+                        <td>{(currentFamilyGroup?.wheatAreaParticipation ?? 0).toFixed(2)} ha</td>
 
                         <td>{(currentFamilyGroup?.cornSilageArea ?? 0).toFixed(2)} ha</td>
-                        <td>{pct(currentFamilyGroup?.cornSilageAreaParticipation, currentFamilyGroup?.cornSilageArea)}%</td>
+                        <td>{(currentFamilyGroup?.cornSilageAreaParticipation ?? 0).toFixed(2)} ha</td>
 
                         <td>{(currentFamilyGroup?.grainCornArea ?? 0).toFixed(2)} ha</td>
-                        <td>{pct(currentFamilyGroup?.grainCornAreaParticipation, currentFamilyGroup?.grainCornArea)}%</td>
+                        <td>{(currentFamilyGroup?.grainCornAreaParticipation ?? 0).toFixed(2)} ha</td>
 
                         <td>{(currentFamilyGroup?.beanArea ?? 0).toFixed(2)} ha</td>
-                        <td>{pct(currentFamilyGroup?.beanAreaParticipation, currentFamilyGroup?.beanArea)}%</td>
+                        <td>{(currentFamilyGroup?.beanAreaParticipation ?? 0).toFixed(2)} ha</td>
 
                         <td>{(currentFamilyGroup?.soybeanArea ?? 0).toFixed(2)} ha</td>
-                        <td>{pct(currentFamilyGroup?.soybeanAreaParticipation, currentFamilyGroup?.soybeanArea)}%</td>
+                        <td>{(currentFamilyGroup?.soybeanAreaParticipation ?? 0).toFixed(2)} ha</td>
                     </tr>
                 </CustomTable>
 
