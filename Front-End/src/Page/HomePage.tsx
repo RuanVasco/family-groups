@@ -141,7 +141,7 @@ const HomePage = () => {
                                 <span className="d-flex align-items-center gap-2 report-title">
                                     <>
                                         <FaTable />
-                                        {!collapsed && "Relatórios"}
+                                        {!collapsed && "Cadastros"}
                                     </>
 
                                 </span>
@@ -254,7 +254,7 @@ const HomePage = () => {
                                     >
                                         <FaTable />
                                         {!collapsed && (
-                                            <>Relatórios <span className="ms-auto"><FaChevronRight /></span></>
+                                            <>Cadastros <span className="ms-auto"><FaChevronRight /></span></>
                                         )}
                                     </li>
                                     <li

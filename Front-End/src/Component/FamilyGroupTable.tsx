@@ -38,6 +38,14 @@ interface CultivationType {
     soybeanAreaParticipation?: number;
 }
 
+type CultivationKey =
+    | "canola"
+    | "wheat"
+    | "cornSilage"
+    | "grainCorn"
+    | "bean"
+    | "soybean";
+
 const FamilyGroupTable = ({
     familyGroup,
     showActions = false,
@@ -66,6 +74,21 @@ const FamilyGroupTable = ({
 
     const [lessors, setLessors] = useState<FarmerType[]>([]);
     const [loadingLessors, setLoadingLessors] = useState<boolean>(false);
+
+    function findInvalidParticipation(
+        obj: CultivationType
+    ): CultivationKey | undefined {
+        const cultivations: CultivationKey[] = [
+            "canola", "wheat", "cornSilage",
+            "grainCorn", "bean", "soybean",
+        ];
+
+        return cultivations.find((c) => {
+            const area = obj[`${c}Area`];
+            const part = obj[`${c}AreaParticipation`];
+            return area !== undefined && part !== undefined && part > area;
+        });
+    }
 
     useEffect(() => {
         if (familyGroup.members) {
@@ -199,9 +222,15 @@ const FamilyGroupTable = ({
 
     const handleEditCultivation = async () => {
         try {
-            if (!currentFamilyGroup) return;
+            if (!currentFamilyGroup || currentFamilyGroup === undefined) return;
 
             setLoadingUpdateCultivations(true);
+
+            const invalid = findInvalidParticipation(editCultivation);
+            if (invalid) {
+                toast.error(`Participação de ${invalid} não pode ser maior que a área total`);
+                return;
+            }
 
             const res = await axiosInstance.put(
                 `/family-group/cultivation/${currentFamilyGroup.id}`,
@@ -618,8 +647,8 @@ const FamilyGroupTable = ({
                                     />
                                 </div>
                                 <div>
-                                    <Form.Label>Participação (%)</Form.Label>
-                                    <NumericFormat
+                                    {/*<Form.Label>Participação (%)</Form.Label>
+                                     <NumericFormat
                                         value={
                                             editCultivation.canolaAreaParticipation !== undefined &&
                                                 editCultivation.canolaArea
@@ -651,6 +680,37 @@ const FamilyGroupTable = ({
                                         isAllowed={({ floatValue }) =>
                                             floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
                                         }
+                                    /> */}
+                                    <Form.Label>Participação Cotrisoja (ha)</Form.Label>
+                                    <NumericFormat
+                                        value={editCultivation.canolaAreaParticipation ?? ""}
+
+                                        onValueChange={({ floatValue }) =>
+                                            setEditCultivation((p) => {
+                                                const total = p.canolaArea ?? Infinity;
+                                                const v = floatValue ?? undefined;
+                                                return {
+                                                    ...p, canolaAreaParticipation: v !== undefined
+                                                        ? Math.min(v, total)
+                                                        : undefined
+                                                };
+                                            })
+                                        }
+
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        inputMode="decimal"
+                                        placeholder="0,00"
+                                        className="form-control"
+
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined ||
+                                            (floatValue >= 0 &&
+                                                (editCultivation.canolaArea === undefined || floatValue <= editCultivation.canolaArea))
+                                        }
                                     />
                                 </div>
                             </Form.Group>
@@ -675,7 +735,7 @@ const FamilyGroupTable = ({
                                     />
                                 </div>
                                 <div>
-                                    <Form.Label>Participação (%)</Form.Label>
+                                    {/* <Form.Label>Participação (%)</Form.Label>
                                     <NumericFormat
                                         value={
                                             editCultivation.wheatAreaParticipation !== undefined &&
@@ -708,6 +768,37 @@ const FamilyGroupTable = ({
                                         isAllowed={({ floatValue }) =>
                                             floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
                                         }
+                                    /> */}
+                                    <Form.Label>Participação Cotrisoja (ha)</Form.Label>
+                                    <NumericFormat
+                                        value={editCultivation.wheatAreaParticipation ?? ""}
+
+                                        onValueChange={({ floatValue }) =>
+                                            setEditCultivation((p) => {
+                                                const total = p.wheatArea ?? Infinity;
+                                                const v = floatValue ?? undefined;
+                                                return {
+                                                    ...p, wheatAreaParticipation: v !== undefined
+                                                        ? Math.min(v, total)
+                                                        : undefined
+                                                };
+                                            })
+                                        }
+
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        inputMode="decimal"
+                                        placeholder="0,00"
+                                        className="form-control"
+
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined ||
+                                            (floatValue >= 0 &&
+                                                (editCultivation.wheatArea === undefined || floatValue <= editCultivation.wheatArea))
+                                        }
                                     />
                                 </div>
                             </Form.Group>
@@ -733,7 +824,7 @@ const FamilyGroupTable = ({
                                     />
                                 </div>
                                 <div>
-                                    <Form.Label>Participação (%)</Form.Label>
+                                    {/* <Form.Label>Participação (%)</Form.Label>
                                     <NumericFormat
                                         value={
                                             editCultivation.cornSilageAreaParticipation !== undefined &&
@@ -766,6 +857,37 @@ const FamilyGroupTable = ({
                                         isAllowed={({ floatValue }) =>
                                             floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
                                         }
+                                    /> */}
+                                    <Form.Label>Participação Cotrisoja (ha)</Form.Label>
+                                    <NumericFormat
+                                        value={editCultivation.cornSilageAreaParticipation ?? ""}
+
+                                        onValueChange={({ floatValue }) =>
+                                            setEditCultivation((p) => {
+                                                const total = p.cornSilageArea ?? Infinity;
+                                                const v = floatValue ?? undefined;
+                                                return {
+                                                    ...p, cornSilageAreaParticipation: v !== undefined
+                                                        ? Math.min(v, total)
+                                                        : undefined
+                                                };
+                                            })
+                                        }
+
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        inputMode="decimal"
+                                        placeholder="0,00"
+                                        className="form-control"
+
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined ||
+                                            (floatValue >= 0 &&
+                                                (editCultivation.cornSilageArea === undefined || floatValue <= editCultivation.cornSilageArea))
+                                        }
                                     />
                                 </div>
                             </Form.Group>
@@ -791,7 +913,7 @@ const FamilyGroupTable = ({
                                     />
                                 </div>
                                 <div>
-                                    <Form.Label>Participação (%)</Form.Label>
+                                    {/* <Form.Label>Participação (%)</Form.Label>
                                     <NumericFormat
                                         value={
                                             editCultivation.grainCornAreaParticipation !== undefined &&
@@ -824,6 +946,37 @@ const FamilyGroupTable = ({
                                         isAllowed={({ floatValue }) =>
                                             floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
                                         }
+                                    /> */}
+                                    <Form.Label>Participação Cotrisoja (ha)</Form.Label>
+                                    <NumericFormat
+                                        value={editCultivation.grainCornAreaParticipation ?? ""}
+
+                                        onValueChange={({ floatValue }) =>
+                                            setEditCultivation((p) => {
+                                                const total = p.grainCornArea ?? Infinity;
+                                                const v = floatValue ?? undefined;
+                                                return {
+                                                    ...p, grainCornAreaParticipation: v !== undefined
+                                                        ? Math.min(v, total)
+                                                        : undefined
+                                                };
+                                            })
+                                        }
+
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        inputMode="decimal"
+                                        placeholder="0,00"
+                                        className="form-control"
+
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined ||
+                                            (floatValue >= 0 &&
+                                                (editCultivation.grainCornArea === undefined || floatValue <= editCultivation.grainCornArea))
+                                        }
                                     />
                                 </div>
                             </Form.Group>
@@ -848,7 +1001,7 @@ const FamilyGroupTable = ({
                                     />
                                 </div>
                                 <div>
-                                    <Form.Label>Participação (%)</Form.Label>
+                                    {/* <Form.Label>Participação (%)</Form.Label>
                                     <NumericFormat
                                         value={
                                             editCultivation.beanAreaParticipation !== undefined &&
@@ -881,6 +1034,37 @@ const FamilyGroupTable = ({
                                         isAllowed={({ floatValue }) =>
                                             floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
                                         }
+                                    /> */}
+                                    <Form.Label>Participação Cotrisoja (ha)</Form.Label>
+                                    <NumericFormat
+                                        value={editCultivation.beanAreaParticipation ?? ""}
+
+                                        onValueChange={({ floatValue }) =>
+                                            setEditCultivation((p) => {
+                                                const total = p.beanArea ?? Infinity;
+                                                const v = floatValue ?? undefined;
+                                                return {
+                                                    ...p, beanAreaParticipation: v !== undefined
+                                                        ? Math.min(v, total)
+                                                        : undefined
+                                                };
+                                            })
+                                        }
+
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        inputMode="decimal"
+                                        placeholder="0,00"
+                                        className="form-control"
+
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined ||
+                                            (floatValue >= 0 &&
+                                                (editCultivation.beanArea === undefined || floatValue <= editCultivation.beanArea))
+                                        }
                                     />
                                 </div>
                             </Form.Group>
@@ -905,7 +1089,7 @@ const FamilyGroupTable = ({
                                     />
                                 </div>
                                 <div>
-                                    <Form.Label>Participação (%)</Form.Label>
+                                    {/* <Form.Label>Participação (%)</Form.Label>
                                     <NumericFormat
                                         value={
                                             editCultivation.soybeanAreaParticipation !== undefined &&
@@ -937,6 +1121,37 @@ const FamilyGroupTable = ({
                                         className="form-control"
                                         isAllowed={({ floatValue }) =>
                                             floatValue === undefined || (floatValue >= 0 && floatValue <= 100)
+                                        }
+                                    /> */}
+                                    <Form.Label>Participação Cotrisoja (ha)</Form.Label>
+                                    <NumericFormat
+                                        value={editCultivation.soybeanAreaParticipation ?? ""}
+
+                                        onValueChange={({ floatValue }) =>
+                                            setEditCultivation((p) => {
+                                                const total = p.soybeanArea ?? Infinity;
+                                                const v = floatValue ?? undefined;
+                                                return {
+                                                    ...p, soybeanAreaParticipation: v !== undefined
+                                                        ? Math.min(v, total)
+                                                        : undefined
+                                                };
+                                            })
+                                        }
+
+                                        decimalSeparator=","
+                                        thousandSeparator="."
+                                        decimalScale={2}
+                                        fixedDecimalScale
+                                        allowNegative={false}
+                                        inputMode="decimal"
+                                        placeholder="0,00"
+                                        className="form-control"
+
+                                        isAllowed={({ floatValue }) =>
+                                            floatValue === undefined ||
+                                            (floatValue >= 0 &&
+                                                (editCultivation.soybeanArea === undefined || floatValue <= editCultivation.soybeanArea))
                                         }
                                     />
                                 </div>
