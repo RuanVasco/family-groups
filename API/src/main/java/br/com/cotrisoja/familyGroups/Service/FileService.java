@@ -154,7 +154,7 @@ public class FileService {
         String rawAssetType    = getCol(columns, 2);
         String description     = getCol(columns, 3);
         String rawAssetCat     = getCol(columns, 4);
-        double amount          = parseDouble(columns, 5, "amount", row);
+        Double amount          = parseDouble(columns, 5, "amount", row);
         String address         = getCol(columns, 6);
         String altReg          = getCol(columns, 7);
 
@@ -240,8 +240,8 @@ public class FileService {
         String principalRegistration = getCol(columns, 3);
         String technicianName = getCol(columns, 5);
 
-        double ownedArea = parseDouble(columns, 6, "ownedArea", row);
-        double leasedArea = parseDouble(columns, 7, "leasedArea", row);
+        Double ownedArea = parseDouble(columns, 6, "ownedArea", row);
+        Double leasedArea = parseDouble(columns, 7, "leasedArea", row);
 
         String branchName = getCol(columns, 14);
         Branch branch = findOrCreateBranch(branchName);
@@ -302,12 +302,12 @@ public class FileService {
             return;
         }
 
-             double canolaArea      = parseDouble(columns, 8,  "canolaArea",      row);
-             double wheatArea       = parseDouble(columns, 9,  "wheatArea",       row);
-             double cornSilageArea  = parseDouble(columns,10,  "cornSilageArea",  row);
-             double grainCornArea   = parseDouble(columns,11,  "grainCornArea",   row);
-             double beanArea        = parseDouble(columns,12,  "beanArea",        row);
-             double soybeanArea     = parseDouble(columns,13,  "soybeanArea",     row);
+            Double canolaArea      = parseDouble(columns, 8,  "canolaArea",      row);
+            Double wheatArea       = parseDouble(columns, 9,  "wheatArea",       row);
+            Double cornSilageArea  = parseDouble(columns,10,  "cornSilageArea",  row);
+            Double grainCornArea   = parseDouble(columns,11,  "grainCornArea",   row);
+            Double beanArea        = parseDouble(columns,12,  "beanArea",        row);
+            Double soybeanArea     = parseDouble(columns,13,  "soybeanArea",     row);
 
              group.setCanolaArea     (group.getCanolaArea()     + canolaArea);
              group.setWheatArea      (group.getWheatArea()      + wheatArea);
