@@ -1,7 +1,9 @@
 package br.com.cotrisoja.familyGroups.Service;
 
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.CultivationResponseDTO;
+import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.CultivationWithFreeAreaDTO;
 import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FamilyGroupRequestDTO;
+import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FreeAreaAggDTO;
 import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
@@ -17,10 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -231,19 +231,52 @@ public class FamilyGroupService {
         return familyGroupRepository.findByMember(farmer);
     }
 
-    public List<CultivationResponseDTO> getCultivationsByBranch(Long branchId) {
+    public List<CultivationWithFreeAreaDTO> getCultivationsByBranch(Long branchId) {
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new BadRequestException("Branch not found"));
 
-        List<FamilyGroup> familyGroups = familyGroupRepository.findByBranch(branch);
-        return familyGroups.stream().map((CultivationResponseDTO::fromEntity)).toList();
+        List<FamilyGroup> groups = familyGroupRepository.findByBranch(branch);
+
+        Map<Long, Double> areaMap = familyGroupRepository.getFreeAreaForGroups(groups)
+                .stream()
+                .collect(Collectors.toMap(
+                        FreeAreaAggDTO::familyGroupId,
+                        FreeAreaAggDTO::freeArea));
+
+        return groups.stream()
+                .map(fg -> new CultivationWithFreeAreaDTO(
+                        fg.getId(),
+                        areaMap.getOrDefault(fg.getId(), 0D),
+                        (CultivationResponseDTO.fromEntity(fg))
+                ))
+                .toList();
     }
 
-    public List<CultivationResponseDTO> getCultivationsByUser(Long userId) {
+    public List<CultivationWithFreeAreaDTO> getCultivationsByUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
-        List<FamilyGroup> familyGroups = familyGroupRepository.findByUser(user);
-        return familyGroups.stream().map((CultivationResponseDTO::fromEntity)).toList();
+        List<FamilyGroup> groups = familyGroupRepository.findByUser(user);
+
+        Map<Long, Double> areaMap = familyGroupRepository.getFreeAreaForGroups(groups)
+                .stream()
+                .collect(Collectors.toMap(
+                        FreeAreaAggDTO::familyGroupId,
+                        FreeAreaAggDTO::freeArea));
+
+        return groups.stream()
+                .map(fg -> new CultivationWithFreeAreaDTO(
+                        fg.getId(),
+                        areaMap.getOrDefault(fg.getId(), 0D),
+                        (CultivationResponseDTO.fromEntity(fg))
+                ))
+                .toList();
+    }
+
+    public Double getFreeArea(Long familyGroupdId) {
+        FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupdId)
+                .orElseThrow(() -> new BadRequestException("Family group not found"));
+
+        return familyGroupRepository.getFreeAreaForGroup(familyGroup);
     }
 }

@@ -40,12 +40,14 @@ public interface FarmerRepository extends
 
             Predicate namePredicate = FarmerSpecifications.nameContainsTokens(search).toPredicate(root, query, cb);
             Predicate statusPredicate = cb.equal(root.get("status"), StatusEnum.ACTIVE);
+            Predicate blockedPredicate = cb.equal(root.get("blocked"), false);
             Predicate noGroupPredicate = cb.isNull(root.get("familyGroup"));
             Predicate oneMemberPredicate = cb.equal(subquery, 1L);
 
             return cb.and(
                     namePredicate,
                     statusPredicate,
+                    blockedPredicate,
                     cb.or(noGroupPredicate, oneMemberPredicate)
             );
         }, page);

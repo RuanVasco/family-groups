@@ -207,4 +207,13 @@ public class FamilyGroupController {
                 familyGroupService.getCultivationsByUser(userId)
         );
     }
+
+    @GetMapping("/free-area/{familyGroupId}")
+    public ResponseEntity<?> getFreeArea(
+            @PathVariable Long familyGroupId
+    ) {
+        return ResponseEntity.ok(
+                familyGroupService.getFreeArea(familyGroupId)
+        );
+    }
 }

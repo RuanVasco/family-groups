@@ -75,6 +75,9 @@ const FamilyGroupTable = ({
     const [lessors, setLessors] = useState<FarmerType[]>([]);
     const [loadingLessors, setLoadingLessors] = useState<boolean>(false);
 
+    const [loadingFreeArea, setLoadingFreeArea] = useState<boolean>(false);
+    const [freeArea, setFreeArea] = useState<number | null>(null);
+
     function findInvalidParticipation(
         obj: CultivationType
     ): CultivationKey | undefined {
@@ -113,6 +116,18 @@ const FamilyGroupTable = ({
         }
 
         setLoadingLessors(false);
+    }
+
+    const fetchFreeArea = async (id: number) => {
+        setLoadingFreeArea(true);
+
+        const res = await axiosInstance(`/family-group/free-area/${id}`);
+
+        if (res.status === 200) {
+            setFreeArea(res.data)
+        }
+
+        setLoadingFreeArea(false);
     }
 
     useEffect(() => {
@@ -196,6 +211,7 @@ const FamilyGroupTable = ({
 
     const handleCloseCultivationModal = () => {
         setShowCultivationModal(false);
+        setFreeArea(null);
     }
 
     const handleOpenCultivationModal = () => {
@@ -217,6 +233,7 @@ const FamilyGroupTable = ({
             });
 
             setShowCultivationModal(true);
+            fetchFreeArea(currentFamilyGroup.id);
         }
     }
 
@@ -616,8 +633,19 @@ const FamilyGroupTable = ({
 
             <Modal show={showCultivationModal} onHide={handleCloseCultivationModal} size="xl">
                 <Modal.Header closeButton>
-                    <Modal.Title className="fw-bold">
-                        Adicionar área de cultivo
+                    <Modal.Title
+                        as="div"
+                        className="w-100 d-flex justify-content-between align-items-center fs-4 fw-semibold pe-3"
+                    >
+                        <span>Adicionar área de cultivo</span>
+
+                        {loadingFreeArea ? (
+                            <div className="spinner-border spinner-border-sm" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        ) : (
+                            <span>Área disponível: {freeArea?.toFixed(2)} ha</span>
+                        )}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>

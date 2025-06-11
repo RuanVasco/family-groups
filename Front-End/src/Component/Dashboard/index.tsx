@@ -15,6 +15,12 @@ import {
 import { BranchType } from "../../Type/BranchType";
 import { UserType } from "../../Type/UserType";
 
+interface FamilyGroupCultivation {
+    familyGroupId: number,
+    freeArea: number,
+    cultivations: CultivationType
+}
+
 interface CultivationType {
     canolaArea?: number;
     wheatArea?: number;
@@ -54,6 +60,8 @@ const Dashboard = () => {
 
     const [allPieData, setAllPieData] = useState<PieData[][]>([]);
 
+    const [totalArea, setTotalArea] = useState<Number>(0);
+
     const fetchBranches = async (): Promise<BranchType[]> => {
         try {
             const res = await axiosInstance.get<BranchType[]>("/branch");
@@ -83,10 +91,10 @@ const Dashboard = () => {
     const fetchCultivations = async (
         branchIds: number[],
         fetchType: "user" | "branch"
-    ): Promise<CultivationType[]> => {
+    ): Promise<FamilyGroupCultivation[]> => {
         try {
             const promises = branchIds.map((branchId) =>
-                axiosInstance.get<CultivationType[]>(`/family-group/cultivation/${fetchType}/${branchId}`)
+                axiosInstance.get<FamilyGroupCultivation[]>(`/family-group/cultivation/${fetchType}/${branchId}`)
             );
 
             const responses = await Promise.all(promises);
@@ -138,56 +146,39 @@ const Dashboard = () => {
         }
 
         (async () => {
-            let cultivations: CultivationType[] = [];
+            let items: FamilyGroupCultivation[] = [];
 
             if (type === "by-branch" && selectedBranches) {
                 const branchIds = selectedBranches.map((b) => b.id);
-                cultivations = await fetchCultivations(branchIds, "branch");
+                items = await fetchCultivations(branchIds, "branch");
             } else if (type === "by-technician" && selectedUsers) {
                 const userIds = selectedUsers.map((u) => u.id);
-                cultivations = await fetchCultivations(userIds, "user");
+                items = await fetchCultivations(userIds, "user");
             } else {
                 setAllPieData([]);
                 return;
             }
 
-            const totals = cultivations.reduce(
-                (acc, cur) => ({
-                    canolaArea: (acc.canolaArea || 0) + (cur.canolaArea || 0),
-                    wheatArea: (acc.wheatArea || 0) + (cur.wheatArea || 0),
-                    cornSilageArea: (acc.cornSilageArea || 0) + (cur.cornSilageArea || 0),
-                    grainCornArea: (acc.grainCornArea || 0) + (cur.grainCornArea || 0),
-                    beanArea: (acc.beanArea || 0) + (cur.beanArea || 0),
-                    soybeanArea: (acc.soybeanArea || 0) + (cur.soybeanArea || 0),
+            type NumericKey = keyof CultivationType;
 
-                    canolaAreaParticipation:
-                        (acc.canolaAreaParticipation || 0) + (cur.canolaAreaParticipation || 0),
-                    wheatAreaParticipation:
-                        (acc.wheatAreaParticipation || 0) + (cur.wheatAreaParticipation || 0),
-                    cornSilageAreaParticipation:
-                        (acc.cornSilageAreaParticipation || 0) + (cur.cornSilageAreaParticipation || 0),
-                    grainCornAreaParticipation:
-                        (acc.grainCornAreaParticipation || 0) + (cur.grainCornAreaParticipation || 0),
-                    beanAreaParticipation:
-                        (acc.beanAreaParticipation || 0) + (cur.beanAreaParticipation || 0),
-                    soybeanAreaParticipation:
-                        (acc.soybeanAreaParticipation || 0) + (cur.soybeanAreaParticipation || 0),
-                }),
-                {
-                    canolaArea: 0,
-                    wheatArea: 0,
-                    cornSilageArea: 0,
-                    grainCornArea: 0,
-                    beanArea: 0,
-                    soybeanArea: 0,
-                    canolaAreaParticipation: 0,
-                    wheatAreaParticipation: 0,
-                    cornSilageAreaParticipation: 0,
-                    grainCornAreaParticipation: 0,
-                    beanAreaParticipation: 0,
-                    soybeanAreaParticipation: 0,
-                } as CultivationType
+            setTotalArea(
+                Number(
+                    items
+                        .reduce((sum, { freeArea }) => sum + (freeArea ?? 0), 0)
+                        .toFixed(2)
+                )
             );
+
+            const rawTotals: CultivationType = items.reduce((acc, { cultivations }) => {
+                (Object.keys(cultivations) as NumericKey[]).forEach((k) => {
+                    acc[k] = (acc[k] ?? 0) + (cultivations[k] ?? 0);
+                });
+                return acc;
+            }, {} as CultivationType);
+
+            const totals: CultivationType = Object.fromEntries(
+                Object.entries(rawTotals).map(([k, v]) => [k, Number(v.toFixed(2))])
+            ) as CultivationType;
 
             const pieCanola: PieData[] = [
                 {
@@ -362,7 +353,7 @@ const Dashboard = () => {
                             })()}
                         </h5>
 
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, minHeight: 280 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -371,24 +362,35 @@ const Dashboard = () => {
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={60}
-                                        fill="#8884d8"
-                                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                                        outerRadius={80}
+                                        label={({ payload }) => `${payload.value}`}
                                     >
-                                        {dataset.map((_entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
-                                            />
+                                        {dataset.map((_e, i) => (
+                                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip />
+
                                     <Legend
-                                        layout="horizontal"
-                                        verticalAlign="bottom"
-                                        align="center"
-                                        wrapperStyle={{ fontSize: "12px" }}
+                                        layout="vertical"
+                                        verticalAlign="middle"
+                                        align="right"
+                                        content={({ payload }) => (
+                                            <ul style={{ listStyle: "none", margin: 0, padding: 0, fontSize: 12 }}>
+                                                {payload?.map((entry) => (
+                                                    <li key={entry.value}>
+                                                        <span style={{ color: entry.color }}>■</span>{" "}
+                                                        {entry.value}: {Number(entry.payload?.value).toFixed(2)}
+                                                    </li>
+                                                ))}
+
+                                                <li style={{ marginTop: 6, fontWeight: "bold" }}>
+                                                    Área total: {totalArea.toFixed(2)}
+                                                </li>
+                                            </ul>
+                                        )}
                                     />
+
+                                    <Tooltip formatter={(v) => v} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>

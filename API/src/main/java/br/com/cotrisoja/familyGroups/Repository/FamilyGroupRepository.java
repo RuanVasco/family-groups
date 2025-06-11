@@ -1,5 +1,6 @@
 package br.com.cotrisoja.familyGroups.Repository;
 
+import br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FreeAreaAggDTO;
 import br.com.cotrisoja.familyGroups.Entity.Branch;
 import br.com.cotrisoja.familyGroups.Entity.FamilyGroup;
 import br.com.cotrisoja.familyGroups.Entity.Farmer;
@@ -57,6 +58,33 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
         WHERE fg = :familyGroup
     """)
     Double getFamilyGroupTotalArea(@Param("familyGroup") FamilyGroup familyGroup);
+
+    @Query("""
+        SELECT COALESCE(SUM(a.amount), 0)
+        FROM Asset a
+        JOIN Farmer leased ON a.leasedTo = leased
+        JOIN FamilyGroup fg ON leased MEMBER OF fg.members
+        WHERE fg = :familyGroup
+    """)
+    Double getFamilyGroupFreeArea(@Param("familyGroup") FamilyGroup familyGroup);
+
+    @Query("""
+    SELECT new br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FreeAreaAggDTO(fg.id,
+           COALESCE(SUM(a.amount),0))
+        FROM Asset a
+        JOIN a.leasedTo l
+        JOIN l.familyGroup fg
+        WHERE fg IN :familyGroups
+        GROUP BY fg.id
+    """)
+    List<FreeAreaAggDTO> getFreeAreaForGroups(@Param("familyGroups") List<FamilyGroup> familyGroups);
+
+    @Query("""
+        SELECT COALESCE(SUM(a.amount), 0)
+        FROM Asset a
+        WHERE a.leasedTo.familyGroup = :familyGroup
+    """)
+    Double getFreeAreaForGroup(@Param("familyGroup") FamilyGroup familyGroup);
 
     @Query("""
         SELECT SUM(a.amount)
