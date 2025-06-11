@@ -181,16 +181,20 @@ public class FileService {
         Farmer sentinel = farmerRepository.findById("-1").orElse(null);
 
         Farmer owner;
-        Farmer leasedTo;
+        Farmer leasedTo = null;
 
         if (catId == 2) {
-            owner    = altOpt.orElse(sentinel);
+            if (altOpt.isEmpty()) {
+                if (sentinel == null) {
+                    sentinel = farmerRepository.findById("-1").orElse(null);
+                }
+                owner = sentinel;
+            } else {
+                owner = altOpt.get();
+            }
             leasedTo = primary;
-
-            if (owner != null) idSap = assetService.getNextIdSapForOwner(owner);
         } else {
-            owner    = primary;
-            leasedTo = altOpt.orElse(sentinel);
+            owner = primary;
         }
 
         if (owner == null) {
