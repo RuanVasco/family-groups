@@ -285,43 +285,40 @@ public class FileService {
     }
 
     private void associateFarmerToGroup(String row) {
-        String[] columns = row.split(";", -1);
-        String farmerReg = getCol(columns, 0);
-        String principalReg = getCol(columns, 3);
+        String[] cols       = row.split(";", -1);
+        String farmerReg    = getCol(cols, 0);
+        String principalReg = getCol(cols, 3);
 
-        Optional<Farmer> farmerOpt = farmerRepository.findById(farmerReg);
-        Optional<Farmer> principalOpt = farmerRepository.findById(principalReg);
+        Farmer farmer    = farmerRepository.findById(farmerReg)   .orElse(null);
+        Farmer principal = farmerRepository.findById(principalReg).orElse(null);
+        if (farmer == null || principal == null) return;
 
-        if (farmerOpt.isEmpty() || principalOpt.isEmpty()) return;
-
-        Farmer farmer = farmerOpt.get();
-        Farmer principal = principalOpt.get();
         FamilyGroup group = familyGroupRepository.findWithMembersByPrincipal(principal);
         if (group == null) {
             log.warn("Grupo familiar não encontrado para o produtor principal: {}", principalReg);
             return;
         }
 
-            Double canolaArea      = parseDouble(columns, 8,  "canolaArea",      row);
-            Double wheatArea       = parseDouble(columns, 9,  "wheatArea",       row);
-            Double cornSilageArea  = parseDouble(columns,10,  "cornSilageArea",  row);
-            Double grainCornArea   = parseDouble(columns,11,  "grainCornArea",   row);
-            Double beanArea        = parseDouble(columns,12,  "beanArea",        row);
-            Double soybeanArea     = parseDouble(columns,13,  "soybeanArea",     row);
+        double canola      = parseDouble(cols,  8, "canolaArea",     row);
+        double wheat       = parseDouble(cols,  9, "wheatArea",      row);
+        double cornSilage  = parseDouble(cols, 10, "cornSilageArea", row);
+        double grainCorn   = parseDouble(cols, 11, "grainCornArea",  row);
+        double bean        = parseDouble(cols, 12, "beanArea",       row);
+        double soybean     = parseDouble(cols, 13, "soybeanArea",    row);
 
-             group.setCanolaArea     (group.getCanolaArea()     + canolaArea);
-             group.setWheatArea      (group.getWheatArea()      + wheatArea);
-             group.setCornSilageArea (group.getCornSilageArea() + cornSilageArea);
-             group.setGrainCornArea  (group.getGrainCornArea()  + grainCornArea);
-             group.setBeanArea       (group.getBeanArea()       + beanArea);
-             group.setSoybeanArea    (group.getSoybeanArea()    + soybeanArea);
+        group.setCanolaArea     ( nz(group.getCanolaArea())     + canola     );
+        group.setWheatArea      ( nz(group.getWheatArea())      + wheat      );
+        group.setCornSilageArea ( nz(group.getCornSilageArea()) + cornSilage );
+        group.setGrainCornArea  ( nz(group.getGrainCornArea())  + grainCorn  );
+        group.setBeanArea       ( nz(group.getBeanArea())       + bean       );
+        group.setSoybeanArea    ( nz(group.getSoybeanArea())    + soybean    );
 
         if (!group.getMembers().contains(farmer)) {
             group.getMembers().add(farmer);
-            familyGroupRepository.save(group);
             farmer.setFamilyGroup(group);
-            farmerRepository.save(farmer);
         }
+
+        familyGroupRepository.save(group);
     }
 
     private Branch findOrCreateBranch(String name) {
@@ -375,4 +372,6 @@ public class FileService {
             return null;
         }
     }
+
+    private static double nz(Double d) { return d == null ? 0.0 : d; }
 }
