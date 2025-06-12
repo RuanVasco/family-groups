@@ -127,15 +127,15 @@ const FamilyGroupTable = ({
     useEffect(() => {
         if (!familyGroup) return;
 
-        fetchFreeArea(familyGroup.id);
-        fetchLessors(familyGroup.id);
-
         setCurrentFamilyGroup(prev => {
             if (prev && shallowEqual(prev, familyGroup)) return prev;
 
             return { ...prev, ...familyGroup };
         });
-    }, [familyGroup]);
+
+        fetchFreeArea(familyGroup.id);
+        fetchLessors(familyGroup.id);
+    }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
 
     const farmers = currentFamilyGroup?.members || [];
 
