@@ -273,8 +273,8 @@ public class FamilyGroupService {
                 .toList();
     }
 
-    public Double getFreeArea(Long familyGroupdId) {
-        FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupdId)
+    public Double getFreeArea(Long familyGroupId) {
+        FamilyGroup familyGroup = familyGroupRepository.findById(familyGroupId)
                 .orElseThrow(() -> new BadRequestException("Family group not found"));
 
         return familyGroupRepository.getFreeAreaForGroup(familyGroup);

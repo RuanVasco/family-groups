@@ -93,18 +93,54 @@ const FamilyGroupTable = ({
         });
     }
 
+    // useEffect(() => {
+    //     fetchFreeArea(familyGroup.id);
+    //     if (familyGroup.members) {
+    //         setCurrentFamilyGroup(prev => {
+    //             if (
+    //                 prev?.id === familyGroup.id &&
+    //                 prev?.principal === familyGroup.principal &&
+    //                 prev?.members === familyGroup.members
+    //             ) {
+    //                 return prev;
+    //             }
+
+    //             return {
+    //                 ...prev,
+    //                 id: familyGroup.id,
+    //                 principal: familyGroup.principal,
+    //                 members: familyGroup.members,
+    //             };
+    //         });
+    //         fetchLessors(familyGroup.id);
+    //     }
+    // }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
+
+    function shallowEqual(a: any, b: any) {
+        if (a === b) return true;
+        if (!a || !b) return false;
+        const keys = Object.keys(a);
+        if (keys.length !== Object.keys(b).length) return false;
+        return keys.every(k => a[k] === b[k]);
+    }
+
     useEffect(() => {
-        if (familyGroup.members) {
-            setCurrentFamilyGroup(familyGroup);
-            fetchLessors(familyGroup.id);
-        }
-    }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
+        if (!familyGroup) return;
+
+        setCurrentFamilyGroup(prev => {
+            if (prev && shallowEqual(prev, familyGroup)) return prev;
+
+            return { ...prev, ...familyGroup };
+        });
+    }, [familyGroup]);
+
+    useEffect(() => {
+        if (!currentFamilyGroup) return;
+        fetchLessors(currentFamilyGroup.id);
+        fetchFreeArea(currentFamilyGroup.id);
+    }, [currentFamilyGroup?.id]);
 
     const farmers = currentFamilyGroup?.members || [];
-    const totalArea = farmers.reduce(
-        (acc, farmer) => acc + (farmer.ownedArea ?? 0) + (farmer.leasedArea ?? 0),
-        0
-    );
 
     const fetchLessors = async (id: number) => {
         setLoadingLessors(true);
@@ -211,7 +247,6 @@ const FamilyGroupTable = ({
 
     const handleCloseCultivationModal = () => {
         setShowCultivationModal(false);
-        setFreeArea(null);
     }
 
     const handleOpenCultivationModal = () => {
@@ -233,7 +268,6 @@ const FamilyGroupTable = ({
             });
 
             setShowCultivationModal(true);
-            fetchFreeArea(currentFamilyGroup.id);
         }
     }
 
@@ -274,7 +308,14 @@ const FamilyGroupTable = ({
                     <h5 className="fw-bold d-flex">
                         Grupo Familiar #{currentFamilyGroup?.id} - Principal: {currentFamilyGroup?.principal.name}
                         <span className="ms-auto me-3">
-                            Área total do grupo familiar: {(totalArea ?? 0).toFixed(2)} ha
+                            Área total do grupo familiar:
+                            {loadingFreeArea ? (
+                                <div className="spinner-border spinner-border-sm" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            ) : (
+                                <span> {freeArea?.toFixed(2) ?? 0} ha</span>
+                            )}
                         </span>
                     </h5>
                 </div>
@@ -638,14 +679,6 @@ const FamilyGroupTable = ({
                         className="w-100 d-flex justify-content-between align-items-center fs-4 fw-semibold pe-3"
                     >
                         <span>Adicionar área de cultivo</span>
-
-                        {loadingFreeArea ? (
-                            <div className="spinner-border spinner-border-sm" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                        ) : (
-                            <span>Área disponível: {freeArea?.toFixed(2)} ha</span>
-                        )}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>

@@ -81,8 +81,13 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
 
     @Query("""
         SELECT COALESCE(SUM(a.amount), 0)
-        FROM Asset a
-        WHERE a.leasedTo.familyGroup = :familyGroup
+        FROM   Asset a
+        LEFT  JOIN a.leasedTo       l
+        LEFT  JOIN l.familyGroup    lfg
+        LEFT  JOIN a.owner          o
+        LEFT  JOIN o.familyGroup    ofg
+        WHERE  lfg = :familyGroup
+           OR (ofg = :familyGroup AND l IS NULL)
     """)
     Double getFreeAreaForGroup(@Param("familyGroup") FamilyGroup familyGroup);
 

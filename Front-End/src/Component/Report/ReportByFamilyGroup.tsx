@@ -199,6 +199,7 @@ const ReportByFamilyGroup = ({ technician, setTotalItems }: ReportByFamilyGroupP
                             );
                         }}
                         onOtherFarmerUpdated={(farmer) => {
+                            if (farmer.familyGroup?.principal.technician?.id != technician.id) return;
                             fetchFamilyGroupByMember(farmer?.registrationNumber);
                             if (farmer.familyGroup) setGroupToRefresh(farmer.familyGroup?.id);
                         }}
