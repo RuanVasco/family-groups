@@ -318,84 +318,88 @@ const Dashboard = () => {
                     height: "600px",
                 }}
             >
-                {allPieData.map((dataset, idx) => (
-                    <div
-                        key={idx}
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            border: "1px solid #e0e0e0",
-                            borderRadius: "8px",
-                            padding: "8px",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                            display: "flex",
-                            flexDirection: "column",
-                        }}
-                    >
-                        <h5 style={{ textAlign: "center", margin: "0 0 8px 0" }}>
-                            {(() => {
-                                switch (idx) {
-                                    case 0:
-                                        return "Canola";
-                                    case 1:
-                                        return "Trigo";
-                                    case 2:
-                                        return "Silagem de Milho";
-                                    case 3:
-                                        return "Milho Grão";
-                                    case 4:
-                                        return "Feijão";
-                                    case 5:
-                                        return "Soja";
-                                    default:
-                                        return "";
-                                }
-                            })()}
-                        </h5>
+                {allPieData.map((dataset, idx) => {
+                    const total = dataset.reduce(
+                        (acc, d) => acc + (Number(d.value) || 0),
+                        0
+                    );
 
-                        <div style={{ flex: 1, minHeight: 280 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={dataset}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={80}
-                                        label={({ payload }) => `${payload.value}`}
-                                    >
-                                        {dataset.map((_e, i) => (
-                                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                                        ))}
-                                    </Pie>
+                    if (total === 0) {
+                        return null;
+                    }
 
-                                    <Legend
-                                        layout="vertical"
-                                        verticalAlign="middle"
-                                        align="right"
-                                        content={({ payload }) => (
-                                            <ul style={{ listStyle: "none", margin: 0, padding: 0, fontSize: 12 }}>
-                                                {payload?.map((entry) => (
-                                                    <li key={entry.value}>
-                                                        <span style={{ color: entry.color }}>■</span>{" "}
-                                                        {entry.value}: {Number(entry.payload?.value).toFixed(2)}
+                    return (
+                        <div
+                            key={idx}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                border: "1px solid #e0e0e0",
+                                borderRadius: "8px",
+                                padding: "8px",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                display: "flex",
+                                flexDirection: "column",
+                            }}
+                        >
+                            <h5 style={{ textAlign: "center", margin: "0 0 8px 0" }}>
+                                {(() => {
+                                    switch (idx) {
+                                        case 0: return "Canola";
+                                        case 1: return "Trigo";
+                                        case 2: return "Silagem de Milho";
+                                        case 3: return "Milho Grão";
+                                        case 4: return "Feijão";
+                                        case 5: return "Soja";
+                                        default: return "";
+                                    }
+                                })()}
+                            </h5>
+
+                            <div style={{ flex: 1, minHeight: 280 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={dataset}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={80}
+                                            label={({ payload }) => `${payload.value}`}
+                                        >
+                                            {dataset.map((_e, i) => (
+                                                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Legend
+                                            layout="vertical"
+                                            verticalAlign="middle"
+                                            align="right"
+                                            content={({ payload }) => (
+                                                <ul style={{ listStyle: "none", margin: 0, padding: 0, fontSize: 12 }}>
+                                                    {payload?.map((entry) => (
+                                                        <li key={entry.value}>
+                                                            <span style={{ color: entry.color }}>■</span>{" "}
+                                                            {entry.value}: {Number(entry.payload?.value).toFixed(2)}
+                                                        </li>
+                                                    ))}
+                                                    <li style={{ marginTop: 6, fontWeight: "bold" }}>
+                                                        Área total do cultivo: {total.toFixed(2)} ha
                                                     </li>
-                                                ))}
-
-                                                <li style={{ marginTop: 6, fontWeight: "bold" }}>
-                                                    Área total: {totalArea.toFixed(2)} ha
-                                                </li>
-                                            </ul>
-                                        )}
-                                    />
-
-                                    <Tooltip formatter={(v) => v} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                                                    <li style={{ fontWeight: "bold" }}>
+                                                        Área total: {totalArea.toFixed(2)} ha
+                                                    </li>
+                                                </ul>
+                                            )}
+                                        />
+                                        <Tooltip formatter={(v) => v} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {allPieData.length < 6 &&
                     Array.from({ length: 6 - allPieData.length }).map((_, idx) => (
