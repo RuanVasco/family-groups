@@ -384,7 +384,7 @@ const Dashboard = () => {
                                                 ))}
 
                                                 <li style={{ marginTop: 6, fontWeight: "bold" }}>
-                                                    Área total: {totalArea.toFixed(2)}
+                                                    Área total: {totalArea.toFixed(2)} ha
                                                 </li>
                                             </ul>
                                         )}

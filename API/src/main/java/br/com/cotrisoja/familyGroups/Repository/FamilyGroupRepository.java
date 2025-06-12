@@ -69,15 +69,22 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
     Double getFamilyGroupFreeArea(@Param("familyGroup") FamilyGroup familyGroup);
 
     @Query("""
-    SELECT new br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FreeAreaAggDTO(fg.id,
-           COALESCE(SUM(a.amount),0))
-        FROM Asset a
-        JOIN a.leasedTo l
-        JOIN l.familyGroup fg
-        WHERE fg IN :familyGroups
-        GROUP BY fg.id
-    """)
-    List<FreeAreaAggDTO> getFreeAreaForGroups(@Param("familyGroups") List<FamilyGroup> familyGroups);
+        SELECT new br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FreeAreaAggDTO(
+                   COALESCE(lfg.id, ofg.id),
+                   COALESCE(SUM(a.amount), 0)
+               )
+        FROM   Asset a
+        LEFT  JOIN a.leasedTo    l
+        LEFT  JOIN l.familyGroup lfg
+        LEFT  JOIN a.owner       o
+        LEFT  JOIN o.familyGroup ofg
+        WHERE  (lfg IN :familyGroups)
+           OR  (l IS NULL AND ofg IN :familyGroups)
+        GROUP BY COALESCE(lfg.id, ofg.id)
+        """)
+    List<FreeAreaAggDTO> getFreeAreaForGroups(
+        @Param("familyGroups") List<FamilyGroup> familyGroups);
+
 
     @Query("""
         SELECT COALESCE(SUM(a.amount), 0)
