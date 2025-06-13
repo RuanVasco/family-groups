@@ -18,6 +18,7 @@ import { UserType } from "../../Type/UserType";
 interface FamilyGroupCultivation {
     familyGroupId: number,
     freeArea: number,
+    totalArea: number,
     cultivations: CultivationType
 }
 
@@ -60,6 +61,7 @@ const Dashboard = () => {
 
     const [allPieData, setAllPieData] = useState<PieData[][]>([]);
 
+    const [totalFreeArea, setTotalFreeArea] = useState<Number>(0);
     const [totalArea, setTotalArea] = useState<Number>(0);
 
     const fetchBranches = async (): Promise<BranchType[]> => {
@@ -161,10 +163,18 @@ const Dashboard = () => {
 
             type NumericKey = keyof CultivationType;
 
-            setTotalArea(
+            setTotalFreeArea(
                 Number(
                     items
                         .reduce((sum, { freeArea }) => sum + (freeArea ?? 0), 0)
+                        .toFixed(2)
+                )
+            );
+
+            setTotalArea(
+                Number(
+                    items
+                        .reduce((sum, { totalArea }) => sum + (totalArea ?? 0), 0)
                         .toFixed(2)
                 )
             );
@@ -182,21 +192,21 @@ const Dashboard = () => {
 
             const pieCanola: PieData[] = [
                 {
-                    name: "Restante",
+                    name: "Outros",
                     value: (totals.canolaArea || 0) - (totals.canolaAreaParticipation || 0),
                 },
                 { name: "Participação Cotrisoja", value: totals.canolaAreaParticipation || 0 },
             ];
             const pieWheat: PieData[] = [
                 {
-                    name: "Restante",
+                    name: "Outros",
                     value: (totals.wheatArea || 0) - (totals.wheatAreaParticipation || 0),
                 },
                 { name: "Participação Cotrisoja", value: totals.wheatAreaParticipation || 0 },
             ];
             const pieSilage: PieData[] = [
                 {
-                    name: "Restante",
+                    name: "Outros",
                     value:
                         (totals.cornSilageArea || 0) - (totals.cornSilageAreaParticipation || 0),
                 },
@@ -204,7 +214,7 @@ const Dashboard = () => {
             ];
             const pieGrainCorn: PieData[] = [
                 {
-                    name: "Restante",
+                    name: "Outros",
                     value:
                         (totals.grainCornArea || 0) - (totals.grainCornAreaParticipation || 0),
                 },
@@ -212,14 +222,14 @@ const Dashboard = () => {
             ];
             const pieBean: PieData[] = [
                 {
-                    name: "Restante",
+                    name: "Outros",
                     value: (totals.beanArea || 0) - (totals.beanAreaParticipation || 0),
                 },
                 { name: "Participação Cotrisoja", value: totals.beanAreaParticipation || 0 },
             ];
             const pieSoybean: PieData[] = [
                 {
-                    name: "Restante",
+                    name: "Outros",
                     value:
                         (totals.soybeanArea || 0) - (totals.soybeanAreaParticipation || 0),
                 },
@@ -378,6 +388,9 @@ const Dashboard = () => {
                                             align="right"
                                             content={({ payload }) => (
                                                 <ul style={{ listStyle: "none", margin: 0, padding: 0, fontSize: 12 }}>
+                                                    <li style={{ marginBottom: 6, fontWeight: "bold" }}>
+                                                        Área total do cultivo: {total.toFixed(2)} ha
+                                                    </li>
                                                     {payload?.map((entry) => (
                                                         <li key={entry.value}>
                                                             <span style={{ color: entry.color }}>■</span>{" "}
@@ -385,9 +398,9 @@ const Dashboard = () => {
                                                         </li>
                                                     ))}
                                                     <li style={{ marginTop: 6, fontWeight: "bold" }}>
-                                                        Área total do cultivo: {total.toFixed(2)} ha
+                                                        Área total cultivável: {totalFreeArea.toFixed(2)} ha
                                                     </li>
-                                                    <li style={{ fontWeight: "bold" }}>
+                                                    <li style={{ marginTop: 6, fontWeight: "bold" }}>
                                                         Área total: {totalArea.toFixed(2)} ha
                                                     </li>
                                                 </ul>

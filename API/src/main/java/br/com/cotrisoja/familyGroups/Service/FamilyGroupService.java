@@ -243,10 +243,18 @@ public class FamilyGroupService {
                         FreeAreaAggDTO::familyGroupId,
                         FreeAreaAggDTO::freeArea));
 
+        Map<Long, Double> totalAreaMap = familyGroupRepository.getAreaForGroups(groups)
+                .stream()
+                .collect(Collectors.toMap(
+                        FreeAreaAggDTO::familyGroupId,
+                        FreeAreaAggDTO::freeArea
+                ));
+
         return groups.stream()
                 .map(fg -> new CultivationWithFreeAreaDTO(
                         fg.getId(),
                         areaMap.getOrDefault(fg.getId(), 0D),
+                        totalAreaMap.getOrDefault(fg.getId(), 0D),
                         (CultivationResponseDTO.fromEntity(fg))
                 ))
                 .toList();
@@ -264,10 +272,18 @@ public class FamilyGroupService {
                         FreeAreaAggDTO::familyGroupId,
                         FreeAreaAggDTO::freeArea));
 
+        Map<Long, Double> totalAreaMap = familyGroupRepository.getAreaForGroups(groups)
+                .stream()
+                .collect(Collectors.toMap(
+                        FreeAreaAggDTO::familyGroupId,
+                        FreeAreaAggDTO::freeArea
+                ));
+
         return groups.stream()
                 .map(fg -> new CultivationWithFreeAreaDTO(
                         fg.getId(),
                         areaMap.getOrDefault(fg.getId(), 0D),
+                        totalAreaMap.getOrDefault(fg.getId(), 0D),
                         (CultivationResponseDTO.fromEntity(fg))
                 ))
                 .toList();

@@ -92,7 +92,7 @@ public class FamilyGroupController {
         }
 
         FamilyGroup familyGroup = familyGroupOptional.get();
-        Double totalFamilyGroupArea = familyGroupService.getFamilyGroupTotalArea(familyGroup);
+        Double totalFamilyGroupArea = familyGroupService.getFreeArea(familyGroup.getId());
 
         if (totalFamilyGroupArea == null) totalFamilyGroupArea = 0.0;
 

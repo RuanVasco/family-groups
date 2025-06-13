@@ -93,49 +93,58 @@ const FamilyGroupTable = ({
         });
     }
 
-    // useEffect(() => {
-    //     fetchFreeArea(familyGroup.id);
-    //     if (familyGroup.members) {
-    //         setCurrentFamilyGroup(prev => {
-    //             if (
-    //                 prev?.id === familyGroup.id &&
-    //                 prev?.principal === familyGroup.principal &&
-    //                 prev?.members === familyGroup.members
-    //             ) {
-    //                 return prev;
-    //             }
+    const CULTIVATION_KEYS = new Set([
+        "canolaArea",
+        "wheatArea",
+        "cornSilageArea",
+        "grainCornArea",
+        "beanArea",
+        "soybeanArea",
+        "canolaAreaParticipation",
+        "wheatAreaParticipation",
+        "cornSilageAreaParticipation",
+        "grainCornAreaParticipation",
+        "beanAreaParticipation",
+        "soybeanAreaParticipation",
+    ]);
 
-    //             return {
-    //                 ...prev,
-    //                 id: familyGroup.id,
-    //                 principal: familyGroup.principal,
-    //                 members: familyGroup.members,
-    //             };
-    //         });
-    //         fetchLessors(familyGroup.id);
-    //     }
-    // }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
-
-    function shallowEqual(a: any, b: any) {
+    function shallowEqualMeta(a?: any, b?: any): boolean {
         if (a === b) return true;
         if (!a || !b) return false;
-        const keys = Object.keys(a);
-        if (keys.length !== Object.keys(b).length) return false;
-        return keys.every(k => a[k] === b[k]);
+
+        const keysA = Object.keys(a).filter(k => !CULTIVATION_KEYS.has(k));
+        const keysB = Object.keys(b).filter(k => !CULTIVATION_KEYS.has(k));
+        if (keysA.length !== keysB.length) return false;
+
+        return keysA.every(k => {
+            if (k === "members") {
+                const mA = a.members ?? [];
+                const mB = b.members ?? [];
+                if (mA.length !== mB.length) return false;
+                return mA.every((m: any, i: number) =>
+                    m.registration_number === mB[i]?.registration_number
+                );
+            }
+            return a[k] === b[k];
+        });
     }
 
     useEffect(() => {
         if (!familyGroup) return;
 
-        setCurrentFamilyGroup(prev => {
-            if (prev && shallowEqual(prev, familyGroup)) return prev;
-
-            return { ...prev, ...familyGroup };
-        });
+        setCurrentFamilyGroup(prev =>
+            shallowEqualMeta(prev, familyGroup)
+                ? prev
+                : { ...prev, ...familyGroup }
+        );
 
         fetchFreeArea(familyGroup.id);
         fetchLessors(familyGroup.id);
-    }, [familyGroup.id, familyGroup.members, familyGroup.principal]);
+    }, [
+        familyGroup.id,
+        familyGroup.principal?.registrationNumber,
+        familyGroup.members,
+    ]);
 
     const farmers = currentFamilyGroup?.members || [];
 

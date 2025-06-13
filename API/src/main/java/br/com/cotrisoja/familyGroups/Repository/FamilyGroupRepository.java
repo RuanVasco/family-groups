@@ -51,12 +51,15 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
     List<Farmer> findLessorsByFamilyGroup(@Param("familyGroup") FamilyGroup familyGroup);
 
     @Query("""
-        SELECT SUM(a.amount)
-        FROM Asset a
-        JOIN Farmer f ON a.owner = f OR a.leasedTo = f
-        JOIN FamilyGroup fg ON f MEMBER OF fg.members
-        WHERE fg = :familyGroup
-    """)
+        SELECT COALESCE(SUM(COALESCE(a.cultivable, a.amount)), 0)
+        FROM   Asset a
+        LEFT  JOIN a.owner          o
+        LEFT  JOIN o.familyGroup    ofg        
+        LEFT  JOIN a.leasedTo       l
+        LEFT  JOIN l.familyGroup    lfg           
+        WHERE  (lfg = :familyGroup)               
+           OR  (l IS NULL AND ofg = :familyGroup) 
+       """)
     Double getFamilyGroupTotalArea(@Param("familyGroup") FamilyGroup familyGroup);
 
     @Query("""
@@ -105,10 +108,27 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
     List<FreeAreaAggDTO> getFreeAreaForGroups(
             @Param("familyGroups") List<FamilyGroup> familyGroups);
 
-
+    @Query("""
+        SELECT new br.com.cotrisoja.familyGroups.DTO.FamilyGroup.FreeAreaAggDTO(
+                   COALESCE(lfg.id, ofg.id),
+                   COALESCE(SUM(a.amount), 0)
+               )
+        FROM   Asset a
+        LEFT  JOIN a.leasedTo    l
+        LEFT  JOIN l.familyGroup lfg
+        LEFT  JOIN a.owner       o
+        LEFT  JOIN o.familyGroup ofg
+        WHERE  (
+                  (lfg IN :familyGroups)
+               OR (l IS NULL AND ofg IN :familyGroups)
+               )
+        GROUP BY COALESCE(lfg.id, ofg.id)
+    """)
+    List<FreeAreaAggDTO> getAreaForGroups(
+            @Param("familyGroups") List<FamilyGroup> familyGroups);
 
     @Query("""
-        SELECT COALESCE(SUM(a.amount), 0)
+        SELECT SUM(COALESCE(cultivable, 0))
         FROM   Asset a
         LEFT  JOIN a.leasedTo       l
         LEFT  JOIN l.familyGroup    lfg
