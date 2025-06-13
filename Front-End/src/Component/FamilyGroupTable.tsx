@@ -93,51 +93,10 @@ const FamilyGroupTable = ({
         });
     }
 
-    const CULTIVATION_KEYS = new Set([
-        "canolaArea",
-        "wheatArea",
-        "cornSilageArea",
-        "grainCornArea",
-        "beanArea",
-        "soybeanArea",
-        "canolaAreaParticipation",
-        "wheatAreaParticipation",
-        "cornSilageAreaParticipation",
-        "grainCornAreaParticipation",
-        "beanAreaParticipation",
-        "soybeanAreaParticipation",
-    ]);
-
-    function shallowEqualMeta(a?: any, b?: any): boolean {
-        if (a === b) return true;
-        if (!a || !b) return false;
-
-        const keysA = Object.keys(a).filter(k => !CULTIVATION_KEYS.has(k));
-        const keysB = Object.keys(b).filter(k => !CULTIVATION_KEYS.has(k));
-        if (keysA.length !== keysB.length) return false;
-
-        return keysA.every(k => {
-            if (k === "members") {
-                const mA = a.members ?? [];
-                const mB = b.members ?? [];
-                if (mA.length !== mB.length) return false;
-                return mA.every((m: any, i: number) =>
-                    m.registration_number === mB[i]?.registration_number
-                );
-            }
-            return a[k] === b[k];
-        });
-    }
-
     useEffect(() => {
         if (!familyGroup) return;
 
-        setCurrentFamilyGroup(prev =>
-            shallowEqualMeta(prev, familyGroup)
-                ? prev
-                : { ...prev, ...familyGroup }
-        );
-
+        setCurrentFamilyGroup(familyGroup);
         fetchFreeArea(familyGroup.id);
         fetchLessors(familyGroup.id);
     }, [
@@ -320,7 +279,7 @@ const FamilyGroupTable = ({
                                     <span className="visually-hidden">Loading...</span>
                                 </div>
                             ) : (
-                                <span> {freeArea?.toFixed(2) ?? 0} ha</span>
+                                <span> {Number(freeArea ?? 0).toFixed(2)} ha</span>
                             )}
                         </span>
                     </h5>
