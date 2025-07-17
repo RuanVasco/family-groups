@@ -93,21 +93,14 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
     useEffect(() => {
         setFilters(prev => {
             const next = { ...prev };
-            let changed = false;
-
             if (debouncedSearch.length >= 3) {
-                if (next.search !== debouncedSearch) {
-                    next.search = debouncedSearch;
-                    changed = true;
-                }
+                if (next.search === debouncedSearch) return prev;
+                next.search = debouncedSearch;
             } else {
-                if ("search" in next) {
-                    delete next.search;
-                    changed = true;
-                }
+                if (!("search" in next)) return prev;
+                delete next.search;
             }
-
-            return changed ? next : prev;
+            return next;
         });
     }, [debouncedSearch]);
 
@@ -126,21 +119,18 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         setSortDirUi(nextDir);
 
         const apiField = fieldMap[header];
-        const newFilters = { ...filters, sort: `${apiField},${nextDir}` };
-        setFilters(newFilters);
-        fetchPage(1, { ...baseParams, ...newFilters });
+        setFilters({ ...filters, sort: `${apiField},${nextDir}` });
+        // fetchPage(1, { ...baseParams, ...newFilters });
     };
 
     const handleType = (opt: any) => {
         setSelectedType(opt);
-        const newFilters = { ...filters };
-        if (opt?.value) {
-            newFilters.typeId = opt.value;
-        } else {
-            delete newFilters.typeId;
-        }
-        setFilters(newFilters);
-        fetchPage(1, { ...baseParams, ...newFilters });
+        setFilters(prev => {
+            const newFilters = { ...prev };
+            if (opt?.value) newFilters.typeId = opt.value;
+            else delete newFilters.typeId;
+            return newFilters;
+        });
     };
 
     const [show, setShow] = useState(false);
@@ -171,20 +161,18 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
             if (res.status === 200 || res.status === 201) {
                 toast.success("Produtor atualizado com sucesso!");
 
-                setCurrentFarmers(prev =>
-                    prev.map(f =>
-                        f.registrationNumber === currentFarmer.registrationNumber
-                            ? currentFarmer
-                            : f
-                    )
-                );
-
                 setShow(false);
+                setCurrentFarmer(null);
+                fetchPage(1, { ...baseParams, ...filters });
             }
         } catch {
             toast.error("Erro ao atualizar o produtor.");
         }
     };
+
+    const filteredFarmers = useMemo(() => {
+        return currentFarmers.filter(f => f.technician?.id === technician?.id);
+    }, [currentFarmers, technician?.id]);
 
     return (
         <div className="pt-3 px-4 pb-5">
@@ -279,69 +267,67 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                             sortDir={sortDirUi}
                             onSort={handleSort}
                         >
-                            {currentFarmers
-                                .filter(f => (f.technician?.id === technician?.id))
-                                .map(f => {
+                            {filteredFarmers.map(f => {
 
-                                    const sapOwned = (
-                                        f.ownedAssets
-                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
-                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
-                                    ).toFixed(2);
+                                const sapOwned = (
+                                    f.ownedAssets
+                                        ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                ).toFixed(2);
 
-                                    const sapLeased = (
-                                        f.leasedAssets
-                                            ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
-                                            .reduce((sum, asset) => sum + asset.amount, 0) || 0
-                                    ).toFixed(2);
+                                const sapLeased = (
+                                    f.leasedAssets
+                                        ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
+                                        .reduce((sum, asset) => sum + asset.amount, 0) || 0
+                                ).toFixed(2);
 
-                                    const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
+                                const sapTotal = (parseFloat(sapOwned) + parseFloat(sapLeased)).toFixed(2);
 
-                                    const ownedArea = (f.ownedArea ?? 0).toFixed(2);
-                                    const leasedArea = (f.leasedArea ?? 0).toFixed(2);
-                                    const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
+                                const ownedArea = (f.ownedArea ?? 0).toFixed(2);
+                                const leasedArea = (f.leasedArea ?? 0).toFixed(2);
+                                const totalArea = ((f.ownedArea ?? 0) + (f.leasedArea ?? 0)).toFixed(2);
 
-                                    return (<tr key={Number(f.registrationNumber)}>
-                                        <td>{f.registrationNumber}</td>
-                                        <td>{f.type?.id ?? "-"}</td>
-                                        <td>{f.name}</td>
-                                        <td>{StatusLabels[f.status]}</td>
-                                        <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
-                                        <td>{f.familyGroup?.principal.name ?? "Sem grupo familiar"}</td>
-                                        <td>{`${sapOwned} ha`}</td>
-                                        <td>{`${sapLeased} ha`}</td>
-                                        <td>{`${sapTotal} ha`}</td>
-                                        <td>
-                                            <button
-                                                className="button_info btn_sm"
-                                                onClick={() => openAssetModal(f)}
-                                                title="Editar Bens"
-                                            >
-                                                <FaTractor />
-                                            </button>
-                                        </td>
-                                        <td>
-                                            {`${ownedArea} ha`}
-                                        </td>
-                                        <td>
-                                            {`${leasedArea} ha`}
-                                        </td>
-                                        <td className={sapTotal !== totalArea ? "text-danger" : ""}>
-                                            {`${totalArea} ha`}
-                                        </td>
-                                        <td className="d-flex gap-2">
+                                return (<tr key={Number(f.registrationNumber)}>
+                                    <td>{f.registrationNumber}</td>
+                                    <td>{f.type?.id ?? "-"}</td>
+                                    <td>{f.name}</td>
+                                    <td>{StatusLabels[f.status]}</td>
+                                    <td>{f.branch?.name ?? "Sem carteira vinculada"}</td>
+                                    <td>{f.familyGroup?.principal.name ?? "Sem grupo familiar"}</td>
+                                    <td>{`${sapOwned} ha`}</td>
+                                    <td>{`${sapLeased} ha`}</td>
+                                    <td>{`${sapTotal} ha`}</td>
+                                    <td>
+                                        <button
+                                            className="button_info btn_sm"
+                                            onClick={() => openAssetModal(f)}
+                                            title="Editar Bens"
+                                        >
+                                            <FaTractor />
+                                        </button>
+                                    </td>
+                                    <td>
+                                        {`${ownedArea} ha`}
+                                    </td>
+                                    <td>
+                                        {`${leasedArea} ha`}
+                                    </td>
+                                    <td className={sapTotal !== totalArea ? "text-danger" : ""}>
+                                        {`${totalArea} ha`}
+                                    </td>
+                                    <td className="d-flex gap-2">
 
-                                            <button
-                                                className="button_edit btn_sm"
-                                                onClick={() => { setCurrentFarmer(f); setShow(true); }}
-                                                title="Editar Produtor"
-                                            >
-                                                <FaPen />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    )
-                                })}
+                                        <button
+                                            className="button_edit btn_sm"
+                                            onClick={() => { setCurrentFarmer(f); setShow(true); }}
+                                            title="Editar Produtor"
+                                        >
+                                            <FaPen />
+                                        </button>
+                                    </td>
+                                </tr>
+                                )
+                            })}
                         </CustomTable>
                     )}
                 </Pagination>
