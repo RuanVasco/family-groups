@@ -34,14 +34,14 @@ const FarmerModal = ({
     modalMode,
     onChange,
 }: FarmerModalProps) => {
+    if (!show || !currentFarmer) return;
+
     const { data: users = [], fetch } = useFetchData<UserType[]>();
 
     useEffect(() => {
         if (!fetch || !show) return;
         fetch("/user/all", "Failed to load users.");
     }, [show]);
-
-    if (!show || !currentFarmer) return;
 
     const technicianOptions: TechnicianOption[] = [
         { value: null, label: "Sem técnico" },
