@@ -41,6 +41,8 @@ const FarmerModal = ({
         fetch("/user/all", "Failed to load users.");
     }, [show]);
 
+    if (!show || !currentFarmer) return;
+
     const technicianOptions: TechnicianOption[] = [
         { value: null, label: "Sem técnico" },
         ...(users ?? []).map<TechnicianOption>((u) => ({

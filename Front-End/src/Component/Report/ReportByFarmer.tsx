@@ -159,11 +159,11 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
             };
             const res = await axiosInstance.put(`/farmer/${currentFarmer.registrationNumber}`, body);
             if (res.status === 200 || res.status === 201) {
-                toast.success("Produtor atualizado com sucesso!");
-
                 setShow(false);
+
                 setCurrentFarmer(null);
                 fetchPage(1, { ...baseParams, ...filters });
+                toast.success("Produtor atualizado com sucesso!");
             }
         } catch {
             toast.error("Erro ao atualizar o produtor.");
