@@ -177,9 +177,6 @@ public class FarmerService {
                 : farmerRepository.findByTechnicianIsNullAndTypeWithSearch(type, s, pageable);
     }
 
-    /* ----------------------------------------------------------
-     * BUSCA POR BRANCH
-     * ---------------------------------------------------------- */
     public Page<Farmer> findByEffectiveBranch(Branch branch,
                                               String search,
                                               Pageable pageable) {

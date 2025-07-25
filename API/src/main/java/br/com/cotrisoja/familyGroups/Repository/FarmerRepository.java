@@ -134,9 +134,6 @@ public interface FarmerRepository extends
         return findAll(spec, page);
     }
 
-    /* --------------------------------------------------------------------- */
-    /* POR TÉCNICO + TIPO --------------------------------------------------- */
-    /* --------------------------------------------------------------------- */
     Page<Farmer> findByTechnicianAndType(User technician, Type type, Pageable pageable);
 
     default Page<Farmer> findByTechnicianAndTypeWithSearch(
@@ -149,9 +146,6 @@ public interface FarmerRepository extends
         return findAll(spec, page);
     }
 
-    /* --------------------------------------------------------------------- */
-    /* SEM TÉCNICO + TIPO --------------------------------------------------- */
-    /* --------------------------------------------------------------------- */
     Page<Farmer> findByTechnicianIsNullAndType(Type type, Pageable pageable);
 
     default Page<Farmer> findByTechnicianIsNullAndTypeWithSearch(
@@ -164,9 +158,6 @@ public interface FarmerRepository extends
         return findAll(spec, page);
     }
 
-    /* --------------------------------------------------------------------- */
-    /* POR CARTEIRA (BRANCH) ------------------------------------------------ */
-    /* --------------------------------------------------------------------- */
     Page<Farmer> findByBranch(Branch branch, Pageable pageable);
 
     default Page<Farmer> findByEffectiveBranchWithSearch(
