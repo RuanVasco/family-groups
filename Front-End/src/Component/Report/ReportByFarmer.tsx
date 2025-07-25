@@ -171,8 +171,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
     };
 
     const filteredFarmers = useMemo(() => {
-        return currentFarmers.filter(f => f.technician?.id === technician?.id);
-    }, [currentFarmers, technician?.id]);
+        if (!technician) return currentFarmers;
+        return currentFarmers.filter(f => f.technician?.id === technician.id);
+    }, [currentFarmers, technician]);
 
     return (
         <div className="pt-3 px-4 pb-5">
@@ -268,7 +269,6 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                             onSort={handleSort}
                         >
                             {filteredFarmers.map(f => {
-
                                 const sapOwned = (
                                     f.ownedAssets
                                         ?.filter((asset) => asset.assetType.id === 1 || asset.assetType.id === 2)
