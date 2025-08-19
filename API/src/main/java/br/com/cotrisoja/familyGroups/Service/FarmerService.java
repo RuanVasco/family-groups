@@ -103,9 +103,17 @@ public class FarmerService {
         }
 
         if (farmerRequestDTO.familyGroupId() != null) {
-            familyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
+            FamilyGroup newFamilyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
                     .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
-            farmer.setFamilyGroup(familyGroup);
+
+            FamilyGroup oldFamilyGroup = farmer.getFamilyGroup();
+            farmer.setFamilyGroup(newFamilyGroup);
+
+            if (oldFamilyGroup != null) {
+                if (oldFamilyGroup.getMembers().size() <= 1 && oldFamilyGroup.getPrincipal().getRegistrationNumber().equals(farmer.getRegistrationNumber())) {
+                    familyGroupRepository.delete(oldFamilyGroup);
+                }
+            }
         }
 
         if (farmerRequestDTO.typeId() != null) {

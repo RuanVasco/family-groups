@@ -26,23 +26,23 @@ public class FamilyGroup {
 
     private String registry;
 
-    private Double canolaArea;
-    private Double canolaAreaParticipation;
+    private Double canolaArea = 0.0;
+    private Double canolaAreaParticipation = 0.0;
 
-    private Double wheatArea;
-    private Double wheatAreaParticipation;
+    private Double wheatArea = 0.0;
+    private Double wheatAreaParticipation = 0.0;
 
-    private Double cornSilageArea;
-    private Double cornSilageAreaParticipation;
+    private Double cornSilageArea = 0.0;
+    private Double cornSilageAreaParticipation = 0.0;
 
-    private Double grainCornArea;
-    private Double grainCornAreaParticipation;
+    private Double grainCornArea = 0.0;
+    private Double grainCornAreaParticipation = 0.0;
 
-    private Double beanArea;
-    private Double beanAreaParticipation;
+    private Double beanArea = 0.0;
+    private Double beanAreaParticipation = 0.0;
 
-    private Double soybeanArea;
-    private Double soybeanAreaParticipation;
+    private Double soybeanArea = 0.0;
+    private Double soybeanAreaParticipation = 0.0;
 
     public void setPrincipal(Farmer principal) {
         this.principal = principal;

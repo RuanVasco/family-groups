@@ -12,6 +12,13 @@ import br.com.cotrisoja.familyGroups.Repository.BranchRepository;
 import br.com.cotrisoja.familyGroups.Repository.TypeRepository;
 import br.com.cotrisoja.familyGroups.Repository.UserRepository;
 import br.com.cotrisoja.familyGroups.Service.FarmerService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -26,6 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Tag(name = "Produtores", description = "Endpoints para gerenciamento de produtores")
 @RestController
 @RequestMapping("/farmer")
 @RequiredArgsConstructor
@@ -75,6 +83,23 @@ public class FarmerController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Buscar um produtor pelo número de matrícula",
+            description = "Retorna os dados detalhados de um único produtor com base no seu número de matrícula fornecido na URL."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Produtor encontrado com sucesso.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = FarmerResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nenhum produtor encontrado com o número de matrícula fornecido.",
+                    content = @Content
+            )
+    })
     @GetMapping("/{farmerRegistration}")
     public ResponseEntity<?> getFarmer(
             @PathVariable String farmerRegistration
@@ -85,6 +110,40 @@ public class FarmerController {
         return ResponseEntity.ok(FarmerResponseDTO.fromEntity(farmer));
     }
 
+    @Operation(
+            summary = "Busca paginada por produtores disponíveis",
+            description = """
+            Retorna uma lista paginada de produtores considerados "disponíveis" para serem adicionados a um grupo familiar.
+            
+            **Regras de Negócio para Disponibilidade (BR-FARM-01):**
+            Um produtores é considerado disponível se atender a **TODAS** as seguintes condições:
+            1.  Seu status é **'ATIVO'**.
+            2.  Ele **NÃO** está bloqueado.
+            3.  Ele atende a um dos seguintes critérios de grupo:
+                - Não pertence a nenhum grupo familiar (**familyGroup** é nulo).
+                - Pertence a um grupo familiar que possui **apenas um membro** (ele mesmo).
+            
+            O endpoint suporta uma busca opcional por nome.
+            """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Busca realizada com sucesso.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Page.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Requisição inválida (ex: parâmetros de paginação inválidos)",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content
+            )
+    })
     @GetMapping("/available")
     public ResponseEntity<Page<FarmerResponseDTO>> findAvailableFarmers(
             @RequestParam(required = false) String search,
@@ -102,7 +161,18 @@ public class FarmerController {
         return ResponseEntity.ok(response);
     }
 
-
+    @Operation(
+            summary = "Busca produtores por grupo familiar",
+            description = "Retorna uma lista de produtores membros de um grupo familiar."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Busca realizada com sucesso.",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = FarmerResponseDTO.class)))
+            )
+    })
     @GetMapping("by-family-group/{familyGroupID}")
     public ResponseEntity<?> findByFamilyGroup(
             @PathVariable Long familyGroupID
