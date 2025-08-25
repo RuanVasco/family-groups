@@ -22,6 +22,7 @@ public class FarmerService {
     private final UserRepository userRepository;
     private final TypeRepository typeRepository;
     private final BranchRepository branchRepository;
+    private final FamilyGroupService familyGroupService;
 
     public Farmer createFarmer(FarmerRequestDTO farmerRequestDTO) {
         FamilyGroup familyGroup = null;
@@ -102,19 +103,14 @@ public class FarmerService {
             farmer.setTechnician(null);
         }
 
+        FamilyGroup newFamilyGroup = null;
         if (farmerRequestDTO.familyGroupId() != null) {
-            FamilyGroup newFamilyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
-                    .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
-
-            FamilyGroup oldFamilyGroup = farmer.getFamilyGroup();
-            farmer.setFamilyGroup(newFamilyGroup);
-
-            if (oldFamilyGroup != null) {
-                if (oldFamilyGroup.getMembers().size() <= 1 && oldFamilyGroup.getPrincipal().getRegistrationNumber().equals(farmer.getRegistrationNumber())) {
-                    familyGroupRepository.delete(oldFamilyGroup);
-                }
-            }
+            newFamilyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
+                .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
         }
+
+        FamilyGroup oldFamilyGroup = farmer.getFamilyGroup();
+        farmer.setFamilyGroup(newFamilyGroup);
 
         if (farmerRequestDTO.typeId() != null) {
             type = typeRepository.findById(farmerRequestDTO.typeId())
@@ -128,7 +124,13 @@ public class FarmerService {
             farmer.setBranch(branch);
         }
 
-        return farmerRepository.save(farmer);
+        Farmer newFarmer = farmerRepository.save(farmer);
+
+        if (oldFamilyGroup != null && oldFamilyGroup.getPrincipal().equals(newFarmer)) {
+            familyGroupService.removePrincipal(oldFamilyGroup);
+        }
+
+        return newFarmer;
     }
 
     public Optional<Farmer> findById(String farmerRegistration) {

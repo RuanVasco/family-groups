@@ -295,4 +295,15 @@ public class FamilyGroupService {
 
         return familyGroupRepository.getFreeAreaForGroup(familyGroup);
     }
+
+    public void removePrincipal(FamilyGroup familyGroup) {
+        if (familyGroup != null) {
+            if (familyGroup.getMembers().isEmpty()) {
+                familyGroupRepository.delete(familyGroup);
+            } else {
+                Farmer newPrincipal = familyGroup.getMembers().getFirst();
+                changePrincipal(familyGroup.getId(), newPrincipal.getRegistrationNumber());
+            }
+        }
+    }
 }

@@ -3,6 +3,7 @@ package br.com.cotrisoja.familyGroups.Repository;
 import br.com.cotrisoja.familyGroups.Entity.*;
 import br.com.cotrisoja.familyGroups.Enum.StatusEnum;
 import br.com.cotrisoja.familyGroups.Repository.Spec.FarmerSpecifications;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.domain.Page;
@@ -55,7 +56,6 @@ public interface FarmerRepository extends
 
 
     default Page<Farmer> findByValue(String value, Pageable page) {
-
         value = (value == null) ? "" : value.trim().toLowerCase();
         String[] tokens = value.split("\\s+");
 
@@ -71,9 +71,11 @@ public interface FarmerRepository extends
             List<Predicate> principalParts = new ArrayList<>();
             for (String t : tokens) {
                 principalParts.add(
-                        cb.like(cb.lower(root.join("familyGroup")
-                                .join("principal")
-                                .get("name")), "%" + t + "%"));
+                        cb.like(cb.lower(
+                                        root.join("familyGroup", JoinType.LEFT)
+                                                .join("principal", JoinType.LEFT)
+                                                .get("name")),
+                                "%" + t + "%"));
             }
             Predicate principalHasAllTokens = cb.and(principalParts.toArray(Predicate[]::new));
 

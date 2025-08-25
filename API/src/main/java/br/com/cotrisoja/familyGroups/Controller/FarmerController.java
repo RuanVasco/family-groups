@@ -61,7 +61,7 @@ public class FarmerController {
 
         if (value != null && !value.isBlank() && typeId != null) {
             farmers = farmerService.findByValueAndType(value, typeId, pageable);
-        } else if (value != null && !value.isBlank()) {
+        } else if (value != null && !value.isBlank() && typeId == null) {
             farmers = farmerService.findByValue(value, pageable);
         } else if (typeId != null) {
             if (typeId > Integer.MAX_VALUE) {
@@ -254,7 +254,9 @@ public class FarmerController {
         Farmer farmer = farmerService.findById(farmerRegistration)
                 .orElseThrow(() -> new RuntimeException("Produtor não encontrado"));
 
-        return ResponseEntity.ok(farmerService.updateFarmer(farmer, farmerRequestDTO));
+        Farmer updatedFarmer = farmerService.updateFarmer(farmer, farmerRequestDTO);
+
+        return ResponseEntity.ok(FarmerResponseDTO.fromEntity(updatedFarmer));
     }
 
     private Sort buildSort(String sortParam) {

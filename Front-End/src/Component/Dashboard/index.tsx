@@ -64,6 +64,10 @@ const Dashboard = () => {
     const [totalFreeArea, setTotalFreeArea] = useState<Number>(0);
     const [totalArea, setTotalArea] = useState<Number>(0);
 
+    function roundToTwo(num: number): number {
+        return Math.round(num * 100) / 100;
+    }
+
     const fetchBranches = async (): Promise<BranchType[]> => {
         try {
             const res = await axiosInstance.get<BranchType[]>("/branch");
@@ -193,45 +197,54 @@ const Dashboard = () => {
             const pieCanola: PieData[] = [
                 {
                     name: "Outros",
-                    value: (totals.canolaArea || 0) - (totals.canolaAreaParticipation || 0),
+                    value: roundToTwo(
+                        (totals.canolaArea || 0) - (totals.canolaAreaParticipation || 0)
+                    ),
                 },
                 { name: "Participação Cotrisoja", value: totals.canolaAreaParticipation || 0 },
             ];
             const pieWheat: PieData[] = [
                 {
                     name: "Outros",
-                    value: (totals.wheatArea || 0) - (totals.wheatAreaParticipation || 0),
+                    value: roundToTwo(
+                        (totals.wheatArea || 0) - (totals.wheatAreaParticipation || 0)
+                    ),
                 },
                 { name: "Participação Cotrisoja", value: totals.wheatAreaParticipation || 0 },
             ];
             const pieSilage: PieData[] = [
                 {
                     name: "Outros",
-                    value:
-                        (totals.cornSilageArea || 0) - (totals.cornSilageAreaParticipation || 0),
+                    value: roundToTwo(
+                        (totals.cornSilageArea || 0) - (totals.cornSilageAreaParticipation || 0)
+                    ),
                 },
                 { name: "Participação Cotrisoja", value: totals.cornSilageAreaParticipation || 0 },
             ];
             const pieGrainCorn: PieData[] = [
                 {
                     name: "Outros",
-                    value:
-                        (totals.grainCornArea || 0) - (totals.grainCornAreaParticipation || 0),
+                    value: roundToTwo(
+                        (totals.grainCornArea || 0) - (totals.grainCornAreaParticipation || 0)
+                    ),
                 },
                 { name: "Participação Cotrisoja", value: totals.grainCornAreaParticipation || 0 },
             ];
             const pieBean: PieData[] = [
                 {
                     name: "Outros",
-                    value: (totals.beanArea || 0) - (totals.beanAreaParticipation || 0),
+                    value: roundToTwo(
+                        (totals.beanArea || 0) - (totals.beanAreaParticipation || 0)
+                    ),
                 },
                 { name: "Participação Cotrisoja", value: totals.beanAreaParticipation || 0 },
             ];
             const pieSoybean: PieData[] = [
                 {
                     name: "Outros",
-                    value:
-                        (totals.soybeanArea || 0) - (totals.soybeanAreaParticipation || 0),
+                    value: roundToTwo(
+                        (totals.soybeanArea || 0) - (totals.soybeanAreaParticipation || 0)
+                    ),
                 },
                 { name: "Participação Cotrisoja", value: totals.soybeanAreaParticipation || 0 },
             ];
