@@ -103,14 +103,21 @@ public class FarmerService {
             farmer.setTechnician(null);
         }
 
-        FamilyGroup newFamilyGroup = null;
-        if (farmerRequestDTO.familyGroupId() != null) {
-            newFamilyGroup = familyGroupRepository.findById(farmerRequestDTO.familyGroupId())
-                .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
-        }
-
         FamilyGroup oldFamilyGroup = farmer.getFamilyGroup();
-        farmer.setFamilyGroup(newFamilyGroup);
+        Long newFamilyGroupId = farmerRequestDTO.familyGroupId();
+
+        boolean hasGroupChanged = (oldFamilyGroup == null && newFamilyGroupId != null) ||
+                (oldFamilyGroup != null && !oldFamilyGroup.getId().equals(newFamilyGroupId));
+
+        if (hasGroupChanged) {
+            if (newFamilyGroupId != null) {
+                FamilyGroup newFamilyGroup = familyGroupRepository.findById(newFamilyGroupId)
+                        .orElseThrow(() -> new RuntimeException("Grupo familiar não encontrado"));
+                farmer.setFamilyGroup(newFamilyGroup);
+            } else {
+                farmer.setFamilyGroup(null);
+            }
+        }
 
         if (farmerRequestDTO.typeId() != null) {
             type = typeRepository.findById(farmerRequestDTO.typeId())
@@ -126,7 +133,10 @@ public class FarmerService {
 
         Farmer newFarmer = farmerRepository.save(farmer);
 
-        if (oldFamilyGroup != null && oldFamilyGroup.getPrincipal().equals(newFarmer)) {
+        if (hasGroupChanged &&
+                oldFamilyGroup != null &&
+                oldFamilyGroup.getPrincipal().equals(newFarmer)
+        ) {
             familyGroupService.removePrincipal(oldFamilyGroup);
         }
 
