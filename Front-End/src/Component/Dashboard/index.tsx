@@ -351,6 +351,7 @@ const Dashboard = () => {
                         return null;
                     }
 
+
                     return (
                         <div
                             key={idx}
@@ -389,7 +390,7 @@ const Dashboard = () => {
                                             cx="50%"
                                             cy="50%"
                                             outerRadius={80}
-                                            label={({ payload }) => `${payload.value}`}
+                                            label={({ payload }) => `${((payload.value / total) * 100).toFixed(2)}%`}
                                         >
                                             {dataset.map((_e, i) => (
                                                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -407,7 +408,7 @@ const Dashboard = () => {
                                                     {payload?.map((entry) => (
                                                         <li key={entry.value}>
                                                             <span style={{ color: entry.color }}>■</span>{" "}
-                                                            {entry.value}: {Number(entry.payload?.value).toFixed(2)}
+                                                            {entry.value}: {Number(entry.payload?.value).toFixed(2)} ha
                                                         </li>
                                                     ))}
                                                     <li style={{ marginTop: 6, fontWeight: "bold" }}>
