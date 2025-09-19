@@ -22,6 +22,7 @@ public class FamilyGroup {
 
     @OneToMany(mappedBy = "familyGroup")
     @JsonIgnore
+    @OrderBy("name ASC")
     private List<Farmer> members;
 
     private String registry;
