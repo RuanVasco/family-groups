@@ -103,6 +103,7 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
                OR (l IS NULL AND ofg IN :familyGroups)
                )
           AND  COALESCE(a.cultivable, 0) > 0
+          AND a.assetType.id = 1
         GROUP BY COALESCE(lfg.id, ofg.id)
     """)
     List<FreeAreaAggDTO> getFreeAreaForGroups(
@@ -122,6 +123,7 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
                   (lfg IN :familyGroups)
                OR (l IS NULL AND ofg IN :familyGroups)
                )
+               AND a.assetType.id = 1
         GROUP BY COALESCE(lfg.id, ofg.id)
     """)
     List<FreeAreaAggDTO> getAreaForGroups(
