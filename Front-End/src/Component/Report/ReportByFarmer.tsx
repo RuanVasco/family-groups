@@ -77,6 +77,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
         Própria: "ownedArea",
         Arrendada: "leasedArea",
         Total: "totalArea",
+        SAP_Própria: "sapOwned",
+        SAP_Arrendada: "sapLeased",
+        SAP_Total: "sapTotal",
     };
 
     useEffect(() => {
@@ -223,9 +226,9 @@ const ReportByFarmer = ({ branch, technician, setTotalItems }: Props) => {
                                 "Situação",
                                 "Carteira",
                                 "Grupo Familiar",
-                                "SAP Própria",
-                                "SAP Arrendada",
-                                "SAP Total",
+                                "SAP_Própria",
+                                "SAP_Arrendada",
+                                "SAP_Total",
                                 "Editar SAP",
                                 "Própria",
                                 "Arrendada",
