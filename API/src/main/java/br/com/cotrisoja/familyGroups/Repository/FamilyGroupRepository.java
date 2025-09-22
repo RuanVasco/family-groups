@@ -57,8 +57,9 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
         LEFT  JOIN o.familyGroup    ofg        
         LEFT  JOIN a.leasedTo       l
         LEFT  JOIN l.familyGroup    lfg           
-        WHERE  (lfg = :familyGroup)               
-           OR  (l IS NULL AND ofg = :familyGroup) 
+        WHERE  ((lfg = :familyGroup)               
+           OR  (l IS NULL AND ofg = :familyGroup)) AND
+           a.assetType = 1 
        """)
     Double getFamilyGroupTotalArea(@Param("familyGroup") FamilyGroup familyGroup);
 
@@ -67,7 +68,7 @@ public interface FamilyGroupRepository extends JpaRepository<FamilyGroup, Long> 
         FROM Asset a
         JOIN Farmer leased ON a.leasedTo = leased
         JOIN FamilyGroup fg ON leased MEMBER OF fg.members
-        WHERE fg = :familyGroup
+        WHERE fg = :familyGroup AND a.assetType = 1
     """)
     Double getFamilyGroupFreeArea(@Param("familyGroup") FamilyGroup familyGroup);
 
